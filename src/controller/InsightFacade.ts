@@ -44,7 +44,7 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function (fulfill, reject) {
             // TODO: implement
 
-            fulfill( {code: 23, body: 'dsad'} );
+            fulfill( {code: 201, body: {}} );
         });
     }
     /**
