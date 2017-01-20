@@ -11,6 +11,8 @@ export default class InsightFacade implements IInsightFacade {
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
     }
+
+
     /**
      * Add a dataset to UBCInsight.
      *
@@ -41,12 +43,34 @@ export default class InsightFacade implements IInsightFacade {
      *
      */
     addDataset(id: string, content: string): Promise<InsightResponse> {
+        const instance = this;
+
         return new Promise(function (fulfill, reject) {
-            // TODO: implement
+
+            if (!(instance.isBase64(content)))
+                reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
+
+            let decoded: any = instance.decode(content);
+
+
+            var keys: any=[];
+            var values: any=[];
+            let i=0;
+            for (var key in decoded[0]) {
+                keys[i]= key;
+                values[i]=content[0][key];
+                i=i+1;
+            }
+            console.log(keys);
+            console.log(values);
+
+
 
             fulfill( {code: 201, body: {}} );
         });
     }
+
+
     /**
      * Remove a dataset from UBCInsight.
      *
@@ -95,5 +119,36 @@ export default class InsightFacade implements IInsightFacade {
             // TODO: implement
             fulfill(0);
         });
+    }
+
+    /**
+     * check if given string is encoded in base64.
+     *
+     * @param input  string needs to be checked
+     *
+     * @return boolean true if given string is in base64. false otherwise.
+     */
+    isBase64(input: string): boolean
+    {
+        //base64 should be multiple of 4 byte string
+        if (input.length % 4 !== 0)
+            return false;
+        //base64 string ends with "="
+        if (input.charAt(input.length - 1) !== "=")
+            return false;
+
+        return true;
+    }
+     /**
+     * decodes a base64 string to JSON object
+     *
+     * @param input  given string needs to be decoded
+     * @return JSON object
+     */
+    decode(input: string): any
+    {
+        var b = new Buffer(input, 'base64');
+        input = b.toString();
+        return JSON.parse(input);
     }
 }
