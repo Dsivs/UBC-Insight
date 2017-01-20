@@ -8,32 +8,35 @@
 import InsightFacade from "../src/controller/InsightFacade";
 import {expect} from 'chai';
 import Log from "../src/Util";
+import {ok} from "assert";
 let JSZip = require("jszip");
 let fs = require("fs");
+let content: string;
 
-describe("EchoSpec", function () {
+describe("InsightTest", function () {
 
-    var insight: InsightFacade = null;
-    before(function () {
+    var insight: InsightFacade = new InsightFacade();
 
-        insight = new InsightFacade();
-
-        var zip = new JSZip();
-        fs.readFile("./test/Archive.zip", function(err: any, data: any) {
-            if (err)
-                console.log(err);
-            JSZip.loadAsync(data).then(function (zip: any) {
-                console.log(zip);
-                //console.log(err);
-                //console.log(data);
-            });
+    var zip = new JSZip();
+    fs.readFile('./test/Archive.zip',function(err: any, data: any) {
+        if (err)
+            console.log(err);
+        JSZip.loadAsync(data).then(function(okay: any) {
+            var b = new Buffer(JSON.stringify(okay));
+            content = b.toString('base64');
+        }).catch(function (err: any) {
+            console.log(err);
         });
+
+    });
+
+    before(function () {
         Log.test('Before: ' + (<any>this).test.parent.title);
     });
 
 
     it("Load data set", function () {
-        return insight.addDataset('courses', 'fake data in base68')
+        return insight.addDataset('courses', content)
             .then(function(response) {
                 expect(response.code).to.deep.equal(201);
                 expect(response.body).to.deep.equal({});
