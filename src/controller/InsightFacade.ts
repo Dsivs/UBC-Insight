@@ -6,12 +6,14 @@ import {IInsightFacade, InsightResponse, QueryRequest} from "./IInsightFacade";
 import Log from "../Util";
 import DataList from "./DataList";
 import {isUndefined} from "util";
-import {error} from "util";
 let JSZip = require("jszip");
+let fs = require("fs");
+let localData = "./cache/";
 
 export default class InsightFacade implements IInsightFacade {
 
     private set:  Array<DataList>;
+    private id:string;
 
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
@@ -50,6 +52,7 @@ export default class InsightFacade implements IInsightFacade {
      */
     addDataset(id: string, content: string): Promise<InsightResponse> {
         const instance = this;
+        this.id = id;
         //code will be used for fulfill only
         let code: number = 0;
 
@@ -62,24 +65,25 @@ export default class InsightFacade implements IInsightFacade {
             //step1: decode base64 content to readable json object
             let step1 = instance.decode(content).then(function (decoded) {
 
-                console.log(decoded);
+                //console.log(decoded);
 
+                /*var obj = JSON.parse(decoded);
 
-                for (var key in decoded)
+                for (var key in obj)
                 {
-                    if (decoded.hasOwnProperty(key))
+                    if (obj.hasOwnProperty(key))
                     {
-                        //console.log(key + " = " + decoded[key]);
-                        let things = decoded[key];
+                        console.log(key + " = " + obj[key]);
+                        let things = obj[key];
                         for (var inner in things)
                         {
                             if (key.hasOwnProperty(inner))
                             {
-                                //console.log(inner + "=" +things[inner]);
+                                console.log(inner + "=" +things[inner]);
                             }
                         }
                     }
-                }
+                }*/
 
             }).catch(function (err) {
                 console.log(err);
@@ -87,7 +91,7 @@ export default class InsightFacade implements IInsightFacade {
 
             //console.log(decoded)
 
-            if (instance.isAdded(id))
+            if (instance.isExist(id))
             {
                 code = 201;
                 //remove then add again if already exits
@@ -143,9 +147,15 @@ export default class InsightFacade implements IInsightFacade {
      *
      */
     removeDataset(id: string): Promise<InsightResponse> {
+        let instance = this;
         return new Promise(function (fulfill, reject) {
-            // TODO: implement
-            fulfill(0);
+            if (!instance.isExist(id))
+                reject({code: 404, body: {"error": "Source not previously added"}});
+            var deletion: Promise<any> = instance.removeFolder(localData);
+
+           Promise.all([deletion]).then( function () {
+               fulfill( {code: 204, body: {}} );
+           })
         });
     }
     /**
@@ -215,6 +225,7 @@ export default class InsightFacade implements IInsightFacade {
                      console.log("before");
 
                      for (var filename in okay.files) {
+                         let name: string = filename;
                          //inner promise is returned
                          var readfile: Promise<any> = okay.file(filename).async("string")
                              .then(function success(text: string) {
@@ -222,6 +233,9 @@ export default class InsightFacade implements IInsightFacade {
                                  //console.log(text);
                                  var buffer = new Buffer(text);
                                  text = buffer.toString();
+                                 //cache data to disk
+                                 instance.cacheData(text, name);
+
                                  content = content + text;
                                  //console.log(content);
                                  //console.log('for loop');
@@ -245,24 +259,6 @@ export default class InsightFacade implements IInsightFacade {
         });
     }
 
-    /**
-     * check if dataset has such id
-     *
-     * @param id given id that should be searched for
-     * @return true if such id exits in dataset. false otherwise
-     */
-    isAdded(id: string): boolean
-    {
-        for (let i of this.set)
-        {
-            if (i.getID() === id)
-            {
-                return true;
-            }
-        }
-        return false;
-    }
-
 
     load(buffer: any): Promise<any>
     {
@@ -275,5 +271,79 @@ export default class InsightFacade implements IInsightFacade {
                 reject(err);
             });
         });
+    }
+
+    cacheData(content: any, filename: string): void
+    {
+        if (!fs.existsSync("./cache/"))
+        {
+            fs.mkdirSync("./cache/");
+            console.log("new directory created!");
+        }
+
+        var path = "./cache/" + filename;
+
+        fs.writeFile(path, content, function(err: any) {
+            if (err) {
+                console.error("!!!write error:  " + err.message);
+            } else {
+                console.log("@Successful Write to " + path);
+            }
+        });
+    }
+
+    /**
+     * check if given id exists
+     *
+     * @param id given id that should be searched for
+     * @return true if such id exits. false otherwise
+     */
+    isExist(id: string): boolean
+    {
+        //since multiple dataset is not allowed for D1 so far
+        //id is not used since we are only going to
+        //have one dataset at this stage
+        var path = "./cache/";
+        if (fs.existsSync(path)) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * delete a given folder recursively
+     *
+     * @param path given path that need to be deleted
+     * @return true a promise to indicate if deletion is successful
+     * @credit the following code contains a recursive algorithm that was cited online
+     * @reference http://stackoverflow.com/questions/18052762
+     */
+    removeFolder(path: string): Promise<any>
+    {
+        return new Promise(function (fulfill, reject) {
+
+        //if path is valid
+        if( fs.existsSync(path) ) {
+            //go through each file in the folder and delete one by one
+            fs.readdirSync(path).forEach(function(file: any){
+                var current = path + "/" + file;
+                //if current folder contains folder
+                if(fs.lstatSync(current).isDirectory()) {
+                    //recursive delete for multiple folder
+                    this.removeFolder(current).catch(function (err: any) {
+                        console.log(err);
+                        reject(err);
+                    });
+                } else {
+                    //delete each single file
+                    fs.unlinkSync(current);
+                }
+            });
+            //remove entire folder when its empty
+            fs.rmdirSync(path);
+        }
+        fulfill();
+        });
+
     }
 }
