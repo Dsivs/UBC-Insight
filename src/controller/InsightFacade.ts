@@ -62,8 +62,24 @@ export default class InsightFacade implements IInsightFacade {
                 reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
 
 
+            let removal: Promise<any>;
+            //check if data set has been added
+            if (instance.isExist(id))
+            {
+                //if so, delete and write again
+                code = 201;
+                //remove then add again if already exits
+                 removal = instance.removeDataset(id).catch(function(err) {
+                    reject({code: 400, body: {"error": "Deletion error"}})
+                });
+            }
+            else
+            {
+                code = 204;
+            }
+
             //step1: decode base64 content to readable json object
-            let step1 = instance.decode(content).then(function (decoded) {
+            let caching = instance.decode(content).then(function (decoded) {
 
                 //console.log(decoded);
 
@@ -91,18 +107,6 @@ export default class InsightFacade implements IInsightFacade {
 
             //console.log(decoded)
 
-            if (instance.isExist(id))
-            {
-                code = 201;
-                //remove then add again if already exits
-                instance.removeDataset(id).catch(function(err) {
-                    reject({code: 400, body: {"error": "Deletion error"}})
-                });
-            }
-            else
-            {
-                code = 204;
-            }
 
             /*var keys: any=[];
             var values: any=[];
@@ -118,10 +122,11 @@ export default class InsightFacade implements IInsightFacade {
             console.log(values);*/
 
 
-            Promise.all([step1]).then(function() {
+            Promise.all([removal, caching]).then(function() {
                 fulfill( {code: code, body: {}} );
             }).catch(function (err) {
                 console.log(err);
+                reject(err);
             })
         });
     }
