@@ -60,7 +60,7 @@ describe("InsightTest", function () {
     });
 
 
-    /*it("Load valid new data set", function () {
+    it("Load valid new data set", function () {
         return insight.addDataset('courses', content)
             .then(function(response) {
                 expect(response.code).to.deep.equal(204);
@@ -68,6 +68,28 @@ describe("InsightTest", function () {
             }).catch(function(err) {
                 console.log(err);
                 expect.fail();
+            })
+    });
+
+    it("Overwrite existing data set", function () {
+        return insight.addDataset('courses', content)
+            .then(function(response) {
+                expect(response.code).to.deep.equal(201);
+                expect(response.body).to.deep.equal({});
+            }).catch(function(err) {
+                console.log(err);
+                expect.fail();
+            })
+    });
+
+    /*it("Load invalid data set", function (done) {
+        return insight.addDataset('courses', 'INVALID')
+            .then(function(response) {
+                console.log(response);
+                expect.fail();
+            }).catch(function(returned) {
+                expect(returned.code).to.deep.equal(400);
+                expect(returned.body).to.deep.equal({"error": "Content Not Base64 Encoded"});
             })
     });*/
 
@@ -92,33 +114,6 @@ describe("InsightTest", function () {
                 expect(response.body).to.deep.equal({"error": "Source not previously added"});
             })
     });
-
-
-
-/*
-    it("Load valid existing data set", function () {
-        return insight.addDataset('courses', content)
-            .then(function(response) {
-                //expect(response.code).to.deep.equal(201);
-                expect(response.body).to.deep.equal({});
-            }).catch(function(err) {
-                console.log(err);
-                expect.fail();
-            })
-    });
-
-    it("Load invalid data set", function () {
-        return insight.addDataset('courses', 'INVALID')
-            .then(function(response) {
-                console.log(response);
-                expect.fail();
-            }).catch(function(returned) {
-                expect(returned.code).to.deep.equal(400);
-                expect(returned.body).to.deep.equal({"error": "Content Not Base64 Encoded"});
-            })
-    });*/
-
-
 
 });
 
