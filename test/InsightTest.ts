@@ -9,7 +9,7 @@ import InsightFacade from "../src/controller/InsightFacade";
 import {expect} from 'chai';
 import Log from "../src/Util";
 import forEach = require("core-js/fn/array/for-each");
-import {ok} from "assert";
+import {isUndefined} from "util";
 let JSZip = require("jszip");
 let fs = require("fs");
 let content: string = "";
@@ -25,11 +25,16 @@ describe("InsightTest", function () {
         Log.test('Before: ' + (<any>this).test.parent.title);
         var zip = new JSZip();
         fs.readFile('./test/demo.zip', function(err: any, data: any){
-            if (err)
+            if (err) {
+                //invalid zip file is given
                 console.log(err);
-
-            //since given data is a array buffer, we can convert right away
-            content = data.toString('base64');
+            }
+            else if (!isUndefined(data) || data !== null)
+            {
+                //debug, if given content is invalid
+                //since given data is a array buffer, we can convert right away
+                content = data.toString('base64');
+            }
             /*
             zip.loadAsync(data).then(function(okay: any) {
 
@@ -82,7 +87,7 @@ describe("InsightTest", function () {
             })
     });
 
-    /*it("Load invalid data set", function (done) {
+    it("Load invalid data set", function () {
         return insight.addDataset('courses', 'INVALID')
             .then(function(response) {
                 console.log(response);
@@ -91,7 +96,7 @@ describe("InsightTest", function () {
                 expect(returned.code).to.deep.equal(400);
                 expect(returned.body).to.deep.equal({"error": "Content Not Base64 Encoded"});
             })
-    });*/
+    });
 
     it("remove a valid new data set", function () {
         return insight.removeDataset('courses')
