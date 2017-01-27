@@ -6,9 +6,14 @@ import {IInsightFacade, InsightResponse, QueryRequest} from "./IInsightFacade";
 import Log from "../Util";
 import DataList from "./DataList";
 import {isUndefined} from "util";
+import {error} from "util";
 let JSZip = require("jszip");
 let fs = require("fs");
 let localData = "./cache/";
+
+//this is a regular expression to check if given string matches base64 encode characteristic
+//a valid base64 string should have A-Z & a-z letters and 0-9 numbers as well as optional "="
+let pattern: string = "^[A-Za-z0-9+\/=]+\Z";
 
 export default class InsightFacade implements IInsightFacade {
 
@@ -60,66 +65,65 @@ export default class InsightFacade implements IInsightFacade {
 
             if (!(instance.isBase64(content)))
                 reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
+            else {
 
 
-            let removal: Promise<any>;
-            //check if data set has been added
-            if (instance.isExist(id))
-            {
-                //if so, delete and write again
-                code = 201;
-                //remove then add again if already exits
-                 removal = instance.removeDataset(id).catch(function(err) {
-                    reject({code: 400, body: {"error": "Deletion error"}})
+                let removal: Promise<any>;
+                //check if data set has been added
+                if (instance.isExist(id)) {
+                    //if so, delete and write again
+                    code = 201;
+                    //remove then add again if already exits
+                    removal = instance.removeDataset(id).catch(function (err) {
+                        reject({code: 400, body: {"error": "Deletion error"}})
+                    });
+                }
+                else {
+                    code = 204;
+                }
+
+                //step1: decode base64 content to readable json object
+                let caching = instance.decode(content).then(function (decoded) {
+
+                    //console.log(decoded);
+
+                    /*var obj = JSON.parse(decoded);
+
+                     for (var key in obj)
+                     {
+                     if (obj.hasOwnProperty(key))
+                     {
+                     console.log(key + " = " + obj[key]);
+                     let things = obj[key];
+                     for (var inner in things)
+                     {
+                     if (key.hasOwnProperty(inner))
+                     {
+                     console.log(inner + "=" +things[inner]);
+                     }
+                     }
+                     }
+                     }*/
+
+                }).catch(function (err) {
+                    console.log(err);
                 });
-            }
-            else
-            {
-                code = 204;
-            }
 
-            //step1: decode base64 content to readable json object
-            let caching = instance.decode(content).then(function (decoded) {
-
-                //console.log(decoded);
-
-                /*var obj = JSON.parse(decoded);
-
-                for (var key in obj)
-                {
-                    if (obj.hasOwnProperty(key))
-                    {
-                        console.log(key + " = " + obj[key]);
-                        let things = obj[key];
-                        for (var inner in things)
-                        {
-                            if (key.hasOwnProperty(inner))
-                            {
-                                console.log(inner + "=" +things[inner]);
-                            }
-                        }
-                    }
-                }*/
-
-            }).catch(function (err) {
-                console.log(err);
-            });
-
-            //console.log(decoded)
+                //console.log(decoded)
 
 
-            /*var keys: any=[];
-            var values: any=[];
-            let i=0;
+                /*var keys: any=[];
+                 var values: any=[];
+                 let i=0;
 
 
-            for (var key in decoded[0]) {
-                keys[i]= key;
-                values[i]=content[0][key];
-                i=i+1;
-            }
-            console.log(keys);
-            console.log(values);*/
+                 for (var key in decoded[0]) {
+                 keys[i]= key;
+                 values[i]=content[0][key];
+                 i=i+1;
+                 }
+                 console.log(keys);
+                 console.log(values);*/
 
 
             Promise.all([removal, caching]).then(function() {
@@ -128,6 +132,8 @@ export default class InsightFacade implements IInsightFacade {
                 console.log(err);
                 reject(err);
             })
+
+            }
         });
     }
 
@@ -154,10 +160,13 @@ export default class InsightFacade implements IInsightFacade {
     removeDataset(id: string): Promise<InsightResponse> {
         let instance = this;
         return new Promise(function (fulfill, reject) {
+            var deletion: Promise<any>;
             if (!instance.isExist(id))
                 reject({code: 404, body: {"error": "Source not previously added"}});
-            var deletion: Promise<any> = instance.removeFolder(localData);
-
+            else
+            {
+                deletion = instance.removeFolder(localData);
+            }
            Promise.all([deletion]).then( function () {
                fulfill( {code: 204, body: {}} );
            })
@@ -184,6 +193,17 @@ export default class InsightFacade implements IInsightFacade {
     performQuery(query: QueryRequest): Promise <InsightResponse> {
         return new Promise(function (fulfill, reject) {
             // TODO: implement
+            // retrieve data from disk, NOT DONE
+
+            //process data -> variables, NOT DONE
+
+            //variables -> sort/ data filter, NOT DONE
+
+            //variable -> JSON, NOT DONE
+
+            //Problem: 1) how to define QueryRequest object
+            // 2) proper way to handle query
+
             fulfill(0);
         });
     }
@@ -197,7 +217,7 @@ export default class InsightFacade implements IInsightFacade {
      */
     isBase64(input: string): boolean
     {
-        if (isUndefined(input) || input === "")
+        if (isUndefined(input) || input === "" || input === null)
             return false;
         //base64 should be multiple of 4 byte string
         if (input.length % 4 !== 0)
@@ -205,7 +225,9 @@ export default class InsightFacade implements IInsightFacade {
         //base64 string ends with "="
         /*if (input.charAt(input.length - 1) !== "=")
             return false;*/
-
+        let expression = new RegExp(pattern);
+        if (!expression.test(input))
+            return false;
         return true;
     }
      /**
@@ -228,13 +250,18 @@ export default class InsightFacade implements IInsightFacade {
                  {
                      let content: string = "";
                      console.log("before");
+                     var readfile: Promise<any>;
 
                      for (var filename in okay.files) {
                          let name: string = filename;
                          //inner promise is returned
-                         var readfile: Promise<any> = okay.file(filename).async("string")
+                         readfile = okay.file(filename).async("string")
                              .then(function success(text: string) {
 
+                                 console.log("text: " + text);
+
+                                 if (isUndefined(text) || (typeof text !== 'string') || !(instance.isJSON(text)))
+                                     throw error;
                                  //console.log(text);
                                  var buffer = new Buffer(text);
                                  text = buffer.toString();
@@ -244,15 +271,21 @@ export default class InsightFacade implements IInsightFacade {
                                  content = content + text;
                                  //console.log(content);
                                  //console.log('for loop');
+                             }).catch(function (err: any) {
+                                 console.log("err catched for readfile:" + err);
+                                 //read file error
+
                              });
                      }
                      //console.log("fulfill");
                      Promise.all([readfile]).then( function () {
                          fulfill(content);
+                     }).catch(function (err: any) {
+                         reject(err);
                      });
                  }).catch(function (err) {
                  console.log(err);
-                 reject(null);
+                 reject(err);
                 });
 
          //console.log('gdfgdf');
@@ -313,6 +346,20 @@ export default class InsightFacade implements IInsightFacade {
             return true;
         }
         return false;
+    }
+
+    isJSON(str: string): boolean
+    {
+        try
+        {
+            JSON.parse(str);
+
+        }catch (err)
+        {
+            return false;
+        }
+
+        return true;
     }
 
     /**
