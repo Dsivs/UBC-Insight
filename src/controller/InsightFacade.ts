@@ -208,7 +208,7 @@ export default class InsightFacade implements IInsightFacade {
                 //Problem: 1) how to define QueryRequest object
                 // 2) proper way to handle query
 
-                fulfill(0);
+                fulfill({code: 200, body: {"JSON": []}});
             }
         });
     }
