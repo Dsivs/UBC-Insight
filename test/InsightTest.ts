@@ -10,6 +10,7 @@ import {expect} from 'chai';
 import Log from "../src/Util";
 import forEach = require("core-js/fn/array/for-each");
 import {isUndefined} from "util";
+import {QueryRequest} from "../src/controller/IInsightFacade";
 let JSZip = require("jszip");
 let fs = require("fs");
 let content: string = "";
@@ -75,6 +76,41 @@ describe("InsightTest", function () {
                 expect.fail();
             })
     });
+
+    it("perform null query", function () {
+
+
+        return insight.performQuery({where: null , options:
+            {columns:["courses_dept", "courses_id", "courses_avg"], order: "courses_avg", form: "TABLE"}})
+            .then(function(response) {
+                console.log(response);
+                expect.fail();
+            }).catch(function(err) {
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({"error": "Invalid query form"});
+            })
+    });
+
+    it("perform valid query", function () {
+
+
+        return insight.performQuery({where: null, options: null})
+            .then(function(response) {
+                console.log(response);
+                expect.fail();
+            }).catch(function(err) {
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({"error": "Invalid query form"});
+            })
+    });
+
+
+
+
+
+
+
+
 
     it("Overwrite existing data set", function () {
         return insight.addDataset('courses', content)
