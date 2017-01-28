@@ -192,19 +192,24 @@ export default class InsightFacade implements IInsightFacade {
      */
     performQuery(query: QueryRequest): Promise <InsightResponse> {
         return new Promise(function (fulfill, reject) {
-            // TODO: implement
-            // retrieve data from disk, NOT DONE
 
-            //process data -> variables, NOT DONE
+            if (query.where === null || query.options === null
+            || isUndefined(query.where) || isUndefined(query.options))
+                reject({code: 400, body: {"error": "Invalid query form"}});
+            else {
+                // retrieve data from disk, NOT DONE
 
-            //variables -> sort/ data filter, NOT DONE
+                //process data -> variables, NOT DONE
 
-            //variable -> JSON, NOT DONE
+                //variables -> sort/ data filter, NOT DONE
 
-            //Problem: 1) how to define QueryRequest object
-            // 2) proper way to handle query
+                //variable -> JSON, NOT DONE
 
-            fulfill(0);
+                //Problem: 1) how to define QueryRequest object
+                // 2) proper way to handle query
+
+                fulfill(0);
+            }
         });
     }
 

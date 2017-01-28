@@ -11,6 +11,32 @@ export interface InsightResponse {
 
 export interface QueryRequest {
     // you can define your own structure that complies with the EBNF here
+    where: {
+            filter:{
+                logicComparison:{
+                    logic: {
+                        and: {};
+                        or: {};
+                    }
+                }
+                mComparison:{
+                    mComparator:{
+                        key: string;
+                    }
+                }
+                sComparison:{
+                    key: string;
+                }
+                negation:{
+                    not: {};
+                }
+            }
+    }
+    options: {
+        columns: string[];
+        order: string;
+        form:string;
+    }
 }
 
 export interface IInsightFacade {
