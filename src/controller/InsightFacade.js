@@ -61,17 +61,55 @@ var InsightFacade = (function () {
     };
     InsightFacade.prototype.performQuery = function (query) {
         var instance = this;
+        var path = "./cache/courses/";
         return new Promise(function (fulfill, reject) {
             if (!instance.isCached()) {
                 reject({ code: 424, body: { "missing": [this.id] } });
             }
-            if (query.where === null || query.options === null
-                || util_1.isUndefined(query.where) || util_1.isUndefined(query.options))
+            if (query.WHERE === null || query.OPTIONS === null || util_1.isUndefined(query.WHERE) || util_1.isUndefined(query.OPTIONS)) {
                 reject({ code: 400, body: { "error": "Invalid query form" } });
+            }
             else {
-                fulfill({ code: 200, body: { "JSON": ["NO ID"] } });
+                instance.readDataFiles(path)
+                    .then(function (result) {
+                    console.log(result);
+                    return Promise.all(instance.readFiles(result));
+                })
+                    .then(function (result2) {
+                    console.log(result2);
+                    fulfill({ code: 200, body: { "data": "json" } });
+                });
             }
         });
+    };
+    InsightFacade.prototype.readDataFiles = function (path) {
+        return new Promise(function (fulfill, reject) {
+            fs.readdir(path, function (err, files) {
+                if (err)
+                    reject(err);
+                else
+                    fulfill(files);
+            });
+        });
+    };
+    InsightFacade.prototype.readFiles = function (files) {
+        var contents = [];
+        var path = "./cache/courses/";
+        files.forEach(function (element) {
+            contents.push(new Promise(function (fulfill, reject) {
+                var url = path + element;
+                console.log(url);
+                fs.readFile(path + element, 'utf8', function (err, data) {
+                    if (err) {
+                        reject(err);
+                    }
+                    else {
+                        fulfill(data);
+                    }
+                });
+            }));
+        });
+        return contents;
     };
     InsightFacade.prototype.isBase64 = function (input) {
         if (util_1.isUndefined(input) || input === "" || input === null)

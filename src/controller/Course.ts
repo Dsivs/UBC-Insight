@@ -1,8 +1,7 @@
 /**
  * Created by John on 2017-01-20.
  */
-export default class Course
-{
+export default class Course {
     //The department that offered the course.
     private courses_dept: string;
     //The course number (will be treated as a string (e.g., 499b)).
@@ -22,38 +21,46 @@ export default class Course
     //the unique id of a course offering.
     private courses_uuid: string;
 
-    constructor(dept: string, id:string)
-    {
+    constructor(dept: string, id: string) {
         this.courses_dept = dept;
         this.courses_id = id;
     }
 
-    pass(num: number)
-    {
-        this.courses_pass = num;
+    dept(): string {
+        return this.courses_dept;
     }
 
-    fail(num: number)
-    {
-        this.courses_fail = num;
-    }
-    audit(num: number)
-    {
-        this.courses_audit = num;
+    id(): string {
+        return this.courses_id;
     }
 
-    average(num: number)
-    {
-        this.courses_avg = num;
+    avg(): number {
+        return this.courses_avg;
     }
 
-    instrctor(name: string)
-    {
-        this.courses_instructor = name;
+    instructor(): string {
+        return this.courses_instructor;
     }
 
-    title(title: string)
-    {
-        this.courses_title = title;
+    title(): string {
+        return this.courses_title;
     }
+
+    pass(): number {
+        return this.courses_pass;
+    }
+
+    fail(): number {
+        return this.courses_fail;
+    }
+
+    audit(): number {
+        return this.courses_audit;
+    }
+
+    uuid(): string {
+        return this.courses_uuid;
+    }
+
+
 }

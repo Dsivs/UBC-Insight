@@ -34,7 +34,7 @@ describe("InsightTest", function () {
         });
     });
     it("perform null query", function () {
-        return insight.performQuery({ where: null, options: { columns: ["courses_dept", "courses_id", "courses_avg"], order: "courses_avg", form: "TABLE" } })
+        return insight.performQuery({ WHERE: null, OPTIONS: { columns: ["courses_dept", "courses_id", "courses_avg"], order: "courses_avg", form: "TABLE" } })
             .then(function (response) {
             console.log(response);
             chai_1.expect.fail();
@@ -44,13 +44,26 @@ describe("InsightTest", function () {
         });
     });
     it("perform valid query", function () {
-        return insight.performQuery({ where: null, options: null })
+        return insight.performQuery({
+            "WHERE": {
+                "GT": {
+                    "courses_avg": 97
+                }
+            },
+            "OPTIONS": {
+                "COLUMNS": [
+                    "courses_dept",
+                    "courses_avg"
+                ],
+                "ORDER": "courses_avg",
+                "FORM": "TABLE"
+            }
+        })
             .then(function (response) {
             console.log(response);
-            chai_1.expect.fail();
+            chai_1.expect(response.code).to.deep.equal(200);
         }).catch(function (err) {
-            chai_1.expect(err.code).to.deep.equal(400);
-            chai_1.expect(err.body).to.deep.equal({ "error": "Invalid query form" });
+            chai_1.expect.fail();
         });
     });
     it("Overwrite existing data set", function () {

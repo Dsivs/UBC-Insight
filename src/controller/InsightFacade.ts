@@ -196,17 +196,28 @@ export default class InsightFacade implements IInsightFacade {
      */
     performQuery(query: QueryRequest): Promise <InsightResponse> {
         let instance = this;
+        let path = "./cache/courses/";
         return new Promise(function (fulfill, reject) {
-
-            if (!instance.isCached())
-            {
+            if (!instance.isCached()) {
                 reject({code: 424, body: {"missing": [this.id]}})
             }
 
-            if (query.where === null || query.options === null
-            || isUndefined(query.where) || isUndefined(query.options))
+            if (query.WHERE === null || query.OPTIONS === null || isUndefined(query.WHERE) || isUndefined(query.OPTIONS)) {
                 reject({code: 400, body: {"error": "Invalid query form"}});
+            }
             else {
+            instance.readDataFiles(path)
+                .then(function (result: any) {
+                    console.log(result);
+
+                    return Promise.all(instance.readFiles(result));
+                    //fulfill({code: 200, body: {"data": "json"}})
+                })
+                .then(function (result2: any) {
+                    console.log(result2);
+                    fulfill({code: 200, body: {"data": "json"}})
+                })
+
                 // retrieve data from disk, NOT DONE
 
                 //process data -> variables, NOT DONE
@@ -218,11 +229,42 @@ export default class InsightFacade implements IInsightFacade {
                 //Problem: 1) how to define QueryRequest object
                 // 2) proper way to handle query
 
-                fulfill({code: 200, body: {"JSON": ["NO ID"]}});
             }
-        });
+        })
     }
 
+    readDataFiles(path: string): Promise<any> {
+        return new Promise(function (fulfill, reject) {
+            fs.readdir(path, function(err: any, files: any) {
+                if (err)
+                    reject(err);
+                else
+                    fulfill(files);
+            })
+        })
+    }
+
+
+    readFiles(files: string[]): Promise<any>[] {
+        let contents: any[] = [];
+        let path = "./cache/courses/";
+        files.forEach(function (element: any) {
+            contents.push(new Promise(function (fulfill, reject) {
+                    let url = path+element;
+                    console.log(url);
+                    fs.readFile(path+element, 'utf8', function (err: any, data: any) {
+                        if (err) {
+                            reject(err);
+                        }
+                        else {
+                            fulfill(data);
+                        }
+                    })
+            }))
+        })
+
+        return contents;
+    }
     /**
      * check if given string is encoded in base64.
      *
