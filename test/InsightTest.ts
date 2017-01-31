@@ -67,6 +67,7 @@ describe("InsightTest", function () {
 
 
     it("Load valid new data set", function () {
+        console.log(content);
         return insight.addDataset('courses', content)
             .then(function(response) {
                 expect(response.code).to.deep.equal(204);
@@ -104,14 +105,6 @@ describe("InsightTest", function () {
             })
     });
 
-
-
-
-
-
-
-
-
     it("Overwrite existing data set", function () {
         return insight.addDataset('courses', content)
             .then(function(response) {
@@ -134,6 +127,7 @@ describe("InsightTest", function () {
             })
     });
 
+    /*
     it("remove a valid new data set", function () {
         return insight.removeDataset('courses')
             .then(function(response) {
@@ -145,6 +139,7 @@ describe("InsightTest", function () {
             })
     });
 
+
     it("remove non-existing data set", function () {
         return insight.removeDataset('courses')
             .then(function(err) {
@@ -155,6 +150,6 @@ describe("InsightTest", function () {
                 expect(response.body).to.deep.equal({"error": "Source not previously added"});
             })
     });
-
+    */
 });
 

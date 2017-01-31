@@ -19,6 +19,8 @@ export default class Course
     private courses_fail: number;
     //The number of students that audited the course offering.
     private courses_audit: number;
+    //the unique id of a course offering.
+    private courses_uuid: string;
 
     constructor(dept: string, id:string)
     {

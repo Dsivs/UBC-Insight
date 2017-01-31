@@ -203,9 +203,6 @@ export default class InsightFacade implements IInsightFacade {
                 reject({code: 424, body: {"missing": [this.id]}})
             }
 
-
-
-
             if (query.where === null || query.options === null
             || isUndefined(query.where) || isUndefined(query.options))
                 reject({code: 400, body: {"error": "Invalid query form"}});
@@ -266,7 +263,7 @@ export default class InsightFacade implements IInsightFacade {
              instance.load(buffer)
                  .then(function (okay: any)
                  {
-                     let content: string = "";
+                     let content: any;
                      console.log("before");
                      var readfile: Promise<any>;
 
@@ -276,20 +273,27 @@ export default class InsightFacade implements IInsightFacade {
                          readfile = okay.file(filename).async("string")
                              .then(function success(text: string) {
 
-                                 console.log("text: " + text);
+                                 //console.log("text: " + text);
 
                                  if (isUndefined(text) || (typeof text !== 'string') || !(instance.isJSON(text)))
                                      throw error;
                                  //console.log(text);
                                  var buffer = new Buffer(text);
-                                 text = buffer.toString();
-                                 //cache data to disk
-                                 instance.cacheData(text, name);
+                                 return instance.parseData(buffer.toString());
 
-                                 content = content + text;
+                                 //cache data to disk
+                                 //instance.cacheData(text, name);
+
+                                 //content = content + text;
                                  //console.log(content);
                                  //console.log('for loop');
-                             }).catch(function (err: any) {
+                             })
+                             .then(function (result: any) {
+                                 instance.cacheData(result, name);
+                                 content = result;
+                                 console.log(result);
+                             })
+                             .catch(function (err: any) {
                                  console.log("err catched for readfile:" + err);
                                  //read file error
                                 reject({code: 400, body: {"error": "read-file error"}});
@@ -442,5 +446,34 @@ export default class InsightFacade implements IInsightFacade {
         fulfill();
         });
 
+    }
+
+    parseData(stringObj: string): Promise<any> {
+        return new Promise(function (fulfill, reject) {
+            var jsonObj: any;
+            var output: any[] = [];
+            try {
+                jsonObj = JSON.parse(stringObj);
+            } catch (err) {
+                reject("Not Valid JSON");
+            }
+
+            jsonObj.result.forEach(function (element: any) {
+                var course = {
+                    "courses_dept": element.Subject,
+                    "courses_id": element.Course,
+                    "courses_avg": element.Avg,
+                    "courses_instructor": element.Professor,
+                    "courses_title": element.Title,
+                    "courses_pass": element.Pass,
+                    "courses_fail": element.Fail,
+                    "courses_audit": element.Audit,
+                    "courses_uuid": element.id
+                }
+                output.push(course);
+            })
+
+            fulfill(JSON.stringify(output));
+        })
     }
 }
