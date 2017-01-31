@@ -1,6 +1,6 @@
 "use strict";
 var InsightFacade_1 = require("../src/controller/InsightFacade");
-var chai_1 = require('chai');
+var chai_1 = require("chai");
 var Util_1 = require("../src/Util");
 var util_1 = require("util");
 var JSZip = require("jszip");
@@ -23,7 +23,6 @@ describe("InsightTest", function () {
         });
     });
     it("Load valid new data set", function () {
-        console.log(content);
         return insight.addDataset('courses', content)
             .then(function (response) {
             chai_1.expect(response.code).to.deep.equal(204);
@@ -84,6 +83,26 @@ describe("InsightTest", function () {
         }).catch(function (returned) {
             chai_1.expect(returned.code).to.deep.equal(400);
             chai_1.expect(returned.body).to.deep.equal({ "error": "Content Not Base64 Encoded" });
+        });
+    });
+    it("remove a valid new data set", function () {
+        return insight.removeDataset('courses')
+            .then(function (response) {
+            chai_1.expect(response.code).to.deep.equal(204);
+            chai_1.expect(response.body).to.deep.equal({});
+        }).catch(function (err) {
+            console.log(err);
+            chai_1.expect.fail();
+        });
+    });
+    it("remove non-existing data set", function () {
+        return insight.removeDataset('courses')
+            .then(function (err) {
+            console.log(err);
+            chai_1.expect.fail();
+        }).catch(function (response) {
+            chai_1.expect(response.code).to.deep.equal(404);
+            chai_1.expect(response.body).to.deep.equal({ "error": "Source not previously added" });
         });
     });
 });

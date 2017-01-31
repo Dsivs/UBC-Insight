@@ -5,6 +5,8 @@ import {IInsightFacade, InsightResponse, QueryRequest} from "./IInsightFacade";
 
 import Log from "../Util";
 import DataList from "./DataList";
+import Course from "./Course";
+import CourseList from "./CourseList";
 import {isUndefined} from "util";
 import {error} from "util";
 let JSZip = require("jszip");
@@ -16,12 +18,12 @@ let pattern: string = "^[A-Za-z0-9+\/=]+\Z";
 
 export default class InsightFacade implements IInsightFacade {
 
-    private set:  Array<DataList>;
+    private set:  CourseList;
     private id:string;
 
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
-        this.set = [];
+        this.set = new CourseList("courses");
     }
 
 
@@ -208,13 +210,27 @@ export default class InsightFacade implements IInsightFacade {
             else {
             instance.readDataFiles(path)
                 .then(function (result: any) {
-                    console.log(result);
+                    //console.log(result);
 
                     return Promise.all(instance.readFiles(result));
-                    //fulfill({code: 200, body: {"data": "json"}})
                 })
                 .then(function (result2: any) {
-                    console.log(result2);
+                    result2.forEach(function (element: any) {
+                        element.forEach(function (ele: any) {
+                            var course = new Course(ele.courses_dept,
+                                                    ele.courses_id,
+                                                    ele.courses_avg,
+                                                    ele.courses_instructor,
+                                                    ele.courses_title,
+                                                    ele.courses_pass,
+                                                    ele.courses_fail,
+                                                    ele.courses_audit,
+                                                    ele.courses_uuid)
+
+                            instance.set.add(course);
+                            //console.log(course);
+                        })
+                    })
                     fulfill({code: 200, body: {"data": "json"}})
                 })
 
@@ -252,12 +268,12 @@ export default class InsightFacade implements IInsightFacade {
             contents.push(new Promise(function (fulfill, reject) {
                     let url = path+element;
                     console.log(url);
-                    fs.readFile(path+element, 'utf8', function (err: any, data: any) {
+                    fs.readFile(url, 'utf8', function (err: any, data: any) {
                         if (err) {
                             reject(err);
                         }
                         else {
-                            fulfill(data);
+                            fulfill(JSON.parse(data));
                         }
                     })
             }))
@@ -333,7 +349,7 @@ export default class InsightFacade implements IInsightFacade {
                              .then(function (result: any) {
                                  instance.cacheData(result, name);
                                  content = result;
-                                 console.log(result);
+                                 //console.log(result);
                              })
                              .catch(function (err: any) {
                                  console.log("err catched for readfile:" + err);
@@ -388,7 +404,7 @@ export default class InsightFacade implements IInsightFacade {
                 console.log("new directory created!");
             }
 
-            var path = "./cache/" + this.id + "/" + filename;
+            var path = "./cache/" + this.id + "/" + filename + ".JSON";
 
             fs.writeFile(path, content, function (err: any) {
                 if (err) {
@@ -515,7 +531,7 @@ export default class InsightFacade implements IInsightFacade {
                 output.push(course);
             })
 
-            fulfill(JSON.stringify(output));
+            fulfill(JSON.stringify(output, null, 4));
         })
     }
 }

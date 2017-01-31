@@ -21,9 +21,16 @@ export default class Course {
     //the unique id of a course offering.
     private courses_uuid: string;
 
-    constructor(dept: string, id: string) {
+    constructor(dept: string, id: string, avg: number, instructor: string, title: string, pass: number, fail: number, audit: number, uuid: number) {
         this.courses_dept = dept;
         this.courses_id = id;
+        this.courses_avg = avg;
+        this.courses_instructor = instructor;
+        this.courses_title = title;
+        this.courses_pass = pass;
+        this.courses_fail = fail;
+        this.courses_audit = audit;
+        this.courses_uuid = uuid.toString();
     }
 
     dept(): string {

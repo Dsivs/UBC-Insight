@@ -12,11 +12,13 @@ export default class CourseList
     constructor(str: String)
     {
         this.list = [];
+        this.size = 0;
     }
 
     add(obj: any)
     {
         this.list.push(obj);
+        this.size++;
     }
 
     remove(obj: any)

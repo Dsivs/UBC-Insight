@@ -1,5 +1,7 @@
 "use strict";
 var Util_1 = require("../Util");
+var Course_1 = require("./Course");
+var CourseList_1 = require("./CourseList");
 var util_1 = require("util");
 var util_2 = require("util");
 var JSZip = require("jszip");
@@ -8,7 +10,7 @@ var pattern = "^[A-Za-z0-9+\/=]+\Z";
 var InsightFacade = (function () {
     function InsightFacade() {
         Util_1.default.trace('InsightFacadeImpl::init()');
-        this.set = [];
+        this.set = new CourseList_1.default("courses");
     }
     InsightFacade.prototype.addDataset = function (id, content) {
         var instance = this;
@@ -72,11 +74,15 @@ var InsightFacade = (function () {
             else {
                 instance.readDataFiles(path)
                     .then(function (result) {
-                    console.log(result);
                     return Promise.all(instance.readFiles(result));
                 })
                     .then(function (result2) {
-                    console.log(result2);
+                    result2.forEach(function (element) {
+                        element.forEach(function (ele) {
+                            var course = new Course_1.default(ele.courses_dept, ele.courses_id, ele.courses_avg, ele.courses_instructor, ele.courses_title, ele.courses_pass, ele.courses_fail, ele.courses_audit, ele.courses_uuid);
+                            instance.set.add(course);
+                        });
+                    });
                     fulfill({ code: 200, body: { "data": "json" } });
                 });
             }
@@ -99,12 +105,12 @@ var InsightFacade = (function () {
             contents.push(new Promise(function (fulfill, reject) {
                 var url = path + element;
                 console.log(url);
-                fs.readFile(path + element, 'utf8', function (err, data) {
+                fs.readFile(url, 'utf8', function (err, data) {
                     if (err) {
                         reject(err);
                     }
                     else {
-                        fulfill(data);
+                        fulfill(JSON.parse(data));
                     }
                 });
             }));
@@ -130,7 +136,7 @@ var InsightFacade = (function () {
                 var content;
                 console.log("before");
                 var readfile;
-                var _loop_1 = function() {
+                var _loop_1 = function () {
                     var name_1 = filename;
                     readfile = okay.file(filename).async("string")
                         .then(function success(text) {
@@ -142,7 +148,6 @@ var InsightFacade = (function () {
                         .then(function (result) {
                         instance.cacheData(result, name_1);
                         content = result;
-                        console.log(result);
                     })
                         .catch(function (err) {
                         console.log("err catched for readfile:" + err);
@@ -183,7 +188,7 @@ var InsightFacade = (function () {
                 fs.mkdirSync("./cache/" + this.id + "/");
                 console.log("new directory created!");
             }
-            var path = "./cache/" + this.id + "/" + filename;
+            var path = "./cache/" + this.id + "/" + filename + ".JSON";
             fs.writeFile(path, content, function (err) {
                 if (err) {
                     console.error("!!!write error:  " + err.message);
@@ -261,7 +266,7 @@ var InsightFacade = (function () {
                 };
                 output.push(course);
             });
-            fulfill(JSON.stringify(output));
+            fulfill(JSON.stringify(output, null, 4));
         });
     };
     return InsightFacade;
