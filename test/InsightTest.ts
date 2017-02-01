@@ -14,6 +14,7 @@ import {QueryRequest} from "../src/controller/IInsightFacade";
 let JSZip = require("jszip");
 let fs = require("fs");
 let content: string = "";
+let invalidContent: string = "";
 
 describe("InsightTest", function () {
 
@@ -35,54 +36,99 @@ describe("InsightTest", function () {
                 //debug, if given content is invalid
                 //since given data is a array buffer, we can convert right away
                 content = data.toString('base64');
+                console.log("Before: content is done!");
             }
-            /*
-            zip.loadAsync(data).then(function(okay: any) {
 
-                for (var filename in okay.files)
-                {
-                    okay.file(filename).async("string")
-                        .then(function success(text: string) {
-                            console.log(text);
-                            var buffer = new Buffer(text);
-                            text = buffer.toString('base64');
-                            //debug: so content can be loaded before test starts
-                            //no idea why, but somehow works. future editing may needed
-                            if (content == "")
-                                done();
-                           content = content + text;
-                    });
-                }*/
+        });// end of first fs.readfile for valid content
 
+        fs.readFile('./test/invalidContent.zip', function(err: any, data: any) {
+            if (err) {
+                //invalid zip file is given
+                console.log(err);
+            }
+            else if (!isUndefined(data) || data !== null) {
+                //debug, if given content is invalid
+                //since given data is a array buffer, we can convert right away
+                invalidContent = data.toString('base64');
+                console.log("Before: Invalidcontent is done!");
+            }
 
-                //done();
-                //second
-                //convert to base64
-            //});// end of loadAsync.then*/
+        });// end of second fs.readfile for invalid content
+
         done();
-        });// end of fs.readfile
-        //first
-
     });
 
 
+    it("add invalid zip", function () {
+        return insight.addDataset('test1', 'SW52YWxpZCBTdHJpbmc=')
+            .then(function(response) {
+                console.log(response);
+                expect.fail();
+            }).catch(function(returned) {
+
+                expect(returned.code).to.deep.equal(400);
+                console.log(returned.body);
+                //expect(response.body).to.deep.equal({"error" : "Invalid Zip file"});
+            })
+    });
+
+    it("add valid zip with invalid content", function () {
+        return insight.addDataset('test2', invalidContent)
+            .then(function(err) {
+                console.log(err);
+                expect.fail();
+            }).catch(function(response) {
+                expect(response.code).to.deep.equal(400);
+                //console.log(response.body);
+                //expect(response.body).to.deep.equal({"error" : "Invalid Zip file"});
+            })
+    });
+
+    it("add null", function () {
+        return insight.addDataset(null, null)
+            .then(function(err) {
+                console.log(err);
+                expect.fail();
+            }).catch(function(response) {
+                expect(response.code).to.deep.equal(400);
+                //console.log(response.body);
+                //expect(response.body).to.deep.equal({"error" : "Invalid Zip file"});
+            })
+    });
+
+    it("add test3 with null content", function () {
+        return insight.addDataset("test3", null)
+            .then(function(err) {
+                console.log(err);
+                expect.fail();
+            }).catch(function(response) {
+                expect(response.code).to.deep.equal(400);
+                //console.log(response.body);
+                //expect(response.body).to.deep.equal({"error" : "Invalid Zip file"});
+            })
+    });
+
+
+
     it("Load valid new data set", function () {
-        //console.log(content);
         return insight.addDataset('courses', content)
             .then(function(response) {
                 expect(response.code).to.deep.equal(204);
                 expect(response.body).to.deep.equal({});
             }).catch(function(err) {
-                console.log(err);
+                //console.log(err);
                 expect.fail();
             })
     });
 
-    it("perform null query", function () {
 
 
-        return insight.performQuery({WHERE: null , OPTIONS:
-            {columns:["courses_dept", "courses_id", "courses_avg"], order: "courses_avg", form: "TABLE"}})
+
+
+    it("perform valid query", function () {
+
+
+        return insight.performQuery({WHERE: null, OPTIONS : null})
             .then(function(response) {
                 console.log(response);
                 expect.fail();
@@ -92,30 +138,6 @@ describe("InsightTest", function () {
             })
     });
 
-    it("perform valid query", function () {
-
-        return insight.performQuery({
-            "WHERE":{
-                "GT":{
-                    "courses_avg":97
-                }
-            },
-            "OPTIONS":{
-                "COLUMNS":[
-                    "courses_dept",
-                    "courses_avg"
-                ],
-                "ORDER":"courses_avg",
-                "FORM":"TABLE"
-            }
-        })
-            .then(function(response) {
-                console.log(response);
-                expect(response.code).to.deep.equal(200);
-            }).catch(function(err) {
-                expect.fail();
-            })
-    });
 
     it("Overwrite existing data set", function () {
         return insight.addDataset('courses', content)
@@ -129,7 +151,7 @@ describe("InsightTest", function () {
     });
 
     it("Load invalid data set", function () {
-        return insight.addDataset('courses', 'INVALID')
+        return insight.addDataset('loadInvalid', 'INVALID')
             .then(function(response) {
                 console.log(response);
                 expect.fail();
@@ -138,7 +160,6 @@ describe("InsightTest", function () {
                 expect(returned.body).to.deep.equal({"error": "Content Not Base64 Encoded"});
             })
     });
-
 
     it("remove a valid new data set", function () {
         return insight.removeDataset('courses')
@@ -150,7 +171,6 @@ describe("InsightTest", function () {
                 expect.fail();
             })
     });
-
 
     it("remove non-existing data set", function () {
         return insight.removeDataset('courses')
