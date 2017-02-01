@@ -19,6 +19,21 @@ describe("InsightTest", function () {
 
     this.timeout(500000);
     var insight: InsightFacade = new InsightFacade();
+    var validQuery = {
+        "WHERE":{
+            "GT":{
+                "courses_avg":97
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    };
 
 
 
@@ -78,37 +93,9 @@ describe("InsightTest", function () {
             })
     });
 
-    it("perform null query", function () {
-
-
-        return insight.performQuery({WHERE: null , OPTIONS:
-            {columns:["courses_dept", "courses_id", "courses_avg"], order: "courses_avg", form: "TABLE"}})
-            .then(function(response) {
-                console.log(response);
-                expect.fail();
-            }).catch(function(err) {
-                expect(err.code).to.deep.equal(400);
-                expect(err.body).to.deep.equal({"error": "Invalid query form"});
-            })
-    });
-
     it("perform valid query", function () {
 
-        return insight.performQuery({
-            "WHERE":{
-                "GT":{
-                    "courses_avg":97
-                }
-            },
-            "OPTIONS":{
-                "COLUMNS":[
-                    "courses_dept",
-                    "courses_avg"
-                ],
-                "ORDER":"courses_avg",
-                "FORM":"TABLE"
-            }
-        })
+        return insight.performQuery(validQuery)
             .then(function(response) {
                 console.log(response);
                 expect(response.code).to.deep.equal(200);

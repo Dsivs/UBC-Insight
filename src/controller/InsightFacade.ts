@@ -18,12 +18,13 @@ let pattern: string = "^[A-Za-z0-9+\/=]+\Z";
 
 export default class InsightFacade implements IInsightFacade {
 
-    private set:  CourseList;
+    private loadedCourses:  Course[];
+    private queryOutput: Course[];
     private id:string;
 
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
-        this.set = new CourseList("courses");
+        this.queryOutput = [];
     }
 
 
@@ -200,38 +201,37 @@ export default class InsightFacade implements IInsightFacade {
         let instance = this;
         let path = "./cache/courses/";
         return new Promise(function (fulfill, reject) {
-            if (!instance.isCached()) {
-                reject({code: 424, body: {"missing": [this.id]}})
-            }
 
-            if (query.WHERE === null || query.OPTIONS === null || isUndefined(query.WHERE) || isUndefined(query.OPTIONS)) {
-                reject({code: 400, body: {"error": "Invalid query form"}});
-            }
-            else {
             instance.readDataFiles(path)
-                .then(function (result: any) {
+                .then(function (listOfFiles: any) {
                     //console.log(result);
-
-                    return Promise.all(instance.readFiles(result));
+                    return Promise.all(instance.readFiles(listOfFiles));
                 })
-                .then(function (result2: any) {
-                    result2.forEach(function (element: any) {
-                        element.forEach(function (ele: any) {
-                            var course = new Course(ele.courses_dept,
-                                                    ele.courses_id,
-                                                    ele.courses_avg,
-                                                    ele.courses_instructor,
-                                                    ele.courses_title,
-                                                    ele.courses_pass,
-                                                    ele.courses_fail,
-                                                    ele.courses_audit,
-                                                    ele.courses_uuid)
-
-                            instance.set.add(course);
+                .then(function (fileContents: any) {
+                    instance.loadedCourses = [];
+                    fileContents.forEach(function (fileContent: any) {
+                        fileContent.forEach(function (courseSection: any) {
+                            var course = new Course(courseSection.courses_dept,
+                                                    courseSection.courses_id,
+                                                    courseSection.courses_avg,
+                                                    courseSection.courses_instructor,
+                                                    courseSection.courses_title,
+                                                    courseSection.courses_pass,
+                                                    courseSection.courses_fail,
+                                                    courseSection.courses_audit,
+                                                    courseSection.courses_uuid)
+                            instance.loadedCourses.push(course);
                             //console.log(course);
                         })
                     })
-                    fulfill({code: 200, body: {"data": "json"}})
+
+                    return instance.parseQuery(query);
+                })
+                .then(function (result) {
+                    fulfill(result);
+                })
+                .catch(function (err) {
+                    reject(err);
                 })
 
                 // retrieve data from disk, NOT DONE
@@ -245,7 +245,6 @@ export default class InsightFacade implements IInsightFacade {
                 //Problem: 1) how to define QueryRequest object
                 // 2) proper way to handle query
 
-            }
         })
     }
 
@@ -280,6 +279,158 @@ export default class InsightFacade implements IInsightFacade {
         })
 
         return contents;
+    }
+
+    /*
+    jsonifyQuery(query: QueryRequest): Promise<any> {
+        var jsonQuery: any;
+        return new Promise(function (fulfill, reject) {
+            try {
+                jsonQuery = JSON.parse(JSON.stringify(query));
+                console.log("JSON:");
+                console.log(jsonQuery);
+                fulfill(jsonQuery);
+            } catch (err) {
+                reject({code: 400, body: {"error": "Invalid JSON"}})
+            }
+        })
+    }
+    */
+
+    parseQuery(query: QueryRequest): Promise<any> {
+        let instance = this;
+        var filter: any;
+        var options: any;
+        var columns: any[];
+        var order: any = null;
+        var form: any;
+        return new Promise(function (fulfill, reject) {
+            try {
+                filter = query.WHERE;
+                options = query.OPTIONS;
+            } catch (err) {
+                reject({code: 400, body: {"error": "Invalid Query"}})
+            }
+            console.log(filter);
+            console.log(options);
+
+            try {
+                columns = options.COLUMNS;
+                form = options.FORM;
+            } catch (err) {
+                reject({code: 400, body: {"error": "Invalid Query"}})
+            }
+            try {
+                order = options.ORDER;
+            } catch (err) {
+            }
+
+            console.log(columns + " " + order + " " + form);
+
+            instance.parseFilter(filter)
+                .then(function (result) {
+                    //stringify based on options
+                    if (result.length == 0) {
+                        console.log("GGG");
+                        fulfill({code: 200, body: {"error": "No Results Returned"}});
+                    }
+
+                    fulfill({code: 200, body: {"data": "json"}});
+                    console.log(JSON.stringify(result, null, 4));
+
+                })
+                .catch(function (err) {
+                    reject({code: 400, body: {"error": "Invalid Query"}})
+                })
+        })
+    }
+
+    parseFilter(filter: any): Promise<any> {
+        let instance = this;
+        return new Promise(function (fulfill, reject) {
+            var keys = Object.keys(filter);
+            if (keys.length != 1) {
+                reject({code: 400, body: {"error": "Invalid Query"}})
+            }
+
+            //
+            var key = keys[0];
+
+            console.log(filter);
+            console.log(keys);
+            console.log(key);
+
+            switch(key) {
+                case "AND":
+                    break;
+                case "OR":
+                    break;
+                case "LT":
+                    break;
+                case "GT":
+                    var filterParams = filter[key];
+                    console.log(filterParams);
+                    instance.parseKeyValues(key, filterParams)
+                        .then(function (result) {
+                            //console.log("HI" + result);
+                            fulfill(result);
+                        })
+                        .catch(function (err) {
+                            reject({code: 400, body: {"error": "Invalid Key:Value"}})
+                        })
+                    break;
+                case "EQ":
+                    break;
+                case "IS":
+                    break;
+                case "NOT":
+                    break;
+                default:
+                    reject({code: 400, body: {"error": "Invalid Query"}})
+            }
+            //fulfill({code: 200, body: {"data": "json"}});
+        })
+    }
+
+    parseKeyValues(operation: any, keyvalues: any): Promise<any> {
+        let instance = this;
+        return new Promise(function (fulfill, reject) {
+            var keys = Object.keys(keyvalues);
+            if (keys.length != 1) {
+                reject({code: 400, body: {"error": "Not exactly 1 Key:Value"}})
+            }
+
+            var param = keys[0];
+            var value = keyvalues[param];
+            console.log(value);
+
+            switch(operation) {
+                case "AND":
+                    break;
+                case "OR":
+                    break;
+                case "LT":
+                    break;
+                case "GT":
+                    instance.queryOutput = instance.loadedCourses.filter(function(d) {
+                        //console.log();
+                        return d.avg() > value;
+                    })
+                    //console.log(instance.queryOutput.length);
+                    fulfill(instance.queryOutput);
+                    break;
+                case "EQ":
+                    break;
+                case "IS":
+                    break;
+                case "NOT":
+                    break;
+                default:
+                    reject({code: 400, body: {"error": "Invalid Query"}})
+            }
+
+            fulfill({code: 200, body: {"data": "json"}});
+        })
     }
     /**
      * check if given string is encoded in base64.

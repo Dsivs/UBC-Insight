@@ -6,13 +6,18 @@
 export default class CourseList
 {
     private id: string;
-    private list:  Array<any>;
+    public list:  Array<any>;
     private size: number;
 
     constructor(str: String)
     {
         this.list = [];
         this.size = 0;
+    }
+
+    getList(): Array<any>
+    {
+        return this.list;
     }
 
     add(obj: any)

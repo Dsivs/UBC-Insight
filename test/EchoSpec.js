@@ -1,6 +1,6 @@
 "use strict";
 var Server_1 = require("../src/rest/Server");
-var chai_1 = require("chai");
+var chai_1 = require('chai');
 var Util_1 = require("../src/Util");
 describe("EchoSpec", function () {
     function sanityCheck(response) {

@@ -1,6 +1,6 @@
 "use strict";
 var InsightFacade_1 = require("../src/controller/InsightFacade");
-var chai_1 = require("chai");
+var chai_1 = require('chai');
 var Util_1 = require("../src/Util");
 var util_1 = require("util");
 var JSZip = require("jszip");
@@ -9,6 +9,21 @@ var content = "";
 describe("InsightTest", function () {
     this.timeout(500000);
     var insight = new InsightFacade_1.default();
+    var validQuery = {
+        "WHERE": {
+            "GT": {
+                "courses_avg": 97
+            }
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER": "courses_avg",
+            "FORM": "TABLE"
+        }
+    };
     before(function (done) {
         Util_1.default.test('Before: ' + this.test.parent.title);
         var zip = new JSZip();
@@ -32,32 +47,8 @@ describe("InsightTest", function () {
             chai_1.expect.fail();
         });
     });
-    it("perform null query", function () {
-        return insight.performQuery({ WHERE: null, OPTIONS: { columns: ["courses_dept", "courses_id", "courses_avg"], order: "courses_avg", form: "TABLE" } })
-            .then(function (response) {
-            console.log(response);
-            chai_1.expect.fail();
-        }).catch(function (err) {
-            chai_1.expect(err.code).to.deep.equal(400);
-            chai_1.expect(err.body).to.deep.equal({ "error": "Invalid query form" });
-        });
-    });
     it("perform valid query", function () {
-        return insight.performQuery({
-            "WHERE": {
-                "GT": {
-                    "courses_avg": 97
-                }
-            },
-            "OPTIONS": {
-                "COLUMNS": [
-                    "courses_dept",
-                    "courses_avg"
-                ],
-                "ORDER": "courses_avg",
-                "FORM": "TABLE"
-            }
-        })
+        return insight.performQuery(validQuery)
             .then(function (response) {
             console.log(response);
             chai_1.expect(response.code).to.deep.equal(200);

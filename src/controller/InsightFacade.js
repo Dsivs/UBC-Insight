@@ -1,7 +1,6 @@
 "use strict";
 var Util_1 = require("../Util");
 var Course_1 = require("./Course");
-var CourseList_1 = require("./CourseList");
 var util_1 = require("util");
 var util_2 = require("util");
 var JSZip = require("jszip");
@@ -10,7 +9,7 @@ var pattern = "^[A-Za-z0-9+\/=]+\Z";
 var InsightFacade = (function () {
     function InsightFacade() {
         Util_1.default.trace('InsightFacadeImpl::init()');
-        this.set = new CourseList_1.default("courses");
+        this.queryOutput = [];
     }
     InsightFacade.prototype.addDataset = function (id, content) {
         var instance = this;
@@ -65,27 +64,26 @@ var InsightFacade = (function () {
         var instance = this;
         var path = "./cache/courses/";
         return new Promise(function (fulfill, reject) {
-            if (!instance.isCached()) {
-                reject({ code: 424, body: { "missing": [this.id] } });
-            }
-            if (query.WHERE === null || query.OPTIONS === null || util_1.isUndefined(query.WHERE) || util_1.isUndefined(query.OPTIONS)) {
-                reject({ code: 400, body: { "error": "Invalid query form" } });
-            }
-            else {
-                instance.readDataFiles(path)
-                    .then(function (result) {
-                    return Promise.all(instance.readFiles(result));
-                })
-                    .then(function (result2) {
-                    result2.forEach(function (element) {
-                        element.forEach(function (ele) {
-                            var course = new Course_1.default(ele.courses_dept, ele.courses_id, ele.courses_avg, ele.courses_instructor, ele.courses_title, ele.courses_pass, ele.courses_fail, ele.courses_audit, ele.courses_uuid);
-                            instance.set.add(course);
-                        });
+            instance.readDataFiles(path)
+                .then(function (listOfFiles) {
+                return Promise.all(instance.readFiles(listOfFiles));
+            })
+                .then(function (fileContents) {
+                instance.loadedCourses = [];
+                fileContents.forEach(function (fileContent) {
+                    fileContent.forEach(function (courseSection) {
+                        var course = new Course_1.default(courseSection.courses_dept, courseSection.courses_id, courseSection.courses_avg, courseSection.courses_instructor, courseSection.courses_title, courseSection.courses_pass, courseSection.courses_fail, courseSection.courses_audit, courseSection.courses_uuid);
+                        instance.loadedCourses.push(course);
                     });
-                    fulfill({ code: 200, body: { "data": "json" } });
                 });
-            }
+                return instance.parseQuery(query);
+            })
+                .then(function (result) {
+                fulfill(result);
+            })
+                .catch(function (err) {
+                reject(err);
+            });
         });
     };
     InsightFacade.prototype.readDataFiles = function (path) {
@@ -117,6 +115,125 @@ var InsightFacade = (function () {
         });
         return contents;
     };
+    InsightFacade.prototype.parseQuery = function (query) {
+        var instance = this;
+        var filter;
+        var options;
+        var columns;
+        var order = null;
+        var form;
+        return new Promise(function (fulfill, reject) {
+            try {
+                filter = query.WHERE;
+                options = query.OPTIONS;
+            }
+            catch (err) {
+                reject({ code: 400, body: { "error": "Invalid Query" } });
+            }
+            console.log(filter);
+            console.log(options);
+            try {
+                columns = options.COLUMNS;
+                form = options.FORM;
+            }
+            catch (err) {
+                reject({ code: 400, body: { "error": "Invalid Query" } });
+            }
+            try {
+                order = options.ORDER;
+            }
+            catch (err) {
+            }
+            console.log(columns + " " + order + " " + form);
+            instance.parseFilter(filter)
+                .then(function (result) {
+                if (result.length == 0) {
+                    console.log("GGG");
+                    fulfill({ code: 200, body: { "error": "No Results Returned" } });
+                }
+                fulfill({ code: 200, body: { "data": "json" } });
+                console.log(JSON.stringify(result, null, 4));
+            })
+                .catch(function (err) {
+                reject({ code: 400, body: { "error": "Invalid Query" } });
+            });
+        });
+    };
+    InsightFacade.prototype.parseFilter = function (filter) {
+        var instance = this;
+        return new Promise(function (fulfill, reject) {
+            var keys = Object.keys(filter);
+            if (keys.length != 1) {
+                reject({ code: 400, body: { "error": "Invalid Query" } });
+            }
+            var key = keys[0];
+            console.log(filter);
+            console.log(keys);
+            console.log(key);
+            switch (key) {
+                case "AND":
+                    break;
+                case "OR":
+                    break;
+                case "LT":
+                    break;
+                case "GT":
+                    var filterParams = filter[key];
+                    console.log(filterParams);
+                    instance.parseKeyValues(key, filterParams)
+                        .then(function (result) {
+                        fulfill(result);
+                    })
+                        .catch(function (err) {
+                        reject({ code: 400, body: { "error": "Invalid Key:Value" } });
+                    });
+                    break;
+                case "EQ":
+                    break;
+                case "IS":
+                    break;
+                case "NOT":
+                    break;
+                default:
+                    reject({ code: 400, body: { "error": "Invalid Query" } });
+            }
+        });
+    };
+    InsightFacade.prototype.parseKeyValues = function (operation, keyvalues) {
+        var instance = this;
+        return new Promise(function (fulfill, reject) {
+            var keys = Object.keys(keyvalues);
+            if (keys.length != 1) {
+                reject({ code: 400, body: { "error": "Not exactly 1 Key:Value" } });
+            }
+            var param = keys[0];
+            var value = keyvalues[param];
+            console.log(value);
+            switch (operation) {
+                case "AND":
+                    break;
+                case "OR":
+                    break;
+                case "LT":
+                    break;
+                case "GT":
+                    instance.queryOutput = instance.loadedCourses.filter(function (d) {
+                        return d.avg() > value;
+                    });
+                    fulfill(instance.queryOutput);
+                    break;
+                case "EQ":
+                    break;
+                case "IS":
+                    break;
+                case "NOT":
+                    break;
+                default:
+                    reject({ code: 400, body: { "error": "Invalid Query" } });
+            }
+            fulfill({ code: 200, body: { "data": "json" } });
+        });
+    };
     InsightFacade.prototype.isBase64 = function (input) {
         if (util_1.isUndefined(input) || input === "" || input === null)
             return false;
@@ -136,7 +253,7 @@ var InsightFacade = (function () {
                 var content;
                 console.log("before");
                 var readfile;
-                var _loop_1 = function () {
+                var _loop_1 = function() {
                     var name_1 = filename;
                     readfile = okay.file(filename).async("string")
                         .then(function success(text) {
