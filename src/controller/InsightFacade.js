@@ -22,24 +22,34 @@ var InsightFacade = (function () {
                 var removal = void 0;
                 if (instance.isExist(id)) {
                     code = 201;
-                    removal = instance.removeDataset(id).catch(function (err) {
+                    removal = instance.removeDataset(id).catch(function () {
                         reject({ code: 400, body: { "error": "Deletion error" } });
                     });
                 }
                 else {
                     code = 204;
                 }
-                var caching = instance.decode(content).then(function (decoded) {
+                var caching = instance.decode(content).then(function () {
                 }).catch(function (err) {
                     console.log(err);
                     reject({ code: 400, body: { "error": err.toString() } });
                 });
-                Promise.all([removal, caching]).then(function () {
-                    fulfill({ code: code, body: {} });
-                }).catch(function (err) {
-                    console.log(err);
-                    reject({ code: 400, body: { "error": err.toString() } });
-                });
+                if (removal) {
+                    Promise.all([removal, caching]).then(function () {
+                        fulfill({ code: code, body: {} });
+                    }).catch(function (err) {
+                        console.log(err);
+                        reject({ code: 400, body: { "error": err.toString() } });
+                    });
+                }
+                else {
+                    Promise.all([caching]).then(function () {
+                        fulfill({ code: code, body: {} });
+                    }).catch(function (err) {
+                        console.log(err);
+                        reject({ code: 400, body: { "error": err.toString() } });
+                    });
+                }
             }
         });
     };
@@ -253,6 +263,7 @@ var InsightFacade = (function () {
                 var content;
                 console.log("before");
                 var readfile;
+                var dataCache;
                 var _loop_1 = function() {
                     var name_1 = filename;
                     readfile = okay.file(filename).async("string")
@@ -260,11 +271,20 @@ var InsightFacade = (function () {
                         if (util_1.isUndefined(text) || (typeof text !== 'string') || !(instance.isJSON(text)))
                             throw util_2.error;
                         var buffer = new Buffer(text);
-                        return instance.parseData(buffer.toString());
-                    })
-                        .then(function (result) {
-                        instance.cacheData(result, name_1);
-                        content = result;
+                        instance.parseData(buffer.toString())
+                            .then(function (result) {
+                            dataCache = instance.cacheData(result, name_1)
+                                .then(function () {
+                                content = result;
+                            })
+                                .catch(function (err) {
+                                reject({ code: 400, body: { "error": "cache data error-catch " +
+                                            "cachedata block with error: " + err.toString() } });
+                            });
+                        })
+                            .catch(function (err) {
+                            reject({ code: 400, body: { "error": "parse data error-parsedata(buffer) block" } });
+                        });
                     })
                         .catch(function (err) {
                         console.log("err catched for readfile:" + err);
@@ -274,11 +294,20 @@ var InsightFacade = (function () {
                 for (var filename in okay.files) {
                     _loop_1();
                 }
-                Promise.all([readfile]).then(function () {
-                    fulfill(content);
-                }).catch(function (err) {
-                    reject({ code: 400, body: { "error": err.toString() } });
-                });
+                if (dataCache) {
+                    Promise.all([readfile, dataCache]).then(function () {
+                        fulfill(content);
+                    }).catch(function (err) {
+                        reject({ code: 400, body: { "error": err.toString() } });
+                    });
+                }
+                else {
+                    Promise.all([readfile]).then(function () {
+                        fulfill(content);
+                    }).catch(function (err) {
+                        reject({ code: 400, body: { "error": err.toString() } });
+                    });
+                }
             }).catch(function (err) {
                 console.log(err);
                 reject({ code: 400, body: { "error": err.toString() } });
@@ -296,25 +325,26 @@ var InsightFacade = (function () {
         });
     };
     InsightFacade.prototype.cacheData = function (content, filename) {
-        if (!fs.existsSync("./cache/")) {
-            fs.mkdirSync("./cache/");
-            console.log("new directory created!");
-        }
-        if (!util_1.isUndefined(this.id)) {
-            if (!fs.existsSync("./cache/" + this.id + "/")) {
-                fs.mkdirSync("./cache/" + this.id + "/");
+        var instance = this;
+        return new Promise(function (fulfill, reject) {
+            if (!fs.existsSync("./cache/")) {
+                fs.mkdirSync("./cache/");
                 console.log("new directory created!");
             }
-            var path = "./cache/" + this.id + "/" + filename + ".JSON";
-            fs.writeFile(path, content, function (err) {
-                if (err) {
-                    console.error("!!!write error:  " + err.message);
+            if (!util_1.isUndefined(instance.id)) {
+                if (!fs.existsSync("./cache/" + instance.id + "/")) {
+                    fs.mkdirSync("./cache/" + instance.id + "/");
+                    console.log("new directory created!");
                 }
-                else {
-                    console.log("@Successful Write to " + path);
-                }
-            });
-        }
+                var path = "./cache/" + instance.id + "/" + filename + ".JSON";
+                fs.writeFile(path, content, function (err) {
+                    if (err)
+                        reject({ code: 400, body: { "error": "Write File Failed!" } });
+                    else
+                        fulfill(0);
+                });
+            }
+        });
     };
     InsightFacade.prototype.isExist = function (id) {
         var path = "./cache/" + id + "/";
@@ -340,12 +370,13 @@ var InsightFacade = (function () {
         return true;
     };
     InsightFacade.prototype.removeFolder = function (path) {
+        var instance = this;
         return new Promise(function (fulfill, reject) {
             if (fs.existsSync(path)) {
                 fs.readdirSync(path).forEach(function (file) {
                     var current = path + "/" + file;
                     if (fs.lstatSync(current).isDirectory()) {
-                        this.removeFolder(current).catch(function (err) {
+                        instance.removeFolder(current).catch(function (err) {
                             console.log(err);
                             reject({ code: 400, body: { "error": err.toString() } });
                         });
@@ -355,6 +386,7 @@ var InsightFacade = (function () {
                     }
                 });
                 fs.rmdirSync(path);
+                fs.rmdirSync("./cache/");
             }
             fulfill();
         });

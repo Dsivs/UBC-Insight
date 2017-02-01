@@ -6,6 +6,7 @@ var util_1 = require("util");
 var JSZip = require("jszip");
 var fs = require("fs");
 var content = "";
+var invalidContent = "";
 describe("InsightTest", function () {
     this.timeout(500000);
     var insight = new InsightFacade_1.default();
@@ -33,8 +34,55 @@ describe("InsightTest", function () {
             }
             else if (!util_1.isUndefined(data) || data !== null) {
                 content = data.toString('base64');
+                console.log("Before: content is done!");
             }
-            done();
+        });
+        fs.readFile('./test/invalidContent.zip', function (err, data) {
+            if (err) {
+                console.log(err);
+            }
+            else if (!util_1.isUndefined(data) || data !== null) {
+                invalidContent = data.toString('base64');
+                console.log("Before: Invalidcontent is done!");
+            }
+        });
+        done();
+    });
+    it("add invalid zip", function () {
+        return insight.addDataset('test1', 'SW52YWxpZCBTdHJpbmc=')
+            .then(function (response) {
+            console.log(response);
+            chai_1.expect.fail();
+        }).catch(function (returned) {
+            chai_1.expect(returned.code).to.deep.equal(400);
+            console.log(returned.body);
+        });
+    });
+    it("add valid zip with invalid content", function () {
+        return insight.addDataset('test2', invalidContent)
+            .then(function (err) {
+            console.log(err);
+            chai_1.expect.fail();
+        }).catch(function (response) {
+            chai_1.expect(response.code).to.deep.equal(400);
+        });
+    });
+    it("add null", function () {
+        return insight.addDataset(null, null)
+            .then(function (err) {
+            console.log(err);
+            chai_1.expect.fail();
+        }).catch(function (response) {
+            chai_1.expect(response.code).to.deep.equal(400);
+        });
+    });
+    it("add test3 with null content", function () {
+        return insight.addDataset("test3", null)
+            .then(function (err) {
+            console.log(err);
+            chai_1.expect.fail();
+        }).catch(function (response) {
+            chai_1.expect(response.code).to.deep.equal(400);
         });
     });
     it("Load valid new data set", function () {
@@ -43,7 +91,6 @@ describe("InsightTest", function () {
             chai_1.expect(response.code).to.deep.equal(204);
             chai_1.expect(response.body).to.deep.equal({});
         }).catch(function (err) {
-            console.log(err);
             chai_1.expect.fail();
         });
     });
@@ -67,7 +114,7 @@ describe("InsightTest", function () {
         });
     });
     it("Load invalid data set", function () {
-        return insight.addDataset('courses', 'INVALID')
+        return insight.addDataset('loadInvalid', 'INVALID')
             .then(function (response) {
             console.log(response);
             chai_1.expect.fail();
