@@ -67,15 +67,13 @@ export default class InsightFacade implements IInsightFacade {
             if (!(instance.isBase64(content)))
                 reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
             else {
-
-
                 let removal: Promise<any>;
                 //check if data set has been added
                 if (instance.isExist(id)) {
                     //if so, delete and write again
                     code = 201;
                     //remove then add again if already exits
-                    removal = instance.removeDataset(id).catch(function (err) {
+                    removal = instance.removeDataset(id).catch(function () {
                         reject({code: 400, body: {"error": "Deletion error"}})
                     });
                 }
@@ -83,58 +81,30 @@ export default class InsightFacade implements IInsightFacade {
                     code = 204;
                 }
 
-                //step1: decode base64 content to readable json object
-                let caching = instance.decode(content).then(function (decoded) {
-
-                    //console.log(decoded);
-
-                    /*var obj = JSON.parse(decoded);
-
-                     for (var key in obj)
-                     {
-                     if (obj.hasOwnProperty(key))
-                     {
-                     console.log(key + " = " + obj[key]);
-                     let things = obj[key];
-                     for (var inner in things)
-                     {
-                     if (key.hasOwnProperty(inner))
-                     {
-                     console.log(inner + "=" +things[inner]);
-                     }
-                     }
-                     }
-                     }*/
-
+                //decode base64 content and cache on disk
+                let caching = instance.decode(content).then(function () {
                 }).catch(function (err) {
                     console.log(err);
                     reject({code: 400, body: {"error": err.toString()}});
                 });
 
-                //console.log(decoded)
-
-
-                /*var keys: any=[];
-                 var values: any=[];
-                 let i=0;
-
-
-                 for (var key in decoded[0]) {
-                 keys[i]= key;
-                 values[i]=content[0][key];
-                 i=i+1;
-                 }
-                 console.log(keys);
-                 console.log(values);*/
-
-
-            Promise.all([removal, caching]).then(function() {
-                fulfill( {code: code, body: {}} );
-            }).catch(function (err) {
-                console.log(err);
-                reject({code: 400, body: {"error": err.toString()}});
-            })
-
+                //if removal is defined/called
+                if (removal) {
+                    Promise.all([removal, caching]).then(function () {
+                        fulfill({code: code, body: {}});
+                    }).catch(function (err) {
+                        console.log(err);
+                        reject({code: 400, body: {"error": err.toString()}});
+                    })
+                }
+                else {
+                    Promise.all([caching]).then(function () {
+                        fulfill({code: code, body: {}});
+                    }).catch(function (err) {
+                        console.log(err);
+                        reject({code: 400, body: {"error": err.toString()}});
+                    })
+                }
             }
         });
     }
@@ -201,7 +171,7 @@ export default class InsightFacade implements IInsightFacade {
         let path = "./cache/courses/";
         return new Promise(function (fulfill, reject) {
             if (!instance.isCached()) {
-                reject({code: 424, body: {"missing": [this.id]}})
+                reject({code: 424, body: {"missing": [instance.id]}})
             }
 
             if (query.WHERE === null || query.OPTIONS === null || isUndefined(query.WHERE) || isUndefined(query.OPTIONS)) {
@@ -225,14 +195,14 @@ export default class InsightFacade implements IInsightFacade {
                                                     ele.courses_pass,
                                                     ele.courses_fail,
                                                     ele.courses_audit,
-                                                    ele.courses_uuid)
+                                                    ele.courses_uuid);
 
                             instance.set.add(course);
                             //console.log(course);
                         })
-                    })
+                    });
                     fulfill({code: 200, body: {"data": "json"}})
-                })
+                });
 
                 // retrieve data from disk, NOT DONE
 
@@ -277,7 +247,7 @@ export default class InsightFacade implements IInsightFacade {
                         }
                     })
             }))
-        })
+        });
 
         return contents;
     }
@@ -313,8 +283,6 @@ export default class InsightFacade implements IInsightFacade {
          let instance = this;
 
         return new Promise( function (fulfill, reject) {
-
-
             //we need to convert the data back to buffer
             var buffer = new Buffer(input, 'base64');
 
@@ -324,6 +292,7 @@ export default class InsightFacade implements IInsightFacade {
                      let content: any;
                      console.log("before");
                      var readfile: Promise<any>;
+                     var dataCache: Promise<any>;
 
                      for (var filename in okay.files) {
                          let name: string = filename;
@@ -337,7 +306,16 @@ export default class InsightFacade implements IInsightFacade {
                                      throw error;
                                  //console.log(text);
                                  var buffer = new Buffer(text);
-                                 return instance.parseData(buffer.toString());
+                                 instance.parseData(buffer.toString()).then( function (result: any) {
+                                     dataCache = instance.cacheData(result, name).then( function () {
+                                         content = result;
+                                     }).catch( function (err: any){
+                                         reject({code: 400, body: {"error": "cache data error-catch " +
+                                         "cachedata block with error: " + err.toString()}});
+                                     });
+                                 }).catch( function (err: any) {
+                                     reject({code: 400, body: {"error": "parse data error-parsedata(buffer) block"}});
+                                 });
 
                                  //cache data to disk
                                  //instance.cacheData(text, name);
@@ -346,11 +324,6 @@ export default class InsightFacade implements IInsightFacade {
                                  //console.log(content);
                                  //console.log('for loop');
                              })
-                             .then(function (result: any) {
-                                 instance.cacheData(result, name);
-                                 content = result;
-                                 //console.log(result);
-                             })
                              .catch(function (err: any) {
                                  console.log("err catched for readfile:" + err);
                                  //read file error
@@ -358,22 +331,24 @@ export default class InsightFacade implements IInsightFacade {
                              });
                      }
                      //console.log("fulfill");
-                     Promise.all([readfile]).then( function () {
-                         fulfill(content);
-                     }).catch(function (err: any) {
-                         reject({code: 400, body: {"error": err.toString()}});
-                     });
+                     if (dataCache) {
+                         Promise.all([readfile, dataCache]).then(function () {
+                             fulfill(content);
+                         }).catch(function (err: any) {
+                             reject({code: 400, body: {"error": err.toString()}});
+                         });
+                     }
+                     else {
+                         Promise.all([readfile]).then(function () {
+                             fulfill(content);
+                         }).catch(function (err: any) {
+                             reject({code: 400, body: {"error": err.toString()}});
+                         });
+                     }
                  }).catch(function (err) {
                  console.log(err);
                  reject({code: 400, body: {"error": err.toString()}});
                 });
-
-         //console.log('gdfgdf');
-         //return pro;
-        /*console.log("input = " +input);
-        var b:string = new Buffer(input, 'base64').toString();
-        return JSON.parse(b);*/
-        //return null;
         });
     }
 
@@ -391,30 +366,38 @@ export default class InsightFacade implements IInsightFacade {
         });
     }
 
-    cacheData(content: any, filename: string): void
+    cacheData(content: any, filename: string): Promise<any>
     {
-        if (!fs.existsSync("./cache/")) {
-            fs.mkdirSync("./cache/");
-            console.log("new directory created!");
-        }
+        let instance = this;
+        return new Promise( function (fulfill, reject) {
 
-        if (!isUndefined(this.id)) {
-            if (!fs.existsSync("./cache/" + this.id + "/")) {
-                fs.mkdirSync("./cache/" + this.id + "/");
+
+            if (!fs.existsSync("./cache/")) {
+                fs.mkdirSync("./cache/");
                 console.log("new directory created!");
             }
 
-            var path = "./cache/" + this.id + "/" + filename + ".JSON";
-
-            fs.writeFile(path, content, function (err: any) {
-                if (err) {
-                    console.error("!!!write error:  " + err.message);
-                } else {
-                    console.log("@Successful Write to " + path);
+            if (!isUndefined(instance.id)) {
+                if (!fs.existsSync("./cache/" + instance.id + "/")) {
+                    fs.mkdirSync("./cache/" + instance.id + "/");
+                    console.log("new directory created!");
                 }
-            });
-        }
+
+                var path = "./cache/" + instance.id + "/" + filename + ".JSON";
+
+                fs.writeFile(path, content,function (err: any) {
+                    if (err)
+                        reject({code: 400, body: {"error": "Write File Failed!"}});
+                    else
+                        fulfill(0);
+                });
+
+
+            }
+        });
     }
+
+
 
     /**
      * check if given id exists
@@ -444,17 +427,6 @@ export default class InsightFacade implements IInsightFacade {
         return false;
     }
 
-    /*isEmpty(): string
-    {
-        try {
-            fs.rmdir("./cache/");
-            return true
-        }catch (err)
-        {
-            return null;
-        }
-    }*/
-
     isJSON(str: string): boolean
     {
         try
@@ -475,10 +447,12 @@ export default class InsightFacade implements IInsightFacade {
      * @param path given path that need to be deleted
      * @return true a promise to indicate if deletion is successful
      * @credit the following code contains a recursive algorithm that was cited online
+     * and has been reviewed by one of lab TA.
      * @reference http://stackoverflow.com/questions/18052762
      */
     removeFolder(path: string): Promise<any>
     {
+        let instance = this;
         return new Promise(function (fulfill, reject) {
 
         //if path is valid
@@ -489,7 +463,7 @@ export default class InsightFacade implements IInsightFacade {
                 //if current folder contains folder
                 if(fs.lstatSync(current).isDirectory()) {
                     //recursive delete for multiple folder
-                    this.removeFolder(current).catch(function (err: any) {
+                    instance.removeFolder(current).catch(function (err: any) {
                         console.log(err);
                         reject({code: 400, body: {"error": err.toString()}});
                     });
@@ -500,6 +474,7 @@ export default class InsightFacade implements IInsightFacade {
             });
             //remove entire folder when its empty
             fs.rmdirSync(path);
+            fs.rmdirSync("./cache/");
         }
         fulfill();
         });
@@ -527,9 +502,9 @@ export default class InsightFacade implements IInsightFacade {
                     "courses_fail": element.Fail,
                     "courses_audit": element.Audit,
                     "courses_uuid": element.id
-                }
+                };
                 output.push(course);
-            })
+            });
 
             fulfill(JSON.stringify(output, null, 4));
         })
