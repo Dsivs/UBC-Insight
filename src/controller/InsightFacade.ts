@@ -271,10 +271,10 @@ export default class InsightFacade implements IInsightFacade {
         var queryResults: Promise<any>[] = [];
         var queryOutput: any[] = [];
         return new Promise(function (fulfill, reject) {
-            try {
+            if (query.hasOwnProperty('WHERE') && query.hasOwnProperty('OPTIONS')) {
                 filter = query.WHERE;
                 options = query.OPTIONS;
-            } catch (err) {
+            } else {
                 reject({code: 400, body: {"error": "Invalid Query"}})
             }
             //console.log("FILTER:");
@@ -282,15 +282,17 @@ export default class InsightFacade implements IInsightFacade {
             //console.log("OPTIONS:");
             //console.log(options);
 
-            try {
+            if (options.hasOwnProperty("COLUMNS") && options.hasOwnProperty("FORM")) {
                 columns = options.COLUMNS;
                 form = options.FORM;
-            } catch (err) {
+            } else {
                 reject({code: 400, body: {"error": "Invalid Query"}})
             }
-            try {
+            if (options.hasOwnProperty("ORDER")) {
                 order = options.ORDER;
-            } catch (err) {
+                if (!columns.includes(order)) {
+                    reject({code: 400, body: {"error": "Invalid Query"}});
+                }
             }
 
             if (form !== 'TABLE') {
@@ -306,13 +308,12 @@ export default class InsightFacade implements IInsightFacade {
 
             Promise.all(queryResults)
             .then(function (result) {
-                console.log(result);
                 if (result.length == 0) {
-                    console.log("GGG");
+                    //console.log("GGG");
                     fulfill({code: 200, body: result});
                 }
 
-                console.log("GGGGGGGGG");
+                //console.log("GGGGGGGGG");
 
                 for (var i = 0; i < instance.loadedCourses.length; i++) {
                     if (result[i] === true) {
@@ -320,20 +321,25 @@ export default class InsightFacade implements IInsightFacade {
                     }
                 }
 
-                try {
-                    columnsOnly = JSON.parse(JSON.stringify(queryOutput, columns));
-                    if (order != null) {
-                        columnsOnly.sort(function(a: any, b: any) {
-                            if (a[order] > b[order]) {
-                                return 1;
-                            } else if (a[order] < b[order]) {
-                                return -1;
-                            }
-                            return 0;
-                        })
-                    }
-                } catch (err) {
-                    reject({code: 400, body: {"error": "Invalid Query"}});
+                //console.log(queryOutput);
+                queryOutput.forEach(function (ele) {
+                    columns.forEach(function (column) {
+                        if (!ele.hasOwnProperty(column)) {
+                            return reject({code: 400, body: {"error": "Invalid Query"}});
+                        }
+                    })
+                })
+                columnsOnly = JSON.parse(JSON.stringify(queryOutput, columns));
+                //console.log(columnsOnly);
+                if (order != null) {
+                    columnsOnly.sort(function(a: any, b: any) {
+                        if (a[order] > b[order]) {
+                            return 1;
+                        } else if (a[order] < b[order]) {
+                            return -1;
+                        }
+                        return 0;
+                    })
                 }
 
                 //console.log(columnsOnly);
@@ -341,7 +347,7 @@ export default class InsightFacade implements IInsightFacade {
                 fulfill({code: 200, body: {render: form, result: columnsOnly}});
             })
             .catch(function (err) {
-                reject({code: 400, body: {"error": "Invalid Query"}})
+                reject(err)
             })
         })
     }
@@ -390,11 +396,11 @@ export default class InsightFacade implements IInsightFacade {
                         reject({code: 400, body: {"error": "Invalid Query"}})
                     }
                     Promise.all(arrayofFilters.map(function (ele: any) {
-                        console.log(ele);
+                        //console.log(ele);
                         return instance.parseFilter(ele, course);
                     }))
                         .then(function (result) {
-                            console.log(result);
+                            //console.log(result);
                             result.forEach(function (ele2) {
                                 if (ele2 === true) {
                                     fulfill(true);
@@ -413,12 +419,12 @@ export default class InsightFacade implements IInsightFacade {
                     // { courses_avg: 85 }
                     var filterParams = filter[key];
                     var paramKeys = Object.keys(filterParams);
-                    /*
-                    console.log("filterParams:")
-                    console.log(filterParams);
-                    console.log("paramKeys:")
-                    console.log(paramKeys);
-                    */
+
+                    //console.log("filterParams:")
+                    //console.log(filterParams);
+                    //console.log("paramKeys:")
+                    //console.log(paramKeys);
+
                     if (paramKeys.length !== 1) {
                         reject({code: 400, body: {"error": "Invalid Query"}})
                     } else {
@@ -427,21 +433,32 @@ export default class InsightFacade implements IInsightFacade {
                         if (paramKey.includes("_")) {
                             var id = paramKey.substr(0, paramKey.indexOf("_"));
                             if (id !== "courses") {
+                                //console.log("id: " + id)
                                 reject(({code: 424, body: {"missing": [id]}}))
                             }
                         }
-                        try {
+                        if (course.hasOwnProperty(paramKey)) {
                             var courseValue = course[paramKey];
                             var paramValue = filterParams[paramKey];
-                            /*
-                            console.log("courseValue:");
-                            console.log(courseValue);
-                            console.log("paramValue");
-                            console.log(paramValue);
-                            */
-                        } catch (err) {
+
+                            //console.log("courseValue:");
+                            //console.log(courseValue);
+                            //console.log("paramValue");
+                            //console.log(paramValue);
+
+                        } else {
                             reject({code: 400, body: {"error": "Invalid Query"}})
                         }
+
+                        if (key === "IS") {
+                            if (typeof paramValue != "string") {
+                                reject(({code: 400, body: {"error": "value of " + key + " must be a string"}}))
+                            }
+                        } else {
+                                if (typeof paramValue != "number") {
+                                    reject(({code: 400, body: {"error": "value of " + key + " must be a number"}}))
+                                }
+                            }
 
                         instance.doOperation(paramValue, courseValue, key)
                             .then(function (result) {
@@ -461,7 +478,7 @@ export default class InsightFacade implements IInsightFacade {
                         .catch(function (err) {
                             reject(err)
                         })
-
+                    break;
                 default:
                     reject({code: 400, body: {"error": "Invalid Query"}})
             }
@@ -470,9 +487,7 @@ export default class InsightFacade implements IInsightFacade {
     }
 
     doOperation(paramValue: any, courseValue: any, operation: any): Promise<any> {
-
         return new Promise(function (fulfill, reject) {
-            try {
                 switch (operation) {
                     case "LT":
                         fulfill(courseValue < paramValue);
@@ -484,12 +499,21 @@ export default class InsightFacade implements IInsightFacade {
                         fulfill(courseValue === paramValue);
                         break;
                     case "IS":
-                        fulfill(courseValue === paramValue);
+                        var firstWildCard = paramValue.indexOf("*");
+                        var lastWildCard = paramValue.lastIndexOf("*");
+                        //console.log(firstWildCard + " " + lastWildCard);
+                        if (firstWildCard == 0) {
+                            if (lastWildCard == paramValue.length-1) {
+                                fulfill(courseValue.includes(paramValue))
+                            }
+                            fulfill(courseValue.endsWith(paramValue.substring(1)))
+                        } else if (firstWildCard == -1) {
+                            fulfill(courseValue === paramValue);
+                        }
+                        fulfill(courseValue.startsWith(paramValue.substring(0, lastWildCard)))
+
                         break;
                 }
-            } catch (err) {
-                reject({code: 400, body: {"error": "Invalid Query"}})
-            }
         })
     }
     /**

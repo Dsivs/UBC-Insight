@@ -2,7 +2,6 @@
 var Util_1 = require("../Util");
 var Course_1 = require("./Course");
 var util_1 = require("util");
-var util_2 = require("util");
 var JSZip = require("jszip");
 var fs = require("fs");
 var pattern = "^[A-Za-z0-9+\/=]+\Z";
@@ -18,37 +17,18 @@ var InsightFacade = (function () {
             if (!(instance.isBase64(content)))
                 reject({ code: 400, body: { "error": "Content Not Base64 Encoded" } });
             else {
-                var removal = void 0;
                 if (instance.isExist(id)) {
                     code = 201;
-                    removal = instance.removeDataset(id).catch(function () {
-                        reject({ code: 400, body: { "error": "Deletion error" } });
-                    });
                 }
                 else {
                     code = 204;
                 }
-                var caching = instance.decode(content).then(function () {
+                instance.decode(content).then(function () {
+                    fulfill({ code: code, body: {} });
                 }).catch(function (err) {
                     console.log(err);
                     reject({ code: 400, body: { "error": err.toString() } });
                 });
-                if (removal) {
-                    Promise.all([removal, caching]).then(function () {
-                        fulfill({ code: code, body: {} });
-                    }).catch(function (err) {
-                        console.log(err);
-                        reject({ code: 400, body: { "error": err.toString() } });
-                    });
-                }
-                else {
-                    Promise.all([caching]).then(function () {
-                        fulfill({ code: code, body: {} });
-                    }).catch(function (err) {
-                        console.log(err);
-                        reject({ code: 400, body: { "error": err.toString() } });
-                    });
-                }
             }
         });
     };
@@ -60,38 +40,53 @@ var InsightFacade = (function () {
             if (!instance.isExist(id))
                 reject({ code: 404, body: { "error": "Source not previously added" } });
             else {
-                deletion = instance.removeFolder("./cache/" + id + "/");
+                deletion = instance.removeFolder("./cache/" + id + "/").then(function () {
+                    try {
+                        fs.rmdirSync("./cache/");
+                    }
+                    catch (err) {
+                    }
+                }).catch(function () {
+                    reject({ code: 404, body: { "error": "deletion error for rm root" } });
+                });
             }
             Promise.all([deletion]).then(function () {
                 fulfill({ code: 204, body: {} });
-            }).catch(function () {
-                reject({ code: 404, body: { "error": "Source not previously added" } });
+            }).catch(function (err) {
+                reject({ code: 404, body: { "error": "deletion error, error is: " + err.toString() } });
             });
         });
     };
     InsightFacade.prototype.performQuery = function (query) {
         var instance = this;
-        var path = "./cache/courses/";
+        var path;
         return new Promise(function (fulfill, reject) {
-            instance.readDataFiles(path)
-                .then(function (listOfFiles) {
-                return Promise.all(instance.readFiles(listOfFiles));
-            })
-                .then(function (fileContents) {
-                instance.loadedCourses = [];
-                fileContents.forEach(function (fileContent) {
-                    fileContent.forEach(function (courseSection) {
-                        var course = new Course_1.default(courseSection.courses_dept, courseSection.courses_id, courseSection.courses_avg, courseSection.courses_instructor, courseSection.courses_title, courseSection.courses_pass, courseSection.courses_fail, courseSection.courses_audit, courseSection.courses_uuid);
-                        instance.loadedCourses.push(course);
+            instance.getId("./cache").then(function (dir) {
+                path = dir;
+                console.log("perform for path= " + path);
+                instance.readDataFiles(path)
+                    .then(function (listOfFiles) {
+                    return Promise.all(instance.readFiles(listOfFiles, path + "/"));
+                })
+                    .then(function (fileContents) {
+                    instance.loadedCourses = [];
+                    fileContents.forEach(function (fileContent) {
+                        fileContent.forEach(function (courseSection) {
+                            var course = new Course_1.default(courseSection.courses_dept, courseSection.courses_id, courseSection.courses_avg, courseSection.courses_instructor, courseSection.courses_title, courseSection.courses_pass, courseSection.courses_fail, courseSection.courses_audit, courseSection.courses_uuid);
+                            instance.loadedCourses.push(course);
+                        });
                     });
+                    return instance.parseQuery(query);
+                })
+                    .then(function (result) {
+                    fulfill(result);
+                })
+                    .catch(function (err) {
+                    reject(err);
                 });
-                return instance.parseQuery(query);
-            })
-                .then(function (result) {
-                fulfill(result);
-            })
-                .catch(function (err) {
-                reject(err);
+            }).catch(function (err) {
+                console.log(err);
+                reject({ code: 424, body: { "missing": ["id"] } });
             });
         });
     };
@@ -105,13 +100,11 @@ var InsightFacade = (function () {
             });
         });
     };
-    InsightFacade.prototype.readFiles = function (files) {
+    InsightFacade.prototype.readFiles = function (files, path) {
         var contents = [];
-        var path = "./cache/courses/";
         files.forEach(function (element) {
             contents.push(new Promise(function (fulfill, reject) {
                 var url = path + element;
-                console.log(url);
                 fs.readFile(url, 'utf8', function (err, data) {
                     if (err) {
                         reject(err);
@@ -124,6 +117,19 @@ var InsightFacade = (function () {
         });
         return contents;
     };
+    InsightFacade.prototype.getId = function (path) {
+        return new Promise(function (fulfill, reject) {
+            if (fs.existsSync(path)) {
+                fs.readdirSync(path).forEach(function (file) {
+                    var current = path + "/" + file;
+                    if (fs.lstatSync(current).isDirectory()) {
+                        fulfill(current);
+                    }
+                });
+            }
+            reject(null);
+        });
+    };
     InsightFacade.prototype.parseQuery = function (query) {
         var instance = this;
         var filter;
@@ -135,24 +141,25 @@ var InsightFacade = (function () {
         var queryResults = [];
         var queryOutput = [];
         return new Promise(function (fulfill, reject) {
-            try {
+            if (query.hasOwnProperty('WHERE') && query.hasOwnProperty('OPTIONS')) {
                 filter = query.WHERE;
                 options = query.OPTIONS;
             }
-            catch (err) {
+            else {
                 reject({ code: 400, body: { "error": "Invalid Query" } });
             }
-            try {
+            if (options.hasOwnProperty("COLUMNS") && options.hasOwnProperty("FORM")) {
                 columns = options.COLUMNS;
                 form = options.FORM;
             }
-            catch (err) {
+            else {
                 reject({ code: 400, body: { "error": "Invalid Query" } });
             }
-            try {
+            if (options.hasOwnProperty("ORDER")) {
                 order = options.ORDER;
-            }
-            catch (err) {
+                if (!columns.includes(order)) {
+                    reject({ code: 400, body: { "error": "Invalid Query" } });
+                }
             }
             if (form !== 'TABLE') {
                 reject({ code: 400, body: { "error": "Invalid Query" } });
@@ -162,38 +169,37 @@ var InsightFacade = (function () {
             });
             Promise.all(queryResults)
                 .then(function (result) {
-                console.log(result);
                 if (result.length == 0) {
-                    console.log("GGG");
                     fulfill({ code: 200, body: result });
                 }
-                console.log("GGGGGGGGG");
                 for (var i = 0; i < instance.loadedCourses.length; i++) {
                     if (result[i] === true) {
                         queryOutput.push(instance.loadedCourses[i]);
                     }
                 }
-                try {
-                    columnsOnly = JSON.parse(JSON.stringify(queryOutput, columns));
-                    if (order != null) {
-                        columnsOnly.sort(function (a, b) {
-                            if (a[order] > b[order]) {
-                                return 1;
-                            }
-                            else if (a[order] < b[order]) {
-                                return -1;
-                            }
-                            return 0;
-                        });
-                    }
-                }
-                catch (err) {
-                    reject({ code: 400, body: { "error": "Invalid Query" } });
+                queryOutput.forEach(function (ele) {
+                    columns.forEach(function (column) {
+                        if (!ele.hasOwnProperty(column)) {
+                            return reject({ code: 400, body: { "error": "Invalid Query" } });
+                        }
+                    });
+                });
+                columnsOnly = JSON.parse(JSON.stringify(queryOutput, columns));
+                if (order != null) {
+                    columnsOnly.sort(function (a, b) {
+                        if (a[order] > b[order]) {
+                            return 1;
+                        }
+                        else if (a[order] < b[order]) {
+                            return -1;
+                        }
+                        return 0;
+                    });
                 }
                 fulfill({ code: 200, body: { render: form, result: columnsOnly } });
             })
                 .catch(function (err) {
-                reject({ code: 400, body: { "error": "Invalid Query" } });
+                reject(err);
             });
         });
     };
@@ -232,11 +238,9 @@ var InsightFacade = (function () {
                         reject({ code: 400, body: { "error": "Invalid Query" } });
                     }
                     Promise.all(arrayofFilters.map(function (ele) {
-                        console.log(ele);
                         return instance.parseFilter(ele, course);
                     }))
                         .then(function (result) {
-                        console.log(result);
                         result.forEach(function (ele2) {
                             if (ele2 === true) {
                                 fulfill(true);
@@ -265,12 +269,22 @@ var InsightFacade = (function () {
                                 reject(({ code: 424, body: { "missing": [id] } }));
                             }
                         }
-                        try {
+                        if (course.hasOwnProperty(paramKey)) {
                             var courseValue = course[paramKey];
                             var paramValue = filterParams[paramKey];
                         }
-                        catch (err) {
+                        else {
                             reject({ code: 400, body: { "error": "Invalid Query" } });
+                        }
+                        if (key === "IS") {
+                            if (typeof paramValue != "string") {
+                                reject(({ code: 400, body: { "error": "value of " + key + " must be a string" } }));
+                            }
+                        }
+                        else {
+                            if (typeof paramValue != "number") {
+                                reject(({ code: 400, body: { "error": "value of " + key + " must be a number" } }));
+                            }
                         }
                         instance.doOperation(paramValue, courseValue, key)
                             .then(function (result) {
@@ -290,6 +304,7 @@ var InsightFacade = (function () {
                         .catch(function (err) {
                         reject(err);
                     });
+                    break;
                 default:
                     reject({ code: 400, body: { "error": "Invalid Query" } });
             }
@@ -297,24 +312,30 @@ var InsightFacade = (function () {
     };
     InsightFacade.prototype.doOperation = function (paramValue, courseValue, operation) {
         return new Promise(function (fulfill, reject) {
-            try {
-                switch (operation) {
-                    case "LT":
-                        fulfill(courseValue < paramValue);
-                        break;
-                    case "GT":
-                        fulfill(courseValue > paramValue);
-                        break;
-                    case "EQ":
+            switch (operation) {
+                case "LT":
+                    fulfill(courseValue < paramValue);
+                    break;
+                case "GT":
+                    fulfill(courseValue > paramValue);
+                    break;
+                case "EQ":
+                    fulfill(courseValue === paramValue);
+                    break;
+                case "IS":
+                    var firstWildCard = paramValue.indexOf("*");
+                    var lastWildCard = paramValue.lastIndexOf("*");
+                    if (firstWildCard == 0) {
+                        if (lastWildCard == paramValue.length - 1) {
+                            fulfill(courseValue.includes(paramValue));
+                        }
+                        fulfill(courseValue.endsWith(paramValue.substring(1)));
+                    }
+                    else if (firstWildCard == -1) {
                         fulfill(courseValue === paramValue);
-                        break;
-                    case "IS":
-                        fulfill(courseValue === paramValue);
-                        break;
-                }
-            }
-            catch (err) {
-                reject({ code: 400, body: { "error": "Invalid Query" } });
+                    }
+                    fulfill(courseValue.startsWith(paramValue.substring(0, lastWildCard)));
+                    break;
             }
         });
     };
@@ -335,15 +356,22 @@ var InsightFacade = (function () {
             instance.load(buffer)
                 .then(function (okay) {
                 var content;
-                console.log("before");
                 var readfile;
                 var dataCache;
+                var substring = "DEFAULT STRING";
                 var _loop_1 = function() {
                     var name_1 = filename;
+                    if (filename.indexOf("/") >= 0) {
+                        substring = filename.substr(filename.indexOf('/') + 1, filename.length + 1);
+                    }
+                    if (substring.length == 0 || substring.match(".DS_Store") || substring.match("__MAXOSX"))
+                        return "continue";
+                    if (okay.file(filename) === null)
+                        return "continue";
                     readfile = okay.file(filename).async("string")
                         .then(function success(text) {
                         if (util_1.isUndefined(text) || (typeof text !== 'string') || !(instance.isJSON(text)))
-                            throw util_2.error;
+                            reject({ code: 400, body: { "error": "file content is invalid! because test = " + test } });
                         var buffer = new Buffer(text);
                         instance.parseData(buffer.toString())
                             .then(function (result) {
@@ -399,16 +427,17 @@ var InsightFacade = (function () {
         });
     };
     InsightFacade.prototype.cacheData = function (content, filename) {
+        while (filename.indexOf("/") >= 0) {
+            filename = filename.substr(filename.indexOf('/') + 1, filename.length + 1);
+        }
         var instance = this;
         return new Promise(function (fulfill, reject) {
             if (!fs.existsSync("./cache/")) {
                 fs.mkdirSync("./cache/");
-                console.log("new directory created!");
             }
             if (!util_1.isUndefined(instance.id)) {
                 if (!fs.existsSync("./cache/" + instance.id + "/")) {
                     fs.mkdirSync("./cache/" + instance.id + "/");
-                    console.log("new directory created!");
                 }
                 var path = "./cache/" + instance.id + "/" + filename + ".JSON";
                 fs.writeFile(path, content, function (err) {
@@ -460,7 +489,6 @@ var InsightFacade = (function () {
                     }
                 });
                 fs.rmdirSync(path);
-                fs.rmdirSync("./cache/");
             }
             fulfill();
         });
