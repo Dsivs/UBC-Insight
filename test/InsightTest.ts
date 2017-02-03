@@ -74,8 +74,6 @@ describe("InsightTest", function () {
             }
 
         });// end of second fs.readfile for invalid content
-
-
         //comprehensive course data is for local test only
         //this read is omitted for auto test
         /*
@@ -97,7 +95,7 @@ describe("InsightTest", function () {
     });
 
 
-    /*it("add invalid zip", function () {
+    it("add invalid zip", function () {
         return insight.addDataset('test1', 'SW52YWxpZCBTdHJpbmc=')
             .then(function(response) {
                 console.log(response);
@@ -164,7 +162,7 @@ describe("InsightTest", function () {
                 //console.log(response.body);
                 //expect(response.body).to.deep.equal({"error" : "Invalid Zip file"});
             })
-    });*/
+    });
 
 
 
