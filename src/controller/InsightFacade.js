@@ -334,7 +334,7 @@ var InsightFacade = (function () {
                     var lastWildCard = paramValue.lastIndexOf("*");
                     if (firstWildCard == 0) {
                         if (lastWildCard == paramValue.length - 1) {
-                            fulfill(courseValue.includes(paramValue));
+                            fulfill(courseValue.includes(paramValue.substring(firstWildCard + 1, lastWildCard)));
                         }
                         fulfill(courseValue.endsWith(paramValue.substring(1)));
                     }
