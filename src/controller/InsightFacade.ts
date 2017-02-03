@@ -229,7 +229,7 @@ export default class InsightFacade implements IInsightFacade {
         files.forEach(function (element: any) {
             contents.push(new Promise(function (fulfill, reject) {
                 let url = path+element;
-                console.log(url);
+                //console.log(url);
                 fs.readFile(url, 'utf8', function (err: any, data: any) {
                     if (err) {
                         reject(err);
@@ -468,12 +468,12 @@ export default class InsightFacade implements IInsightFacade {
                          //if got timeout, this line is the problem
                          if (okay.file(filename) === null)
                              continue;
-                         console.log(filename);
+                         //console.log(filename);
                          //inner promise is returned
                          readfile = okay.file(filename).async("string")
                              .then(function success(text: string) {
 
-                                 console.log("text: " + text);
+                                 //console.log("text: " + text);
 
                                  if (isUndefined(text) || (typeof text !== 'string') || !(instance.isJSON(text)))
                                      reject({code: 400, body: {"error": "file content is invalid! because test = " + test}});
@@ -552,20 +552,20 @@ export default class InsightFacade implements IInsightFacade {
             filename = filename.substr(filename.indexOf('/')+1, filename.length + 1);
         }
 
-        console.log("cache requested for (" + filename + ")");
+        //console.log("cache requested for (" + filename + ")");
         let instance = this;
         return new Promise( function (fulfill, reject) {
 
 
             if (!fs.existsSync("./cache/")) {
                 fs.mkdirSync("./cache/");
-                console.log("new directory created!");
+                //console.log("new directory created!");
             }
 
             if (!isUndefined(instance.id)) {
                 if (!fs.existsSync("./cache/" + instance.id + "/")) {
                     fs.mkdirSync("./cache/" + instance.id + "/");
-                    console.log("new directory created!");
+                    //console.log("new directory created!");
                 }
 
                 var path = "./cache/" + instance.id + "/" + filename + ".JSON";
