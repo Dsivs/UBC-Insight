@@ -763,7 +763,7 @@ describe("InsightTest", function () {
     });
 
 
-    /*
+
     it("Load invalid data set", function () {
         return insight.addDataset('loadInvalid', 'INVALID')
             .then(function(response) {
