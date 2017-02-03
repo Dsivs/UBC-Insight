@@ -47,11 +47,11 @@ export default class InsightFacade implements IInsightFacade {
      *
      * Response codes:
      *
-     * 201: the operation was successful and the id already existed (was added in
+     * existing id: 201: the operation was successful and the id already existed (was added in
      * this session or was previously cached).
-     * 204: the operation was successful and the id was new (not added in this
+     * new id:   204: the operation was successful and the id was new (not added in this
      * session or was previously cached).
-     * 400: the operation failed. The body should contain {"error": "my text"}
+     * error:   400: the operation failed. The body should contain {"error": "my text"}
      * to explain what went wrong.
      *
      */
@@ -66,44 +66,26 @@ export default class InsightFacade implements IInsightFacade {
             if (!(instance.isBase64(content)))
                 reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
             else {
-                let removal: Promise<any>;
                 //check if data set has been added
                 if (instance.isExist(id)) {
                     //if so, delete and write again
                     code = 201;
                     //remove then add again if already exits
-                    removal = instance.removeDataset(id).catch(function () {
+                    /*removal = instance.removeDataset(id).catch(function () {
                         reject({code: 400, body: {"error": "Deletion error"}})
-                    });
+                    });*/
                 }
                 else {
                     code = 204;
                 }
 
                 //decode base64 content and cache on disk
-                let caching = instance.decode(content).then(function () {
+                instance.decode(content).then(function () {
+                    fulfill({code: code, body: {}});
                 }).catch(function (err) {
                     console.log(err);
                     reject({code: 400, body: {"error": err.toString()}});
                 });
-
-                //if removal is defined/called
-                if (removal) {
-                    Promise.all([removal, caching]).then(function () {
-                        fulfill({code: code, body: {}});
-                    }).catch(function (err) {
-                        console.log(err);
-                        reject({code: 400, body: {"error": err.toString()}});
-                    })
-                }
-                else {
-                    Promise.all([caching]).then(function () {
-                        fulfill({code: code, body: {}});
-                    }).catch(function (err) {
-                        console.log(err);
-                        reject({code: 400, body: {"error": err.toString()}});
-                    })
-                }
             }
         });
     }
@@ -138,12 +120,24 @@ export default class InsightFacade implements IInsightFacade {
                 reject({code: 404, body: {"error": "Source not previously added"}});
             else
             {
-                deletion = instance.removeFolder("./cache/" + id + "/");
+                deletion = instance.removeFolder("./cache/" + id + "/").then( function () {
+                    try {
+                        fs.rmdirSync("./cache/");
+                    } catch (err)
+                    {
+                        //try to remove root dir if its not empty
+                        //console.log(err);
+                    }
+                }).catch( function (){
+                    reject({code: 404, body: {"error": "deletion error for rm root"}});
+                });
             }
            Promise.all([deletion]).then( function () {
+
+
                fulfill( {code: 204, body: {}} );
-           }).catch(function () {
-               reject({code: 404, body: {"error": "Source not previously added"}});
+           }).catch(function (err: any) {
+               reject({code: 404, body: {"error": "deletion error, error is: " + err.toString()}});
            })
         });
     }
@@ -167,51 +161,50 @@ export default class InsightFacade implements IInsightFacade {
      */
     performQuery(query: QueryRequest): Promise <InsightResponse> {
         let instance = this;
-        let path = "./cache/courses/";
+        let path: string;
         return new Promise(function (fulfill, reject) {
 
-            instance.readDataFiles(path)
-                .then(function (listOfFiles: any) {
-                    //console.log(result);
-                    return Promise.all(instance.readFiles(listOfFiles));
-                })
-                .then(function (fileContents: any) {
-                    instance.loadedCourses = [];
-                    fileContents.forEach(function (fileContent: any) {
-                        fileContent.forEach(function (courseSection: any) {
-                            var course = new Course(courseSection.courses_dept,
-                                                    courseSection.courses_id,
-                                                    courseSection.courses_avg,
-                                                    courseSection.courses_instructor,
-                                                    courseSection.courses_title,
-                                                    courseSection.courses_pass,
-                                                    courseSection.courses_fail,
-                                                    courseSection.courses_audit,
-                                                    courseSection.courses_uuid)
-                            instance.loadedCourses.push(course);
-                            //console.log(course);
-                        })
+            instance.getId("./cache").then( function (dir: string){
+                path = dir;
+                console.log("perform for path= " + path);
+
+                instance.readDataFiles(path)
+                    .then(function (listOfFiles: any) {
+                        //console.log(result);
+                        return Promise.all(instance.readFiles(listOfFiles, path+"/"));
                     })
+                    .then(function (fileContents: any) {
+                        instance.loadedCourses = [];
+                        fileContents.forEach(function (fileContent: any) {
+                            fileContent.forEach(function (courseSection: any) {
+                                var course = new Course(courseSection.courses_dept,
+                                    courseSection.courses_id,
+                                    courseSection.courses_avg,
+                                    courseSection.courses_instructor,
+                                    courseSection.courses_title,
+                                    courseSection.courses_pass,
+                                    courseSection.courses_fail,
+                                    courseSection.courses_audit,
+                                    courseSection.courses_uuid)
+                                instance.loadedCourses.push(course);
+                                //console.log(course);
+                            })
+                        })
 
-                    return instance.parseQuery(query);
-                })
-                .then(function (result) {
-                    fulfill(result);
-                })
-                .catch(function (err) {
-                    reject(err);
-                })
-                // retrieve data from disk, NOT DONE
+                        return instance.parseQuery(query);
+                    })
+                    .then(function (result: any) {
+                        fulfill(result);
+                    })
+                    .catch(function (err: any) {
+                        reject(err);
+                    })
+            }).catch( function (err: any) {
+                console.log(err);
+                reject({code: 424, body:{"missing": ["id"]}});
+            });
 
-                //process data -> variables, NOT DONE
-
-                //variables -> sort/ data filter, NOT DONE
-
-                //variable -> JSON, NOT DONE
-
-                //Problem: 1) how to define QueryRequest object
-                // 2) proper way to handle query
-        })
+        });
     }
 
     readDataFiles(path: string): Promise<any> {
@@ -226,26 +219,46 @@ export default class InsightFacade implements IInsightFacade {
     }
 
 
-    readFiles(files: string[]): Promise<any>[] {
+    readFiles(files: string[], path: string): Promise<any>[] {
         let contents: any[] = [];
-        let path = "./cache/courses/";
         files.forEach(function (element: any) {
             contents.push(new Promise(function (fulfill, reject) {
-                    let url = path+element;
-                    console.log(url);
-                    fs.readFile(url, 'utf8', function (err: any, data: any) {
-                        if (err) {
-                            reject(err);
-                        }
-                        else {
-                            fulfill(JSON.parse(data));
-                        }
-                    })
+                let url = path+element;
+                //console.log(url);
+                fs.readFile(url, 'utf8', function (err: any, data: any) {
+                    if (err) {
+                        reject(err);
+                    }
+                    else {
+                        fulfill(JSON.parse(data));
+                    }
+                })
             }))
         });
 
         return contents;
     }
+    //returns a existing id path
+    getId(path: string): Promise<string>
+    {
+        return new Promise( function(fulfill, reject){
+            //if path is valid
+            if( fs.existsSync(path) ) {
+                //go through each file in the folder and delete one by one
+                fs.readdirSync(path).forEach(function(file: any){
+                    var current = path + "/" + file;
+                    //if current folder contains folder
+                    if(fs.lstatSync(current).isDirectory()) {
+                        //found a valid folder in cache
+                        fulfill(current);
+                    }
+                });
+            }
+            //if cache folder is empty or cache folder does not exist
+            reject(null);
+        });
+    }
+
 
     parseQuery(query: QueryRequest): Promise<any> {
         let instance = this;
@@ -342,7 +355,6 @@ export default class InsightFacade implements IInsightFacade {
                 reject({code: 400, body: {"error": "Invalid Query"}})
             }
 
-            //
             var key = keys[0];
 
             //console.log(filter);
@@ -519,12 +531,22 @@ export default class InsightFacade implements IInsightFacade {
                  .then(function (okay: any)
                  {
                      let content: any;
-                     console.log("before");
                      var readfile: Promise<any>;
                      var dataCache: Promise<any>;
+                     var substring: string = "DEFAULT STRING";
 
                      for (var filename in okay.files) {
                          let name: string = filename;
+                         if (filename.indexOf("/") >= 0)
+                         {
+                             substring = filename.substr(filename.indexOf('/')+1, filename.length + 1);
+                         }
+                         if (substring.length == 0 || substring.match(".DS_Store") || substring.match("__MAXOSX"))
+                             continue;
+                         //if got timeout, this line is the problem
+                         if (okay.file(filename) === null)
+                             continue;
+                         //console.log(filename);
                          //inner promise is returned
                          readfile = okay.file(filename).async("string")
                              .then(function success(text: string) {
@@ -532,7 +554,7 @@ export default class InsightFacade implements IInsightFacade {
                                  //console.log("text: " + text);
 
                                  if (isUndefined(text) || (typeof text !== 'string') || !(instance.isJSON(text)))
-                                     throw error;
+                                     reject({code: 400, body: {"error": "file content is invalid! because test = " + test}});
                                  //console.log(text);
                                  var buffer = new Buffer(text);
                                  instance.parseData(buffer.toString())
@@ -601,19 +623,27 @@ export default class InsightFacade implements IInsightFacade {
 
     cacheData(content: any, filename: string): Promise<any>
     {
+
+        //case inner folder is found
+        while (filename.indexOf("/") >= 0)
+        {
+            filename = filename.substr(filename.indexOf('/')+1, filename.length + 1);
+        }
+
+        //console.log("cache requested for (" + filename + ")");
         let instance = this;
         return new Promise( function (fulfill, reject) {
 
 
             if (!fs.existsSync("./cache/")) {
                 fs.mkdirSync("./cache/");
-                console.log("new directory created!");
+                //console.log("new directory created!");
             }
 
             if (!isUndefined(instance.id)) {
                 if (!fs.existsSync("./cache/" + instance.id + "/")) {
                     fs.mkdirSync("./cache/" + instance.id + "/");
-                    console.log("new directory created!");
+                    //console.log("new directory created!");
                 }
 
                 var path = "./cache/" + instance.id + "/" + filename + ".JSON";
@@ -707,7 +737,6 @@ export default class InsightFacade implements IInsightFacade {
             });
             //remove entire folder when its empty
             fs.rmdirSync(path);
-            fs.rmdirSync("./cache/");
         }
         fulfill();
         });
