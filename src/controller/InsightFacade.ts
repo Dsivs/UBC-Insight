@@ -223,6 +223,7 @@ export default class InsightFacade implements IInsightFacade {
                         reject(err);
                     }
                     else {
+                        //console.log(JSON.parse(data))
                         fulfill(JSON.parse(data));
                     }
                 })
