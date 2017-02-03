@@ -61,33 +61,40 @@ var InsightFacade = (function () {
         var instance = this;
         var path;
         return new Promise(function (fulfill, reject) {
-            instance.getId("./cache").then(function (dir) {
+            instance.getId("./cache")
+                .then(function (dir) {
                 path = dir;
                 console.log("perform for path= " + path);
-                instance.readDataFiles(path)
-                    .then(function (listOfFiles) {
-                    return Promise.all(instance.readFiles(listOfFiles, path + "/"));
-                })
-                    .then(function (fileContents) {
-                    instance.loadedCourses = [];
-                    fileContents.forEach(function (fileContent) {
-                        fileContent.forEach(function (courseSection) {
-                            var course = new Course_1.default(courseSection.courses_dept, courseSection.courses_id, courseSection.courses_avg, courseSection.courses_instructor, courseSection.courses_title, courseSection.courses_pass, courseSection.courses_fail, courseSection.courses_audit, courseSection.courses_uuid);
-                            instance.loadedCourses.push(course);
-                        });
-                    });
-                    return instance.parseQuery(query);
-                })
-                    .then(function (result) {
-                    fulfill(result);
-                })
-                    .catch(function (err) {
-                    reject(err);
-                });
-            }).catch(function (err) {
-                console.log(err);
-                reject({ code: 424, body: { "missing": ["id"] } });
+                return instance.readDataFiles(path);
+            })
+                .then(function (listOfFiles) {
+                return Promise.all(instance.readFiles(listOfFiles, path + "/"));
+            })
+                .then(function (fileContents) {
+                return instance.loadCoursesIntoArray(fileContents);
+            })
+                .then(function (result) {
+                return instance.parseQuery(query);
+            })
+                .then(function (result) {
+                fulfill(result);
+            })
+                .catch(function (err) {
+                reject(err);
             });
+        });
+    };
+    InsightFacade.prototype.loadCoursesIntoArray = function (fileContents) {
+        var instance = this;
+        return new Promise(function (fulfill, reject) {
+            instance.loadedCourses = [];
+            fileContents.forEach(function (fileContent) {
+                fileContent.forEach(function (courseSection) {
+                    var course = new Course_1.default(courseSection.courses_dept, courseSection.courses_id, courseSection.courses_avg, courseSection.courses_instructor, courseSection.courses_title, courseSection.courses_pass, courseSection.courses_fail, courseSection.courses_audit, courseSection.courses_uuid);
+                    instance.loadedCourses.push(course);
+                });
+            });
+            fulfill(0);
         });
     };
     InsightFacade.prototype.readDataFiles = function (path) {

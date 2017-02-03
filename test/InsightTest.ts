@@ -83,7 +83,7 @@ describe("InsightTest", function () {
 
     var invalidValueQuery = {
         "WHERE":{
-            "GT":{
+            "OR":{
                 "courses_avg": "abd"
             }
         },
@@ -271,11 +271,46 @@ describe("InsightTest", function () {
         }
     };
 
+    var complexAutoSuiteQuery = {
+        "WHERE":{
+            "OR":[
+                {
+                    "AND":[
+                        {
+                            "GT":{
+                                "courses_avg":94
+                            }
+                        },
+                        {
+                            "IS":{
+                                "courses_dept":"adhe"
+                            }
+                        }
+                    ]
+                },
+                {
+                    "EQ":{
+                        "courses_avg":95
+                    }
+                }
+            ]
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_id",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    }
+
 
     before(function (done) {
         Log.test('Before: ' + (<any>this).test.parent.title);
         var zip = new JSZip();
-        fs.readFile('./test/demo.zip', function(err: any, data: any){
+        fs.readFile('./test/courses.zip', function(err: any, data: any){
             if (err) {
                 //invalid zip file is given
                 console.log(err);
@@ -466,6 +501,17 @@ describe("InsightTest", function () {
     it("perform valid query", function () {
 
         return insight.performQuery(validQuery)
+            .then(function(response) {
+                console.log(response.body);
+                expect(response.code).to.deep.equal(200);
+            }).catch(function(err) {
+                expect.fail();
+            })
+    });
+
+    it("perform complex autosuite query", function () {
+
+        return insight.performQuery(complexAutoSuiteQuery)
             .then(function(response) {
                 console.log(response.body);
                 expect(response.code).to.deep.equal(200);

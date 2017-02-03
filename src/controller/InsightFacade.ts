@@ -164,47 +164,54 @@ export default class InsightFacade implements IInsightFacade {
         let path: string;
         return new Promise(function (fulfill, reject) {
 
-            instance.getId("./cache").then( function (dir: string){
+            instance.getId("./cache")
+            .then(function (dir: string){
                 path = dir;
                 console.log("perform for path= " + path);
+                return instance.readDataFiles(path)
 
-                instance.readDataFiles(path)
-                    .then(function (listOfFiles: any) {
-                        //console.log(result);
-                        return Promise.all(instance.readFiles(listOfFiles, path+"/"));
-                    })
-                    .then(function (fileContents: any) {
-                        instance.loadedCourses = [];
-                        fileContents.forEach(function (fileContent: any) {
-                            fileContent.forEach(function (courseSection: any) {
-                                var course = new Course(courseSection.courses_dept,
-                                    courseSection.courses_id,
-                                    courseSection.courses_avg,
-                                    courseSection.courses_instructor,
-                                    courseSection.courses_title,
-                                    courseSection.courses_pass,
-                                    courseSection.courses_fail,
-                                    courseSection.courses_audit,
-                                    courseSection.courses_uuid)
-                                instance.loadedCourses.push(course);
-                                //console.log(course);
-                            })
-                        })
-
-                        return instance.parseQuery(query);
-                    })
-                    .then(function (result: any) {
-                        fulfill(result);
-                    })
-                    .catch(function (err: any) {
-                        reject(err);
-                    })
-            }).catch( function (err: any) {
-                console.log(err);
-                reject({code: 424, body:{"missing": ["id"]}});
-            });
-
+            })
+            .then(function (listOfFiles: any) {
+                return Promise.all(instance.readFiles(listOfFiles, path+"/"));
+            })
+            .then(function (fileContents: any) {
+                return instance.loadCoursesIntoArray(fileContents);
+            })
+            .then(function (result: any) {
+                return instance.parseQuery(query);
+            })
+            .then(function (result: any) {
+                fulfill(result);
+            })
+            .catch(function (err: any) {
+                reject(err);
+            })
         });
+    }
+
+    loadCoursesIntoArray(fileContents: any): Promise<any> {
+        let instance = this;
+
+        return new Promise(function (fulfill, reject) {
+            instance.loadedCourses = [];
+            fileContents.forEach(function (fileContent: any) {
+                fileContent.forEach(function (courseSection: any) {
+                    var course = new Course(courseSection.courses_dept,
+                        courseSection.courses_id,
+                        courseSection.courses_avg,
+                        courseSection.courses_instructor,
+                        courseSection.courses_title,
+                        courseSection.courses_pass,
+                        courseSection.courses_fail,
+                        courseSection.courses_audit,
+                        courseSection.courses_uuid)
+                    instance.loadedCourses.push(course);
+                    //console.log(course);
+                })
+            })
+
+            fulfill(0);
+        })
     }
 
     readDataFiles(path: string): Promise<any> {
@@ -271,6 +278,7 @@ export default class InsightFacade implements IInsightFacade {
         var queryResults: Promise<any>[] = [];
         var queryOutput: any[] = [];
         return new Promise(function (fulfill, reject) {
+
             if (query.hasOwnProperty('WHERE') && query.hasOwnProperty('OPTIONS')) {
                 filter = query.WHERE;
                 options = query.OPTIONS;
