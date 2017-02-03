@@ -23,7 +23,7 @@ describe("InsightTest", function () {
     var validQuery = {
         "WHERE":{
             "GT":{
-                "courses_avg":97
+                "courses_avg":71
             }
         },
         "OPTIONS":{
@@ -35,6 +35,32 @@ describe("InsightTest", function () {
             "FORM":"TABLE"
         }
     };
+
+    var complexQuery = {
+        "WHERE":{
+            "OR":[
+                {
+                            "GT":{
+                                "courses_avg":85
+                            }
+                },
+                {
+                    "GT":{
+                        "courses_avg":72
+                    }
+                }
+            ]
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_id",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    }
 
 
 
@@ -140,12 +166,24 @@ describe("InsightTest", function () {
 
         return insight.performQuery(validQuery)
             .then(function(response) {
-                console.log(response);
+                console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
                 expect.fail();
             })
     });
+
+    it("perform valid complex query", function () {
+
+        return insight.performQuery(complexQuery)
+            .then(function(response) {
+                console.log(response.body);
+                expect(response.code).to.deep.equal(200);
+            }).catch(function(err) {
+                expect.fail();
+            })
+    });
+
 
 
     it("Overwrite existing data set", function () {
@@ -183,12 +221,12 @@ describe("InsightTest", function () {
 
     it("remove non-existing data set", function () {
         return insight.removeDataset('courses')
-            .then(function(err) {
-                console.log(err);
+            .then(function(response) {
+                console.log(response);
                 expect.fail();
-            }).catch(function(response) {
-                expect(response.code).to.deep.equal(404);
-                expect(response.body).to.deep.equal({"error": "Source not previously added"});
+            }).catch(function(err) {
+                expect(err.code).to.deep.equal(404);
+                expect(err.body).to.deep.equal({"error": "Source not previously added"});
             })
     });
 

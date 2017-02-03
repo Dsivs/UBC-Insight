@@ -19,12 +19,10 @@ let pattern: string = "^[A-Za-z0-9+\/=]+\Z";
 export default class InsightFacade implements IInsightFacade {
 
     private loadedCourses:  Course[];
-    private queryOutput: Course[];
     private id:string;
 
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
-        this.queryOutput = [];
     }
 
 
@@ -213,7 +211,6 @@ export default class InsightFacade implements IInsightFacade {
 
                 //Problem: 1) how to define QueryRequest object
                 // 2) proper way to handle query
-
         })
     }
 
@@ -250,22 +247,6 @@ export default class InsightFacade implements IInsightFacade {
         return contents;
     }
 
-    /*
-    jsonifyQuery(query: QueryRequest): Promise<any> {
-        var jsonQuery: any;
-        return new Promise(function (fulfill, reject) {
-            try {
-                jsonQuery = JSON.parse(JSON.stringify(query));
-                console.log("JSON:");
-                console.log(jsonQuery);
-                fulfill(jsonQuery);
-            } catch (err) {
-                reject({code: 400, body: {"error": "Invalid JSON"}})
-            }
-        })
-    }
-    */
-
     parseQuery(query: QueryRequest): Promise<any> {
         let instance = this;
         var filter: any;
@@ -273,6 +254,9 @@ export default class InsightFacade implements IInsightFacade {
         var columns: any[];
         var order: any = null;
         var form: any;
+        var columnsOnly: any;
+        var queryResults: Promise<any>[] = [];
+        var queryOutput: any[] = [];
         return new Promise(function (fulfill, reject) {
             try {
                 filter = query.WHERE;
@@ -280,8 +264,10 @@ export default class InsightFacade implements IInsightFacade {
             } catch (err) {
                 reject({code: 400, body: {"error": "Invalid Query"}})
             }
-            console.log(filter);
-            console.log(options);
+            //console.log("FILTER:");
+            //console.log(filter);
+            //console.log("OPTIONS:");
+            //console.log(options);
 
             try {
                 columns = options.COLUMNS;
@@ -294,30 +280,64 @@ export default class InsightFacade implements IInsightFacade {
             } catch (err) {
             }
 
-            console.log(columns + " " + order + " " + form);
+            if (form !== 'TABLE') {
+                reject({code: 400, body: {"error": "Invalid Query"}});
+            }
 
-            instance.parseFilter(filter)
-                .then(function (result) {
-                    //stringify based on options
-                    if (result.length == 0) {
-                        console.log("GGG");
-                        fulfill({code: 200, body: {"error": "No Results Returned"}});
+            //all ok here
+            //console.log(instance.loadedCourses);
+
+            instance.loadedCourses.forEach(function (course: any) {
+                queryResults.push(instance.parseFilter(filter, course));
+            })
+
+            Promise.all(queryResults)
+            .then(function (result) {
+                console.log(result);
+                if (result.length == 0) {
+                    console.log("GGG");
+                    fulfill({code: 200, body: result});
+                }
+
+                console.log("GGGGGGGGG");
+
+                for (var i = 0; i < instance.loadedCourses.length; i++) {
+                    if (result[i] === true) {
+                        queryOutput.push(instance.loadedCourses[i]);
                     }
+                }
 
-                    fulfill({code: 200, body: {"data": "json"}});
-                    console.log(JSON.stringify(result, null, 4));
+                try {
+                    columnsOnly = JSON.parse(JSON.stringify(queryOutput, columns));
+                    if (order != null) {
+                        columnsOnly.sort(function(a: any, b: any) {
+                            if (a[order] > b[order]) {
+                                return 1;
+                            } else if (a[order] < b[order]) {
+                                return -1;
+                            }
+                            return 0;
+                        })
+                    }
+                } catch (err) {
+                    reject({code: 400, body: {"error": "Invalid Query"}});
+                }
 
-                })
-                .catch(function (err) {
-                    reject({code: 400, body: {"error": "Invalid Query"}})
-                })
+                //console.log(columnsOnly);
+
+                fulfill({code: 200, body: {render: form, result: columnsOnly}});
+            })
+            .catch(function (err) {
+                reject({code: 400, body: {"error": "Invalid Query"}})
+            })
         })
     }
 
-    parseFilter(filter: any): Promise<any> {
+    parseFilter(filter: any, course: any): Promise<any> {
         let instance = this;
         return new Promise(function (fulfill, reject) {
             var keys = Object.keys(filter);
+
             if (keys.length != 1) {
                 reject({code: 400, body: {"error": "Invalid Query"}})
             }
@@ -325,35 +345,111 @@ export default class InsightFacade implements IInsightFacade {
             //
             var key = keys[0];
 
-            console.log(filter);
-            console.log(keys);
-            console.log(key);
+            //console.log(filter);
+            //console.log(keys);
+            //console.log(key);
+
+            //if ((avg > 90 && dept === "adhe") || avg === 95)
 
             switch(key) {
                 case "AND":
-                    break;
-                case "OR":
-                    break;
-                case "LT":
-                    break;
-                case "GT":
-                    var filterParams = filter[key];
-                    console.log(filterParams);
-                    instance.parseKeyValues(key, filterParams)
+                    var arrayofFilters = filter[key];
+                    if (!Array.isArray(arrayofFilters)) {
+                        reject({code: 400, body: {"error": "Invalid Query"}})
+                    }
+                    Promise.all(arrayofFilters.map(function (ele: any) {
+                        return instance.parseFilter(ele, course);
+                    }))
                         .then(function (result) {
-                            //console.log("HI" + result);
-                            fulfill(result);
+                            result.forEach(function (ele2) {
+                                if (ele2 === false) {
+                                    fulfill(false);
+                                }
+                            })
+                            fulfill(true);
                         })
                         .catch(function (err) {
-                            reject({code: 400, body: {"error": "Invalid Key:Value"}})
+                            reject(err);
                         })
                     break;
-                case "EQ":
+                case "OR":
+                    var arrayofFilters = filter[key];
+                    if (!Array.isArray(arrayofFilters)) {
+                        reject({code: 400, body: {"error": "Invalid Query"}})
+                    }
+                    Promise.all(arrayofFilters.map(function (ele: any) {
+                        console.log(ele);
+                        return instance.parseFilter(ele, course);
+                    }))
+                        .then(function (result) {
+                            console.log(result);
+                            result.forEach(function (ele2) {
+                                if (ele2 === true) {
+                                    fulfill(true);
+                                }
+                            })
+                            fulfill(false);
+                        })
+                        .catch(function (err) {
+                            reject(err);
+                        })
                     break;
+                case "LT":
+                case "GT":
+                case "EQ":
                 case "IS":
+                    // { courses_avg: 85 }
+                    var filterParams = filter[key];
+                    var paramKeys = Object.keys(filterParams);
+                    /*
+                    console.log("filterParams:")
+                    console.log(filterParams);
+                    console.log("paramKeys:")
+                    console.log(paramKeys);
+                    */
+                    if (paramKeys.length !== 1) {
+                        reject({code: 400, body: {"error": "Invalid Query"}})
+                    } else {
+                        // courses_avg
+                        var paramKey = paramKeys[0];
+                        if (paramKey.includes("_")) {
+                            var id = paramKey.substr(0, paramKey.indexOf("_"));
+                            if (id !== "courses") {
+                                reject(({code: 424, body: {"missing": [id]}}))
+                            }
+                        }
+                        try {
+                            var courseValue = course[paramKey];
+                            var paramValue = filterParams[paramKey];
+                            /*
+                            console.log("courseValue:");
+                            console.log(courseValue);
+                            console.log("paramValue");
+                            console.log(paramValue);
+                            */
+                        } catch (err) {
+                            reject({code: 400, body: {"error": "Invalid Query"}})
+                        }
+
+                        instance.doOperation(paramValue, courseValue, key)
+                            .then(function (result) {
+                                fulfill(result);
+                            })
+                            .catch(function (err) {
+                                reject(err)
+                            })
+                    }
                     break;
                 case "NOT":
-                    break;
+                    var filterParams = filter[key];
+                    instance.parseFilter(filterParams, course)
+                        .then(function (result) {
+                            fulfill(!result)
+                        })
+                        .catch(function (err) {
+                            reject(err)
+                        })
+
                 default:
                     reject({code: 400, body: {"error": "Invalid Query"}})
             }
@@ -361,44 +457,27 @@ export default class InsightFacade implements IInsightFacade {
         })
     }
 
-    parseKeyValues(operation: any, keyvalues: any): Promise<any> {
-        let instance = this;
+    doOperation(paramValue: any, courseValue: any, operation: any): Promise<any> {
+
         return new Promise(function (fulfill, reject) {
-            var keys = Object.keys(keyvalues);
-            if (keys.length != 1) {
-                reject({code: 400, body: {"error": "Not exactly 1 Key:Value"}})
+            try {
+                switch (operation) {
+                    case "LT":
+                        fulfill(courseValue < paramValue);
+                        break;
+                    case "GT":
+                        fulfill(courseValue > paramValue);
+                        break;
+                    case "EQ":
+                        fulfill(courseValue === paramValue);
+                        break;
+                    case "IS":
+                        fulfill(courseValue === paramValue);
+                        break;
+                }
+            } catch (err) {
+                reject({code: 400, body: {"error": "Invalid Query"}})
             }
-
-            var param = keys[0];
-            var value = keyvalues[param];
-            console.log(value);
-
-            switch(operation) {
-                case "AND":
-                    break;
-                case "OR":
-                    break;
-                case "LT":
-                    break;
-                case "GT":
-                    instance.queryOutput = instance.loadedCourses.filter(function(d) {
-                        //console.log();
-                        return d.avg() > value;
-                    })
-                    //console.log(instance.queryOutput.length);
-                    fulfill(instance.queryOutput);
-                    break;
-                case "EQ":
-                    break;
-                case "IS":
-                    break;
-                case "NOT":
-                    break;
-                default:
-                    reject({code: 400, body: {"error": "Invalid Query"}})
-            }
-
-            fulfill({code: 200, body: {"data": "json"}});
         })
     }
     /**

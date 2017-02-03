@@ -9,7 +9,6 @@ var pattern = "^[A-Za-z0-9+\/=]+\Z";
 var InsightFacade = (function () {
     function InsightFacade() {
         Util_1.default.trace('InsightFacadeImpl::init()');
-        this.queryOutput = [];
     }
     InsightFacade.prototype.addDataset = function (id, content) {
         var instance = this;
@@ -132,6 +131,9 @@ var InsightFacade = (function () {
         var columns;
         var order = null;
         var form;
+        var columnsOnly;
+        var queryResults = [];
+        var queryOutput = [];
         return new Promise(function (fulfill, reject) {
             try {
                 filter = query.WHERE;
@@ -140,8 +142,6 @@ var InsightFacade = (function () {
             catch (err) {
                 reject({ code: 400, body: { "error": "Invalid Query" } });
             }
-            console.log(filter);
-            console.log(options);
             try {
                 columns = options.COLUMNS;
                 form = options.FORM;
@@ -154,22 +154,50 @@ var InsightFacade = (function () {
             }
             catch (err) {
             }
-            console.log(columns + " " + order + " " + form);
-            instance.parseFilter(filter)
+            if (form !== 'TABLE') {
+                reject({ code: 400, body: { "error": "Invalid Query" } });
+            }
+            instance.loadedCourses.forEach(function (course) {
+                queryResults.push(instance.parseFilter(filter, course));
+            });
+            Promise.all(queryResults)
                 .then(function (result) {
+                console.log(result);
                 if (result.length == 0) {
                     console.log("GGG");
-                    fulfill({ code: 200, body: { "error": "No Results Returned" } });
+                    fulfill({ code: 200, body: result });
                 }
-                fulfill({ code: 200, body: { "data": "json" } });
-                console.log(JSON.stringify(result, null, 4));
+                console.log("GGGGGGGGG");
+                for (var i = 0; i < instance.loadedCourses.length; i++) {
+                    if (result[i] === true) {
+                        queryOutput.push(instance.loadedCourses[i]);
+                    }
+                }
+                try {
+                    columnsOnly = JSON.parse(JSON.stringify(queryOutput, columns));
+                    if (order != null) {
+                        columnsOnly.sort(function (a, b) {
+                            if (a[order] > b[order]) {
+                                return 1;
+                            }
+                            else if (a[order] < b[order]) {
+                                return -1;
+                            }
+                            return 0;
+                        });
+                    }
+                }
+                catch (err) {
+                    reject({ code: 400, body: { "error": "Invalid Query" } });
+                }
+                fulfill({ code: 200, body: { render: form, result: columnsOnly } });
             })
                 .catch(function (err) {
                 reject({ code: 400, body: { "error": "Invalid Query" } });
             });
         });
     };
-    InsightFacade.prototype.parseFilter = function (filter) {
+    InsightFacade.prototype.parseFilter = function (filter, course) {
         var instance = this;
         return new Promise(function (fulfill, reject) {
             var keys = Object.keys(filter);
@@ -177,71 +205,117 @@ var InsightFacade = (function () {
                 reject({ code: 400, body: { "error": "Invalid Query" } });
             }
             var key = keys[0];
-            console.log(filter);
-            console.log(keys);
-            console.log(key);
             switch (key) {
                 case "AND":
-                    break;
-                case "OR":
-                    break;
-                case "LT":
-                    break;
-                case "GT":
-                    var filterParams = filter[key];
-                    console.log(filterParams);
-                    instance.parseKeyValues(key, filterParams)
+                    var arrayofFilters = filter[key];
+                    if (!Array.isArray(arrayofFilters)) {
+                        reject({ code: 400, body: { "error": "Invalid Query" } });
+                    }
+                    Promise.all(arrayofFilters.map(function (ele) {
+                        return instance.parseFilter(ele, course);
+                    }))
                         .then(function (result) {
-                        fulfill(result);
+                        result.forEach(function (ele2) {
+                            if (ele2 === false) {
+                                fulfill(false);
+                            }
+                        });
+                        fulfill(true);
                     })
                         .catch(function (err) {
-                        reject({ code: 400, body: { "error": "Invalid Key:Value" } });
+                        reject(err);
                     });
                     break;
-                case "EQ":
+                case "OR":
+                    var arrayofFilters = filter[key];
+                    if (!Array.isArray(arrayofFilters)) {
+                        reject({ code: 400, body: { "error": "Invalid Query" } });
+                    }
+                    Promise.all(arrayofFilters.map(function (ele) {
+                        console.log(ele);
+                        return instance.parseFilter(ele, course);
+                    }))
+                        .then(function (result) {
+                        console.log(result);
+                        result.forEach(function (ele2) {
+                            if (ele2 === true) {
+                                fulfill(true);
+                            }
+                        });
+                        fulfill(false);
+                    })
+                        .catch(function (err) {
+                        reject(err);
+                    });
                     break;
+                case "LT":
+                case "GT":
+                case "EQ":
                 case "IS":
+                    var filterParams = filter[key];
+                    var paramKeys = Object.keys(filterParams);
+                    if (paramKeys.length !== 1) {
+                        reject({ code: 400, body: { "error": "Invalid Query" } });
+                    }
+                    else {
+                        var paramKey = paramKeys[0];
+                        if (paramKey.includes("_")) {
+                            var id = paramKey.substr(0, paramKey.indexOf("_"));
+                            if (id !== "courses") {
+                                reject(({ code: 424, body: { "missing": [id] } }));
+                            }
+                        }
+                        try {
+                            var courseValue = course[paramKey];
+                            var paramValue = filterParams[paramKey];
+                        }
+                        catch (err) {
+                            reject({ code: 400, body: { "error": "Invalid Query" } });
+                        }
+                        instance.doOperation(paramValue, courseValue, key)
+                            .then(function (result) {
+                            fulfill(result);
+                        })
+                            .catch(function (err) {
+                            reject(err);
+                        });
+                    }
                     break;
                 case "NOT":
-                    break;
+                    var filterParams = filter[key];
+                    instance.parseFilter(filterParams, course)
+                        .then(function (result) {
+                        fulfill(!result);
+                    })
+                        .catch(function (err) {
+                        reject(err);
+                    });
                 default:
                     reject({ code: 400, body: { "error": "Invalid Query" } });
             }
         });
     };
-    InsightFacade.prototype.parseKeyValues = function (operation, keyvalues) {
-        var instance = this;
+    InsightFacade.prototype.doOperation = function (paramValue, courseValue, operation) {
         return new Promise(function (fulfill, reject) {
-            var keys = Object.keys(keyvalues);
-            if (keys.length != 1) {
-                reject({ code: 400, body: { "error": "Not exactly 1 Key:Value" } });
+            try {
+                switch (operation) {
+                    case "LT":
+                        fulfill(courseValue < paramValue);
+                        break;
+                    case "GT":
+                        fulfill(courseValue > paramValue);
+                        break;
+                    case "EQ":
+                        fulfill(courseValue === paramValue);
+                        break;
+                    case "IS":
+                        fulfill(courseValue === paramValue);
+                        break;
+                }
             }
-            var param = keys[0];
-            var value = keyvalues[param];
-            console.log(value);
-            switch (operation) {
-                case "AND":
-                    break;
-                case "OR":
-                    break;
-                case "LT":
-                    break;
-                case "GT":
-                    instance.queryOutput = instance.loadedCourses.filter(function (d) {
-                        return d.avg() > value;
-                    });
-                    fulfill(instance.queryOutput);
-                    break;
-                case "EQ":
-                    break;
-                case "IS":
-                    break;
-                case "NOT":
-                    break;
-                default:
-                    reject({ code: 400, body: { "error": "Invalid Query" } });
+            catch (err) {
+                reject({ code: 400, body: { "error": "Invalid Query" } });
             }
-            fulfill({ code: 200, body: { "data": "json" } });
         });
     };
     InsightFacade.prototype.isBase64 = function (input) {
