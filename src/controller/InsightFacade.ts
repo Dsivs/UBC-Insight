@@ -113,32 +113,15 @@ export default class InsightFacade implements IInsightFacade {
      */
     removeDataset(id: string): Promise<InsightResponse> {
         let instance = this;
-        this.id = id;
+        var path = "./cache/" + id + "/";
         return new Promise(function (fulfill, reject) {
-            var deletion: Promise<any>;
-            if (!instance.isExist(id))
-                reject({code: 404, body: {"error": "Source not previously added"}});
-            else
-            {
-                deletion = instance.removeFolder("./cache/" + id + "/").then( function () {
-                    try {
-                        fs.rmdirSync("./cache/");
-                    } catch (err)
-                    {
-                        //try to remove root dir if its not empty
-                        //console.log(err);
-                    }
-                }).catch( function (){
-                    reject({code: 404, body: {"error": "deletion error for rm root"}});
-                });
-            }
-           Promise.all([deletion]).then( function () {
-
-
-               fulfill( {code: 204, body: {}} );
-           }).catch(function (err: any) {
-               reject({code: 404, body: {"error": "deletion error, error is: " + err.toString()}});
-           })
+            instance.removeFolder(path)
+            .then(function (result) {
+                fulfill(result);
+            })
+            .catch( function (err) {
+                reject(err);
+            });
         });
     }
     /**
@@ -169,15 +152,17 @@ export default class InsightFacade implements IInsightFacade {
                 path = dir;
                 console.log("perform for path= " + path);
                 return instance.readDataFiles(path)
-
             })
             .then(function (listOfFiles: any) {
+                console.log("readfiles ok")
                 return Promise.all(instance.readFiles(listOfFiles, path+"/"));
             })
             .then(function (fileContents: any) {
+                console.log("loadcourses ok")
                 return instance.loadCoursesIntoArray(fileContents);
             })
             .then(function (result: any) {
+                console.log("parsequery ok")
                 return instance.parseQuery(query);
             })
             .then(function (result: any) {
@@ -190,8 +175,8 @@ export default class InsightFacade implements IInsightFacade {
     }
 
     loadCoursesIntoArray(fileContents: any): Promise<any> {
-        let instance = this;
 
+        let instance = this;
         return new Promise(function (fulfill, reject) {
             instance.loadedCourses = [];
             fileContents.forEach(function (fileContent: any) {
@@ -218,7 +203,7 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function (fulfill, reject) {
             fs.readdir(path, function(err: any, files: any) {
                 if (err)
-                    reject(err);
+                    reject({code: 404, body: {"error": "Source not previously added"}});
                 else
                     fulfill(files);
             })
@@ -234,6 +219,7 @@ export default class InsightFacade implements IInsightFacade {
                 //console.log(url);
                 fs.readFile(url, 'utf8', function (err: any, data: any) {
                     if (err) {
+                        console.log(err);
                         reject(err);
                     }
                     else {
@@ -762,6 +748,7 @@ export default class InsightFacade implements IInsightFacade {
      * and has been reviewed by one of lab TA.
      * @reference http://stackoverflow.com/questions/18052762
      */
+    /*
     removeFolder(path: string): Promise<any>
     {
         let instance = this;
@@ -782,14 +769,64 @@ export default class InsightFacade implements IInsightFacade {
                 } else {
                     //delete each single file
                     fs.unlinkSync(current);
+                    //console.log(current);
                 }
             });
             //remove entire folder when its empty
+            console.log(fs.readdirSync(path));
             fs.rmdirSync(path);
         }
         fulfill();
         });
+    }
+    */
+    removeFolder(path: string): Promise<any> {
+        let instance = this;
+        return new Promise(function (fulfill, reject) {
+            instance.readDataFiles(path)
+                .then(function (files: any) {
+                    return Promise.all(instance.removeFiles(path, files))
+                })
+                .then(function (result) {
 
+                    return instance.removeDirectory(path);
+                })
+                .then(function (result2) {
+                    fulfill(result2)
+                })
+                .catch(function (err) {
+                    reject(err)
+                })
+        })
+    }
+
+    removeFiles(path: string, listofFiles: any[]): Promise<any>[] {
+        var output: Promise<any>[] = []
+        listofFiles.forEach(function (file) {
+            output.push(new Promise(function (fulfill, reject) {
+                fs.unlink(path+file, function(err: any) {
+                    if (err) {
+                        reject({code: 404, body: {"error": "Source not previously added"}});
+                    } else {
+                        fulfill({code: 204, body: {}})
+                    }
+                })
+            }))
+        })
+
+        return output;
+    }
+
+    removeDirectory(path: string): Promise<any> {
+        return new Promise(function (fulfill, reject) {
+            fs.rmdir(path, function (err: any) {
+                if (err) {
+                    console.log(path)
+                    reject({code: 400, body: {"error:": "not empty"}});
+                }
+                fulfill({code: 204, body: {}})
+            })
+        })
     }
 
     parseData(stringObj: string): Promise<any> {
