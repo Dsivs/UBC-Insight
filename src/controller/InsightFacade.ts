@@ -459,7 +459,6 @@ export default class InsightFacade implements IInsightFacade {
 
                      for (var filename in okay.files) {
                          let name: string = filename;
-                         console.log(filename);
                          if (filename.indexOf("/") >= 0)
                          {
                              substring = filename.substr(filename.indexOf('/')+1, filename.length + 1);
@@ -469,14 +468,15 @@ export default class InsightFacade implements IInsightFacade {
                          //if got timeout, this line is the problem
                          if (okay.file(filename) === null)
                              continue;
+                         console.log(filename);
                          //inner promise is returned
                          readfile = okay.file(filename).async("string")
                              .then(function success(text: string) {
 
-                                 //console.log("text: " + text);
+                                 console.log("text: " + text);
 
                                  if (isUndefined(text) || (typeof text !== 'string') || !(instance.isJSON(text)))
-                                     reject({code: 400, body: {"error": "file content is invalid!"}});
+                                     reject({code: 400, body: {"error": "file content is invalid! because test = " + test}});
                                  //console.log(text);
                                  var buffer = new Buffer(text);
                                  instance.parseData(buffer.toString())
