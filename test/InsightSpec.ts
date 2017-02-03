@@ -278,7 +278,7 @@ describe("InsightTest", function () {
                     "AND":[
                         {
                             "GT":{
-                                "courses_avg":94
+                                "courses_avg":90
                             }
                         },
                         {
@@ -362,7 +362,7 @@ describe("InsightTest", function () {
     before(function (done) {
         Log.test('Before: ' + (<any>this).test.parent.title);
         var zip = new JSZip();
-        fs.readFile('./test/courses.zip', function(err: any, data: any){
+        fs.readFile('./test/demo.zip', function(err: any, data: any){
             if (err) {
                 //invalid zip file is given
                 console.log(err);

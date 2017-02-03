@@ -103,15 +103,13 @@ var InsightFacade = (function () {
         files.forEach(function (element) {
             contents.push(new Promise(function (fulfill, reject) {
                 var url = path + element;
-                fs.readFile(url, 'utf8', function (err, data) {
-                    if (err) {
-                        console.log(err);
-                        reject(err);
-                    }
-                    else {
-                        fulfill(JSON.parse(data));
-                    }
-                });
+                try {
+                    fulfill(JSON.parse(fs.readFileSync(url, 'utf8')));
+                }
+                catch (err) {
+                    console.log(err);
+                    reject(err);
+                }
             }));
         });
         return contents;

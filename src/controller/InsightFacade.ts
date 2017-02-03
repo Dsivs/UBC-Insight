@@ -217,16 +217,12 @@ export default class InsightFacade implements IInsightFacade {
             contents.push(new Promise(function (fulfill, reject) {
                 let url = path+element;
                 //console.log(url);
-                fs.readFile(url, 'utf8', function (err: any, data: any) {
-                    if (err) {
-                        console.log(err);
-                        reject(err);
-                    }
-                    else {
-                        //console.log(JSON.parse(data))
-                        fulfill(JSON.parse(data));
-                    }
-                })
+                try {
+                    fulfill(JSON.parse(fs.readFileSync(url, 'utf8')))
+                } catch (err) {
+                    console.log(err);
+                    reject(err);
+                }
             }))
         });
 
