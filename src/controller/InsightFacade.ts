@@ -154,7 +154,7 @@ export default class InsightFacade implements IInsightFacade {
                 })
                 .then(function (listOfFiles: any) {
                     console.log("readfiles ok")
-                    return Promise.all(instance.readFiles(listOfFiles, path+"/"));
+                    return Promise.all(instance.readFiles(listOfFiles, path));
                 })
                 .then(function (fileContents: any) {
                     console.log("loadcourses ok")
@@ -201,6 +201,8 @@ export default class InsightFacade implements IInsightFacade {
     readDataFiles(path: string): Promise<any> {
         return new Promise(function (fulfill, reject) {
             fs.readdir(path, function(err: any, files: any) {
+                console.log(path);
+
                 if (err)
                     reject({code: 404, body: {"error": "Source not previously added"}});
                 else
@@ -235,10 +237,10 @@ export default class InsightFacade implements IInsightFacade {
             if( fs.existsSync(path) ) {
                 //go through each file in the folder and delete one by one
                 fs.readdirSync(path).forEach(function(file: any){
-                    var current = path + "/" + file;
+                    var current = path + "/" + file + "/";
                     //if current folder contains folder
-                    if(fs.lstatSync(current).isDirectory()) {
-                        //found a valid folder in cache
+                    if(fs.existsSync(current)) {
+                        //found a valid file in cache
                         fulfill(current);
                     }
                 });
@@ -486,6 +488,7 @@ export default class InsightFacade implements IInsightFacade {
                     fulfill(courseValue < paramValue);
                     break;
                 case "GT":
+                case "GT":
                     fulfill(courseValue > paramValue);
                     break;
                 case "EQ":
@@ -547,9 +550,9 @@ export default class InsightFacade implements IInsightFacade {
             instance.load(buffer)
                 .then(function (okay: any)
                 {
-                    let content: any;
+                    let content: any = "";
                     var readfile: Promise<any>;
-                    var dataCache: Promise<any>;
+                    var dataParsing: Promise<any>;
                     var substring: string = "DEFAULT STRING";
 
                     for (var filename in okay.files) {
@@ -574,27 +577,18 @@ export default class InsightFacade implements IInsightFacade {
                                     reject({code: 400, body: {"error": "file content is invalid! because test = " + test}});
                                 //console.log(text);
                                 var buffer = new Buffer(text);
-                                instance.parseData(buffer.toString())
+                                dataParsing = instance.parseData(buffer.toString())
                                     .then( function (result: any) {
-                                        dataCache = instance.cacheData(result, name)
-                                            .then(function () {
-                                                content = result;
-                                            })
-                                            .catch( function (err: any){
-                                                reject({code: 400, body: {"error": "cache data error-catch " +
-                                                "cachedata block with error: " + err.toString()}});
-                                            });
+                                        if (result !== "[]" && result !== "[" && result !== "]" && result !== ",") {
+                                            //if (content === "")
+                                            content = content + result;
+                                            //else
+                                              //  content = content + "," + result;
+                                        }
                                     })
                                     .catch( function (err: any) {
                                         reject({code: 400, body: {"error": "parse data error-parsedata(buffer) block"}});
                                     });
-
-                                //cache data to disk
-                                //instance.cacheData(text, name);
-
-                                //content = content + text;
-                                //console.log(content);
-                                //console.log('for loop');
                             })
                             .catch(function (err: any) {
                                 console.log("err catched for readfile:" + err);
@@ -603,16 +597,31 @@ export default class InsightFacade implements IInsightFacade {
                             });
                     }
                     //console.log("fulfill");
-                    if (dataCache) {
-                        Promise.all([readfile, dataCache]).then(function () {
+                    if (dataParsing) {
+                        Promise.all([readfile, dataParsing]).then(function () {
                             fulfill(content);
+
+
+
                         }).catch(function (err: any) {
                             reject({code: 400, body: {"error": err.toString()}});
                         });
                     }
                     else {
                         Promise.all([readfile]).then(function () {
-                            fulfill(content);
+                            instance.cacheData(content, instance.id)
+                                .then(function () {
+                                    console.log("WWWWWW: " + content.charAt(588), content.charAt(600));
+
+                                    fulfill(content);
+                                })
+                                .catch( function (err: any){
+                                    reject({code: 400, body: {"error": "cache data error-catch " +
+                                    "cachedata block with error: " + err.toString()}});
+                                });
+
+
+
                         }).catch(function (err: any) {
                             reject({code: 400, body: {"error": err.toString()}});
                         });
