@@ -153,7 +153,7 @@ export default class InsightFacade implements IInsightFacade {
         instance.invalidIDs = [];
         return new Promise(function (fulfill, reject) {
 
-            instance.getId("./cache")
+            instance.getId(query)
                 .then(function (dir: string){
                     path = dir;
                     //console.log("perform for path= " + path);
@@ -161,7 +161,7 @@ export default class InsightFacade implements IInsightFacade {
                 })
                 .then(function (listOfFiles: any) {
                     //console.log("readfiles ok")
-                    return Promise.all(instance.readFiles(listOfFiles, path));
+                    return Promise.all(instance.readFiles(listOfFiles, path+"/"));
                 })
                 .then(function (fileContents: any) {
                     //console.log("loadcourses ok")
@@ -238,23 +238,40 @@ export default class InsightFacade implements IInsightFacade {
         return contents;
     }
     //returns a existing id path
-    getId(path: string): Promise<string>
+    getId(query: QueryRequest): Promise<string>
     {
+        let id:string;
         return new Promise( function(fulfill, reject){
+            var options: any;
+            var columns: any;
+            let path: string;
+            if (query.hasOwnProperty('WHERE') && query.hasOwnProperty('OPTIONS')) {
+                options = query.OPTIONS;
+            } else {
+                reject({code: 400, body: {"error": "Invalid Query"}})
+            }
+
+            if (options.hasOwnProperty("COLUMNS") && options.hasOwnProperty("FORM")) {
+                columns = options.COLUMNS;
+            } else {
+                reject({code: 400, body: {"error": "Invalid Query"}})
+            }
+            try {
+                id = columns[0].substr(0, columns[0].indexOf('_'));
+                path = "./cache/" + id;
+            }catch (err){
+                console.log(err);
+            }
+
             //if path is valid
             if( fs.existsSync(path) ) {
-                //go through each file in the folder and delete one by one
-                fs.readdirSync(path).forEach(function(file: any){
-                    var current = path + "/" + file + "/";
-                    //if current folder contains folder
-                    if(fs.existsSync(current)) {
-                        //found a valid file in cache
-                        fulfill(current);
-                    }
-                });
+                fulfill(path);
             }
-            //if cache folder is empty or cache folder does not exist
-            reject(null);
+            else
+            {
+                //if cache folder is empty or cache folder does not exist
+                reject({code: 404, body: {"missing": [id]}});
+            }
         });
     }
 
