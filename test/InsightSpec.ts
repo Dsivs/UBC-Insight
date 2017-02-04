@@ -362,7 +362,7 @@ describe("InsightTest", function () {
     before(function (done) {
         Log.test('Before: ' + (<any>this).test.parent.title);
         var zip = new JSZip();
-        fs.readFile('./test/demo.zip', function(err: any, data: any){
+        fs.readFile('./test/courses.zip', function(err: any, data: any){
             if (err) {
                 //invalid zip file is given
                 console.log(err);
@@ -760,20 +760,6 @@ describe("InsightTest", function () {
                 expect(response.code).to.deep.equal(200)
             }).catch(function(err) {
                 expect.fail();
-            })
-    });
-
-
-
-    it( "Load invalid data set", function () {
-        return insight.addDataset('loadInvalid', 'INVALID')
-            .then(function(response) {
-                console.log(response);
-                expect.fail();
-            }).catch(function(returned) {
-                expect(returned.code).to.deep.equal(400);
-                expect(returned.body).to.have.property('error');
-                expect(returned.body).to.deep.equal({"error": "Content Not Base64 Encoded"});
             })
     });
 
