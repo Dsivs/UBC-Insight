@@ -62,29 +62,35 @@ export default class InsightFacade implements IInsightFacade {
 
         return new Promise(function (fulfill, reject) {
 
-            if (!(instance.isBase64(content)))
-                reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
-            else {
-                //check if data set has been added
-                if (instance.isExist(id)) {
-                    //if so, delete and write again
-                    code = 201;
-                    //remove then add again if already exits
-                    /*removal = instance.removeDataset(id).catch(function () {
-                     reject({code: 400, body: {"error": "Deletion error"}})
-                     });*/
-                }
-                else {
-                    code = 204;
-                }
+            try {
 
-                //decode base64 content and cache on disk
-                instance.decode(content).then(function () {
-                    fulfill({code: code, body: {}});
-                }).catch(function (err) {
-                    //console.log(err);
-                    reject({code: 400, body: {"error": err.toString()}});
-                });
+                if (!(instance.isBase64(content)))
+                    reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
+                else {
+                    //check if data set has been added
+                    if (instance.isExist(id)) {
+                        //if so, delete and write again
+                        code = 201;
+                        //remove then add again if already exits
+                        /*removal = instance.removeDataset(id).catch(function () {
+                         reject({code: 400, body: {"error": "Deletion error"}})
+                         });*/
+                    }
+                    else {
+                        code = 204;
+                    }
+
+                    //decode base64 content and cache on disk
+                    instance.decode(content).then(function () {
+                        fulfill({code: code, body: {}});
+                    }).catch(function (err) {
+                        //console.log(err);
+                        reject({code: 400, body: {"error": err.toString()}});
+                    });
+                }
+            }catch (err)
+            {
+                reject(err);
             }
         });
     }
