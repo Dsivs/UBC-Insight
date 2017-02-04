@@ -235,7 +235,7 @@ export default class InsightFacade implements IInsightFacade {
     readDataFiles(path: string): Promise<any> {
         let listoffiles: any;
         return new Promise(function (fulfill, reject) {
-            try {
+            /*try {
                 listoffiles = fs.readdirSync(path);
             }
             catch (err)
@@ -246,16 +246,16 @@ export default class InsightFacade implements IInsightFacade {
             if (isUndefined(listoffiles))
             {
                 reject({code: 404, body: {"error": "Source not previously added"}});
-            }
+            }*/
 
-            fulfill(listoffiles);
+            //fulfill(listoffiles);
 
-            /*fs.readdir(path, function(err: any, files: any) {
+            fs.readdir(path, function(err: any, files: any) {
                 if (err)
                     reject({code: 404, body: {"error": "Source not previously added"}});
                 else
                     fulfill(files);
-            })*/
+            })
         })
     }
 
@@ -269,7 +269,7 @@ export default class InsightFacade implements IInsightFacade {
                 let data: any;
                 //console.log(url);
 
-                try {
+                /*try {
 
                     data = fs.readFileSync(url, 'utf8');
 
@@ -277,22 +277,20 @@ export default class InsightFacade implements IInsightFacade {
                 {
                     console.log(err);
                     reject(err);
-                }
-
-                if (isUndefined(data))
-                    reject(data);
-                fulfill(JSON.parse(data));
-                /*fs.readFile(url, 'utf8', function (err: any, data: any) {
-                    if (err) {
+                }*/
+                fs.readFile(url, 'utf8', function (err: any, data: any) {
+                     if (err) {
                         console.log(err);
                         reject(err);
-                    }
-                    else {
-                        fulfill(JSON.parse(data));
-                    }
-                });*/
+                     }
+                     else {
+                         fulfill(JSON.parse(data));
+                     }
+                 });
 
-
+                //if (isUndefined(data))
+                //    reject(data);
+                //fulfill(JSON.parse(data));
             }));
             });
         return contents;
