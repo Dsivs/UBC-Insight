@@ -510,7 +510,6 @@ export default class InsightFacade implements IInsightFacade {
             }
         })
     }
-
     /**
      * decodes base64 dataset to JSON object
      *
