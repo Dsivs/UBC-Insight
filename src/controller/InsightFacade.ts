@@ -17,9 +17,11 @@ export default class InsightFacade implements IInsightFacade {
 
     private loadedCourses:  Course[];
     private id:string;
+    private invalidIDs: any[];
 
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
+        this.invalidIDs = [];
     }
 
 
@@ -422,7 +424,10 @@ export default class InsightFacade implements IInsightFacade {
                             var id = paramKey.substr(0, paramKey.indexOf("_"));
                             if (id !== "courses") {
                                 //console.log("id: " + id)
-                                reject(({code: 424, body: {"missing": [id]}}))
+                                if (!instance.invalidIDs.includes(id)) {
+                                    instance.invalidIDs.push(id);
+                                }
+                                reject(({code: 424, body: {"missing": instance.invalidIDs}}))
                             }
                         }
                         if (course.hasOwnProperty(paramKey)) {

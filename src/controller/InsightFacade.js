@@ -8,6 +8,7 @@ var pattern = "^[A-Za-z0-9+\/=]+\Z";
 var InsightFacade = (function () {
     function InsightFacade() {
         Util_1.default.trace('InsightFacadeImpl::init()');
+        this.invalidIDs = [];
     }
     InsightFacade.prototype.addDataset = function (id, content) {
         var instance = this;
@@ -263,7 +264,10 @@ var InsightFacade = (function () {
                         if (paramKey.includes("_")) {
                             var id = paramKey.substr(0, paramKey.indexOf("_"));
                             if (id !== "courses") {
-                                reject(({ code: 424, body: { "missing": [id] } }));
+                                if (!instance.invalidIDs.includes(id)) {
+                                    instance.invalidIDs.push(id);
+                                }
+                                reject(({ code: 424, body: { "missing": instance.invalidIDs } }));
                             }
                         }
                         if (course.hasOwnProperty(paramKey)) {
