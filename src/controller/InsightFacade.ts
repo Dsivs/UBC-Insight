@@ -14,7 +14,7 @@ let fs = require("fs");
 
 //this is a regular expression to check if given string matches base64 encode characteristic
 //a valid base64 string should have A-Z & a-z letters and 0-9 numbers as well as optional "="
-let pattern: string = "^[A-Za-z0-9+\/=]+\Z";
+let pattern: string = "^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})$";
 
 export default class InsightFacade implements IInsightFacade {
 
@@ -63,9 +63,9 @@ export default class InsightFacade implements IInsightFacade {
 
         return new Promise(function (fulfill, reject) {
 
-            if (!(instance.isBase64(content)))
-                reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
-            else {
+           // if (!(instance.isBase64(content)))
+                //reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
+            //else {
                 //check if data set has been added
                 if (instance.isExist(id)) {
                     //if so, delete and write again
@@ -86,7 +86,7 @@ export default class InsightFacade implements IInsightFacade {
                     console.log(err);
                     reject({code: 400, body: {"error": err.toString()}});
                 });
-            }
+           // }
         });
     }
 
@@ -610,7 +610,7 @@ export default class InsightFacade implements IInsightFacade {
         //base64 string ends with "="
         /*if (input.charAt(input.length - 1) !== "=")
             return false;*/
-        let expression = new RegExp(pattern);
+        let expression = new RegExp("^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})$");
         if (!expression.test(input))
             return false;
         return true;
