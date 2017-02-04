@@ -11,6 +11,7 @@ let fs = require("fs");
 
 //this is a regular expression to check if given string matches base64 encode characteristic
 //a valid base64 string should have A-Z & a-z letters and 0-9 numbers as well as optional "="
+let pattern: string = "^[A-Za-z0-9+\/=]+\Z";
 
 export default class InsightFacade implements IInsightFacade {
 
@@ -61,9 +62,9 @@ export default class InsightFacade implements IInsightFacade {
 
         return new Promise(function (fulfill, reject) {
 
-            //if (!(instance.isBase64(content)))
-            //    reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
-            //else {
+            if (!(instance.isBase64(content)))
+                reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
+            else {
                 //check if data set has been added
                 if (instance.isExist(id)) {
                     //if so, delete and write again
@@ -82,9 +83,9 @@ export default class InsightFacade implements IInsightFacade {
                     fulfill({code: code, body: {}});
                 }).catch(function (err) {
                     //console.log(err);
-                    reject(err);
+                    reject({code: 400, body: {"error": err.toString()}});
                 });
-            //}
+            }
         });
     }
 
@@ -165,6 +166,7 @@ export default class InsightFacade implements IInsightFacade {
                     return instance.parseQuery(query);
                 })
                 .then(function (result: any) {
+                    fulfill(result);
                     fulfill(result);
                 })
                 .catch(function (err: any) {
@@ -511,6 +513,28 @@ export default class InsightFacade implements IInsightFacade {
         })
     }
     /**
+     * check if given string is encoded in base64.
+     *
+     * @param input  string needs to be checked
+     *
+     * @return boolean true if given string is in base64. false otherwise.
+     */
+    isBase64(input: string): boolean
+    {
+        if (isUndefined(input) || input === "" || input === null)
+            return false;
+        //base64 should be multiple of 4 byte string
+        /*if (input.length % 4 !== 0)
+            return false;
+        //base64 string ends with "="
+        if (input.charAt(input.length - 1) !== "=")
+         return false;
+        let expression = new RegExp(pattern);
+        if (!expression.test(input))
+            return false;*/
+        return true;
+    }
+    /**
      * decodes base64 dataset to JSON object
      *
      * @param input  given string needs to be decoded
@@ -520,92 +544,105 @@ export default class InsightFacade implements IInsightFacade {
         let instance = this;
 
         return new Promise( function (fulfill, reject) {
-            //we need to convert the data back to buffer
+            var buffer;
             try {
-                var buffer = Buffer.from(input, "base64");
-            } catch (err) {
-                reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
+                //we need to convert the data back to buffer
+                buffer = new Buffer(input, 'base64');
+            }catch (err)
+            {
+                reject({code: 400, body: {"error": "not base64 encoded"}});
             }
 
-            instance.load(buffer)
-                .then(function (okay: any)
-                {
-                    let contentArray: any[] = [];
-                    var content: any = "";
-                    var readfile: Promise<any>;
-                    var dataParsing: Promise<any>;
-                    var substring: string = "DEFAULT STRING";
+            if (buffer) {
+                instance.load(buffer)
+                    .then(function (okay: any) {
+                        let contentArray: any[] = [];
+                        var content: any = "";
+                        var readfile: Promise<any>;
+                        var dataParsing: Promise<any>;
+                        var substring: string = "DEFAULT STRING";
 
-                    for (var filename in okay.files) {
-                        let name: string = filename;
-                        if (filename.indexOf("/") >= 0)
-                        {
-                            substring = filename.substr(filename.indexOf('/')+1, filename.length + 1);
-                        }
-                        if (substring.length == 0 || substring.match(".DS_Store") || substring.match("__MAXOSX"))
-                            continue;
-                        //if got timeout, this line is the problem
-                        if (okay.file(filename) === null)
-                            continue;
-                        //console.log(filename);
-                        //inner promise is returned
-                        readfile = okay.file(filename).async("string")
-                            .then(function success(text: string) {
+                        for (var filename in okay.files) {
+                            let name: string = filename;
+                            if (filename.indexOf("/") >= 0) {
+                                substring = filename.substr(filename.indexOf('/') + 1, filename.length + 1);
+                            }
+                            if (substring.length == 0 || substring.match(".DS_Store") || substring.match("__MAXOSX"))
+                                continue;
+                            //if got timeout, this line is the problem
+                            if (okay.file(filename) === null)
+                                continue;
+                            //console.log(filename);
+                            //inner promise is returned
+                            readfile = okay.file(filename).async("string")
+                                .then(function success(text: string) {
 
-                                //console.log("text: " + text);
+                                    //console.log("text: " + text);
 
-                                if (isUndefined(text) || (typeof text !== 'string') || !(instance.isJSON(text)))
-                                    reject({code: 400, body: {"error": "file content is invalid! because test = " + test}});
-                                //console.log(text);
-                                var buffer = new Buffer(text);
-                                dataParsing = instance.parseData(buffer.toString())
-                                    .then( function (result: any) {
-                                        contentArray = contentArray.concat(result);
-                                        //console.log(contentArray);
-                                    })
-                                    .catch( function (err: any) {
-                                        reject({code: 400, body: {"error": "parse data error-parsedata(buffer) block"}});
-                                    });
-                            })
-                            .catch(function (err: any) {
-                                //console.log("err catched for readfile:" + err);
-                                //read file error
-                                reject({code: 400, body: {"error": "read-file error"}});
-                            });
-                    }
-                    //console.log("fulfill");
-                    if (dataParsing) {
-                        Promise.all([readfile, dataParsing]).then(function () {
-                            content = JSON.stringify(contentArray, null, 4)
-                            fulfill(content);
-
-                        }).catch(function (err: any) {
-                            reject({code: 400, body: {"error": err.toString()}});
-                        });
-                    }
-                    else {
-
-                        Promise.all([readfile]).then(function () {
-                            content = JSON.stringify(contentArray, null, 4)
-                            instance.cacheData(content, instance.id)
-                                .then(function () {
-                                    //console.log("WWWWWW: " + content.charAt(588), content.charAt(600));
-
-                                    fulfill(content);
+                                    if (isUndefined(text) || (typeof text !== 'string') || !(instance.isJSON(text)))
+                                        reject({
+                                            code: 400,
+                                            body: {"error": "file content is invalid! because test = " + test}
+                                        });
+                                    //console.log(text);
+                                    var buffer = new Buffer(text);
+                                    dataParsing = instance.parseData(buffer.toString())
+                                        .then(function (result: any) {
+                                            contentArray = contentArray.concat(result);
+                                            //console.log(contentArray);
+                                        })
+                                        .catch(function (err: any) {
+                                            reject({
+                                                code: 400,
+                                                body: {"error": "parse data error-parsedata(buffer) block"}
+                                            });
+                                        });
                                 })
-                                .catch( function (err: any){
-                                    reject({code: 400, body: {"error": "cache data error-catch " +
-                                    "cachedata block with error: " + err.toString()}});
+                                .catch(function (err: any) {
+                                    //console.log("err catched for readfile:" + err);
+                                    //read file error
+                                    reject({code: 400, body: {"error": "read-file error"}});
                                 });
+                        }
+                        //console.log("fulfill");
+                        if (dataParsing) {
+                            Promise.all([readfile, dataParsing]).then(function () {
+                                content = JSON.stringify(contentArray, null, 4)
+                                fulfill(content);
 
-                        }).catch(function (err: any) {
-                            reject({code: 400, body: {"error": err.toString()}});
-                        });
-                    }
-                }).catch(function (err) {
-                //console.log(err);
-                reject(err);
-            });
+                            }).catch(function (err: any) {
+                                reject({code: 400, body: {"error": err.toString()}});
+                            });
+                        }
+                        else {
+
+                            Promise.all([readfile]).then(function () {
+                                content = JSON.stringify(contentArray, null, 4)
+                                instance.cacheData(content, instance.id)
+                                    .then(function () {
+                                        //console.log("WWWWWW: " + content.charAt(588), content.charAt(600));
+
+                                        fulfill(content);
+                                    })
+                                    .catch(function (err: any) {
+                                        reject({
+                                            code: 400, body: {
+                                                "error": "cache data error-catch " +
+                                                "cachedata block with error: " + err.toString()
+                                            }
+                                        });
+                                    });
+
+                            }).catch(function (err: any) {
+                                reject({code: 400, body: {"error": err.toString()}});
+                            });
+                        }
+                    }).catch(function (err) {
+                    //console.log(err);
+                    reject({code: 400, body: {"error": err.toString()}});
+                });
+
+            }
         });
     }
 
@@ -615,12 +652,10 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function(fulfill, reject)
         {
             let zip = new JSZip();
-            zip.loadAsync(buffer)
-            .then(function (okay: any) {
+            zip.loadAsync(buffer).then(function (okay: any) {
                 fulfill(okay);
-            })
-            .catch(function (err: any) {
-                reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
+            }).catch(function (err: any) {
+                reject({code: 400, body: {"error": err.toString()}});
             });
         });
     }
