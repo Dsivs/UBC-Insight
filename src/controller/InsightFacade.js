@@ -4,7 +4,6 @@ var Course_1 = require("./Course");
 var util_1 = require("util");
 var JSZip = require("jszip");
 var fs = require("fs");
-var pattern = "^[A-Za-z0-9+\/=]+\Z";
 var InsightFacade = (function () {
     function InsightFacade() {
         Util_1.default.trace('InsightFacadeImpl::init()');
@@ -15,21 +14,17 @@ var InsightFacade = (function () {
         this.id = id;
         var code = 0;
         return new Promise(function (fulfill, reject) {
-            if (!(instance.isBase64(content)))
-                reject({ code: 400, body: { "error": "Content Not Base64 Encoded" } });
-            else {
-                if (instance.isExist(id)) {
-                    code = 201;
-                }
-                else {
-                    code = 204;
-                }
-                instance.decode(content).then(function () {
-                    fulfill({ code: code, body: {} });
-                }).catch(function (err) {
-                    reject({ code: 400, body: { "error": err.toString() } });
-                });
+            if (instance.isExist(id)) {
+                code = 201;
             }
+            else {
+                code = 204;
+            }
+            instance.decode(content).then(function () {
+                fulfill({ code: code, body: {} });
+            }).catch(function (err) {
+                reject(err);
+            });
         });
     };
     InsightFacade.prototype.removeDataset = function (id) {
@@ -335,20 +330,15 @@ var InsightFacade = (function () {
             }
         });
     };
-    InsightFacade.prototype.isBase64 = function (input) {
-        if (util_1.isUndefined(input) || input === "" || input === null)
-            return false;
-        if (input.length % 4 !== 0)
-            return false;
-        var expression = new RegExp(pattern);
-        if (!expression.test(input))
-            return false;
-        return true;
-    };
     InsightFacade.prototype.decode = function (input) {
         var instance = this;
         return new Promise(function (fulfill, reject) {
-            var buffer = new Buffer(input, 'base64');
+            try {
+                var buffer = Buffer.from(input, "base64");
+            }
+            catch (err) {
+                reject({ code: 400, body: { "error": "Content Not Base64 Encoded" } });
+            }
             instance.load(buffer)
                 .then(function (okay) {
                 var contentArray = [];
@@ -406,17 +396,19 @@ var InsightFacade = (function () {
                     });
                 }
             }).catch(function (err) {
-                reject({ code: 400, body: { "error": err.toString() } });
+                reject(err);
             });
         });
     };
     InsightFacade.prototype.load = function (buffer) {
         return new Promise(function (fulfill, reject) {
             var zip = new JSZip();
-            zip.loadAsync(buffer).then(function (okay) {
+            zip.loadAsync(buffer)
+                .then(function (okay) {
                 fulfill(okay);
-            }).catch(function (err) {
-                reject({ code: 400, body: { "error": err.toString() } });
+            })
+                .catch(function (err) {
+                reject({ code: 400, body: { "error": "Content Not Base64 Encoded" } });
             });
         });
     };

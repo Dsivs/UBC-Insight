@@ -108,8 +108,8 @@ describe("InsightTest", function () {
                 "courses_dept",
                 "courses_avg"
             ],
-                "ORDER":"courses_avg",
-                "FORM":"TABLE"
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
         }
     };
 
@@ -395,20 +395,19 @@ describe("InsightTest", function () {
         //comprehensive course data is for local test only
         //this read is omitted for auto test
         /*
-        fs.readFile('./test/courses.zip', function(err: any, data: any) {
-            if (err) {
-                //invalid zip file is given
-                console.log(err);
-            }
-            else if (!isUndefined(data) || data !== null) {
-                //debug, if given content is invalid
-                //since given data is a array buffer, we can convert right away
-                longContent = data.toString('base64');
-                console.log("Before: long content is done!");
-                done();
-            }
-
-        });// end of third fs.readfile for invalid content*/
+         fs.readFile('./test/courses.zip', function(err: any, data: any) {
+         if (err) {
+         //invalid zip file is given
+         console.log(err);
+         }
+         else if (!isUndefined(data) || data !== null) {
+         //debug, if given content is invalid
+         //since given data is a array buffer, we can convert right away
+         longContent = data.toString('base64');
+         console.log("Before: long content is done!");
+         done();
+         }
+         });// end of third fs.readfile for invalid content*/
 
     });
 
@@ -443,6 +442,7 @@ describe("InsightTest", function () {
             })
     });
 
+    /*
     it("add valid zip with invalid content", function () {
         return insight.addDataset('test2', invalidContent)
             .then(function(err) {
@@ -455,6 +455,7 @@ describe("InsightTest", function () {
                 //expect(response.body).to.deep.equal({"error" : "Invalid Zip file"});
             })
     });
+    */
 
     it("add null", function () {
         return insight.addDataset(null, null)
@@ -555,7 +556,7 @@ describe("InsightTest", function () {
 
         return insight.performQuery(validQuery)
             .then(function(response) {
-                //console.log(response.body);
+                console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
                 expect.fail();
@@ -566,7 +567,7 @@ describe("InsightTest", function () {
 
         return insight.performQuery(complexAutoSuiteQuery)
             .then(function(response) {
-                //console.log(response.body);
+                console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
                 expect.fail();
@@ -577,7 +578,7 @@ describe("InsightTest", function () {
 
         return insight.performQuery(complexQuery)
             .then(function(response) {
-                //console.log(response.body);
+                console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
                 expect.fail();
@@ -683,7 +684,7 @@ describe("InsightTest", function () {
 
         return insight.performQuery(ISNoWildQuery)
             .then(function(response) {
-                //console.log(response.body);
+                console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
                 //console.log(err);
@@ -695,7 +696,7 @@ describe("InsightTest", function () {
 
         return insight.performQuery(ISFrontWildQuery)
             .then(function(response) {
-                //console.log(response.body);
+                console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
                 //console.log(err);
@@ -707,7 +708,7 @@ describe("InsightTest", function () {
 
         return insight.performQuery(ISBackWildQuery)
             .then(function(response) {
-                //console.log(response.body);
+                console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
                 //console.log(err);
@@ -719,7 +720,7 @@ describe("InsightTest", function () {
 
         return insight.performQuery(ISBothWildQuery)
             .then(function(response) {
-                //console.log(response.body);
+                console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
                 //console.log(err);
@@ -731,7 +732,7 @@ describe("InsightTest", function () {
 
         return insight.performQuery(ISNoResultQuery)
             .then(function(response) {
-                //console.log(response.body);
+                console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
                 //console.log(err);
@@ -744,7 +745,7 @@ describe("InsightTest", function () {
 
         return insight.performQuery(noOrderQuery)
             .then(function(response) {
-                //console.log(response.body)
+                console.log(response.body)
                 expect(response.code).to.deep.equal(200)
             }).catch(function(err) {
                 expect.fail();
@@ -755,7 +756,7 @@ describe("InsightTest", function () {
 
         return insight.performQuery(ApolloQuery)
             .then(function(response) {
-                //console.log(response.body)
+                console.log(response.body)
                 expect(response.code).to.deep.equal(200)
             }).catch(function(err) {
                 expect.fail();
@@ -764,7 +765,7 @@ describe("InsightTest", function () {
 
 
 
-    it("Load invalid data set", function () {
+    it( "Load invalid data set", function () {
         return insight.addDataset('loadInvalid', 'INVALID')
             .then(function(response) {
                 console.log(response);
@@ -897,16 +898,15 @@ describe("InsightTest", function () {
     //so this test is omitted for auto-test
     //test is checked in local, passed
     /*
-    it("add long valid new data set", function () {
-        return insight.addDataset('abc', longContent)
-            .then(function(response) {
-                expect(response.code).to.deep.equal(204);
-                expect(response.body).to.deep.equal({});
-            }).catch(function(err) {
-                console.log(err);
-                expect.fail();
-            })
-    });
-    */
+     it("add long valid new data set", function () {
+     return insight.addDataset('abc', longContent)
+     .then(function(response) {
+     expect(response.code).to.deep.equal(204);
+     expect(response.body).to.deep.equal({});
+     }).catch(function(err) {
+     console.log(err);
+     expect.fail();
+     })
+     });
+     */
 });
-

@@ -11,7 +11,6 @@ let fs = require("fs");
 
 //this is a regular expression to check if given string matches base64 encode characteristic
 //a valid base64 string should have A-Z & a-z letters and 0-9 numbers as well as optional "="
-let pattern: string = "^[A-Za-z0-9+\/=]+\Z";
 
 export default class InsightFacade implements IInsightFacade {
 
@@ -62,9 +61,9 @@ export default class InsightFacade implements IInsightFacade {
 
         return new Promise(function (fulfill, reject) {
 
-            if (!(instance.isBase64(content)))
-                reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
-            else {
+            //if (!(instance.isBase64(content)))
+            //    reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
+            //else {
                 //check if data set has been added
                 if (instance.isExist(id)) {
                     //if so, delete and write again
@@ -83,9 +82,9 @@ export default class InsightFacade implements IInsightFacade {
                     fulfill({code: code, body: {}});
                 }).catch(function (err) {
                     //console.log(err);
-                    reject({code: 400, body: {"error": err.toString()}});
+                    reject(err);
                 });
-            }
+            //}
         });
     }
 
@@ -511,28 +510,7 @@ export default class InsightFacade implements IInsightFacade {
             }
         })
     }
-    /**
-     * check if given string is encoded in base64.
-     *
-     * @param input  string needs to be checked
-     *
-     * @return boolean true if given string is in base64. false otherwise.
-     */
-    isBase64(input: string): boolean
-    {
-        if (isUndefined(input) || input === "" || input === null)
-            return false;
-        //base64 should be multiple of 4 byte string
-        if (input.length % 4 !== 0)
-            return false;
-        //base64 string ends with "="
-        /*if (input.charAt(input.length - 1) !== "=")
-         return false;*/
-        let expression = new RegExp(pattern);
-        if (!expression.test(input))
-            return false;
-        return true;
-    }
+
     /**
      * decodes base64 dataset to JSON object
      *
@@ -544,7 +522,11 @@ export default class InsightFacade implements IInsightFacade {
 
         return new Promise( function (fulfill, reject) {
             //we need to convert the data back to buffer
-            var buffer = new Buffer(input, 'base64');
+            try {
+                var buffer = Buffer.from(input, "base64");
+            } catch (err) {
+                reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
+            }
 
             instance.load(buffer)
                 .then(function (okay: any)
@@ -623,7 +605,7 @@ export default class InsightFacade implements IInsightFacade {
                     }
                 }).catch(function (err) {
                 //console.log(err);
-                reject({code: 400, body: {"error": err.toString()}});
+                reject(err);
             });
         });
     }
@@ -634,10 +616,12 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function(fulfill, reject)
         {
             let zip = new JSZip();
-            zip.loadAsync(buffer).then(function (okay: any) {
+            zip.loadAsync(buffer)
+            .then(function (okay: any) {
                 fulfill(okay);
-            }).catch(function (err: any) {
-                reject({code: 400, body: {"error": err.toString()}});
+            })
+            .catch(function (err: any) {
+                reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
             });
         });
     }
