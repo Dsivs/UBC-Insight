@@ -63,9 +63,9 @@ export default class InsightFacade implements IInsightFacade {
 
         return new Promise(function (fulfill, reject) {
 
-           // if (!(instance.isBase64(content)))
-                //reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
-            //else {
+           if (!(instance.isBase64(content)))
+                reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
+            else {
                 //check if data set has been added
                 if (instance.isExist(id)) {
                     //if so, delete and write again
@@ -79,14 +79,19 @@ export default class InsightFacade implements IInsightFacade {
                     code = 204;
                 }
 
-                //decode base64 content and cache on disk
-                instance.decode(content).then(function () {
-                    fulfill({code: code, body: {}});
-                }).catch(function (err) {
-                    console.log(err);
+                try {
+                    //decode base64 content and cache on disk
+                    instance.decode(content).then(function () {
+                        fulfill({code: code, body: {}});
+                    }).catch(function (err) {
+                        console.log(err);
+                        reject({code: 400, body: {"error": err.toString()}});
+                    });
+                }catch (err)
+                {
                     reject({code: 400, body: {"error": err.toString()}});
-                });
-           // }
+                }
+            }
         });
     }
 
@@ -147,7 +152,7 @@ export default class InsightFacade implements IInsightFacade {
         let path: string;
         return new Promise(function (fulfill, reject) {
 
-            instance.getId(query)
+            /*instance.getId(query)
                 .then(function (dir: string){
                     path = dir;
                     console.log("perform for path= " + path);
@@ -174,35 +179,31 @@ export default class InsightFacade implements IInsightFacade {
 
                 }).catch(function (err: any) {
                 reject(err);
-            });
-
-
-
-
-
-            /*instance.getId(query)
-            .then(function (dir: string){
-                path = dir;
-                console.log("perform for path= " + path);
-                return instance.readDataFiles(path)
-            })
-            .then(function (listOfFiles: any) {
-
-            })
-            .then(function (fileContents: any) {
-                console.log("loadcourses ok")
-                return instance.loadCoursesIntoArray(fileContents);
-            })
-            .then(function (result: any) {
-                console.log("parsequery ok")
-                return instance.parseQuery(query);
-            })
-            .then(function (result: any) {
-                fulfill(result);
-            })
-            .catch(function (err: any) {
-                reject(err);
-            })*/
+            });*/
+            instance.getId(query)
+                .then(function (dir: string){
+                    path = dir;
+                    //console.log("perform for path= " + path);
+                    return instance.readDataFiles(path)
+                })
+                .then(function (listOfFiles: any) {
+                    //console.log("readfiles ok")
+                    return Promise.all(instance.readFiles(listOfFiles, path+"/"));
+                })
+                .then(function (fileContents: any) {
+                    //console.log("loadcourses ok")
+                    return instance.loadCoursesIntoArray(fileContents);
+                })
+                .then(function (result: any) {
+                    //console.log("parsequery ok")
+                    return instance.parseQuery(query);
+                })
+                .then(function (result: any) {
+                    fulfill(result);
+                })
+                .catch(function (err: any) {
+                    reject(err);
+                })
         });
     }
 
@@ -605,14 +606,14 @@ export default class InsightFacade implements IInsightFacade {
         if (isUndefined(input) || input === "" || input === null)
             return false;
         //base64 should be multiple of 4 byte string
-        if (input.length % 4 !== 0)
-            return false;
+        //if (input.length % 4 !== 0)
+        //    return false;
         //base64 string ends with "="
         /*if (input.charAt(input.length - 1) !== "=")
             return false;*/
-        let expression = new RegExp("^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{4})$");
-        if (!expression.test(input))
-            return false;
+        //let expression = new RegExp(pattern);
+        //if (!expression.test(input))
+        //    return false;
         return true;
     }
      /**
