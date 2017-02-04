@@ -27,7 +27,6 @@ var InsightFacade = (function () {
                 instance.decode(content).then(function () {
                     fulfill({ code: code, body: {} });
                 }).catch(function (err) {
-                    console.log(err);
                     reject({ code: 400, body: { "error": err.toString() } });
                 });
             }
@@ -49,23 +48,20 @@ var InsightFacade = (function () {
     InsightFacade.prototype.performQuery = function (query) {
         var instance = this;
         var path;
+        instance.invalidIDs = [];
         return new Promise(function (fulfill, reject) {
             instance.getId("./cache")
                 .then(function (dir) {
                 path = dir;
-                console.log("perform for path= " + path);
                 return instance.readDataFiles(path);
             })
                 .then(function (listOfFiles) {
-                console.log("readfiles ok");
-                return Promise.all(instance.readFiles(listOfFiles, path + "/"));
+                return Promise.all(instance.readFiles(listOfFiles, path));
             })
                 .then(function (fileContents) {
-                console.log("loadcourses ok");
                 return instance.loadCoursesIntoArray(fileContents);
             })
                 .then(function (result) {
-                console.log("parsequery ok");
                 return instance.parseQuery(query);
             })
                 .then(function (result) {
@@ -108,7 +104,6 @@ var InsightFacade = (function () {
                     fulfill(JSON.parse(fs.readFileSync(url, 'utf8')));
                 }
                 catch (err) {
-                    console.log(err);
                     reject(err);
                 }
             }));
@@ -119,8 +114,8 @@ var InsightFacade = (function () {
         return new Promise(function (fulfill, reject) {
             if (fs.existsSync(path)) {
                 fs.readdirSync(path).forEach(function (file) {
-                    var current = path + "/" + file;
-                    if (fs.lstatSync(current).isDirectory()) {
+                    var current = path + "/" + file + "/";
+                    if (fs.existsSync(current)) {
                         fulfill(current);
                     }
                 });
@@ -356,49 +351,40 @@ var InsightFacade = (function () {
             var buffer = new Buffer(input, 'base64');
             instance.load(buffer)
                 .then(function (okay) {
-                var content;
+                var contentArray = [];
+                var content = "";
                 var readfile;
-                var dataCache;
+                var dataParsing;
                 var substring = "DEFAULT STRING";
-                var _loop_1 = function() {
+                for (var filename in okay.files) {
                     var name_1 = filename;
                     if (filename.indexOf("/") >= 0) {
                         substring = filename.substr(filename.indexOf('/') + 1, filename.length + 1);
                     }
                     if (substring.length == 0 || substring.match(".DS_Store") || substring.match("__MAXOSX"))
-                        return "continue";
+                        continue;
                     if (okay.file(filename) === null)
-                        return "continue";
+                        continue;
                     readfile = okay.file(filename).async("string")
                         .then(function success(text) {
                         if (util_1.isUndefined(text) || (typeof text !== 'string') || !(instance.isJSON(text)))
                             reject({ code: 400, body: { "error": "file content is invalid! because test = " + test } });
                         var buffer = new Buffer(text);
-                        instance.parseData(buffer.toString())
+                        dataParsing = instance.parseData(buffer.toString())
                             .then(function (result) {
-                            dataCache = instance.cacheData(result, name_1)
-                                .then(function () {
-                                content = result;
-                            })
-                                .catch(function (err) {
-                                reject({ code: 400, body: { "error": "cache data error-catch " +
-                                            "cachedata block with error: " + err.toString() } });
-                            });
+                            contentArray = contentArray.concat(result);
                         })
                             .catch(function (err) {
                             reject({ code: 400, body: { "error": "parse data error-parsedata(buffer) block" } });
                         });
                     })
                         .catch(function (err) {
-                        console.log("err catched for readfile:" + err);
                         reject({ code: 400, body: { "error": "read-file error" } });
                     });
-                };
-                for (var filename in okay.files) {
-                    _loop_1();
                 }
-                if (dataCache) {
-                    Promise.all([readfile, dataCache]).then(function () {
+                if (dataParsing) {
+                    Promise.all([readfile, dataParsing]).then(function () {
+                        content = JSON.stringify(contentArray, null, 4);
                         fulfill(content);
                     }).catch(function (err) {
                         reject({ code: 400, body: { "error": err.toString() } });
@@ -406,13 +392,20 @@ var InsightFacade = (function () {
                 }
                 else {
                     Promise.all([readfile]).then(function () {
-                        fulfill(content);
+                        content = JSON.stringify(contentArray, null, 4);
+                        instance.cacheData(content, instance.id)
+                            .then(function () {
+                            fulfill(content);
+                        })
+                            .catch(function (err) {
+                            reject({ code: 400, body: { "error": "cache data error-catch " +
+                                        "cachedata block with error: " + err.toString() } });
+                        });
                     }).catch(function (err) {
                         reject({ code: 400, body: { "error": err.toString() } });
                     });
                 }
             }).catch(function (err) {
-                console.log(err);
                 reject({ code: 400, body: { "error": err.toString() } });
             });
         });
@@ -511,7 +504,6 @@ var InsightFacade = (function () {
         return new Promise(function (fulfill, reject) {
             fs.rmdir(path, function (err) {
                 if (err) {
-                    console.log(path);
                     reject({ code: 400, body: { "error:": "not empty" } });
                 }
                 fulfill({ code: 204, body: {} });
@@ -542,7 +534,7 @@ var InsightFacade = (function () {
                 };
                 output.push(course);
             });
-            fulfill(JSON.stringify(output, null, 4));
+            fulfill(output);
         });
     };
     return InsightFacade;

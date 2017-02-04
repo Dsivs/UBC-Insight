@@ -82,7 +82,7 @@ export default class InsightFacade implements IInsightFacade {
                 instance.decode(content).then(function () {
                     fulfill({code: code, body: {}});
                 }).catch(function (err) {
-                    console.log(err);
+                    //console.log(err);
                     reject({code: 400, body: {"error": err.toString()}});
                 });
             }
@@ -144,24 +144,25 @@ export default class InsightFacade implements IInsightFacade {
     performQuery(query: QueryRequest): Promise <InsightResponse> {
         let instance = this;
         let path: string;
+        instance.invalidIDs = [];
         return new Promise(function (fulfill, reject) {
 
             instance.getId("./cache")
                 .then(function (dir: string){
                     path = dir;
-                    console.log("perform for path= " + path);
+                    //console.log("perform for path= " + path);
                     return instance.readDataFiles(path)
                 })
                 .then(function (listOfFiles: any) {
-                    console.log("readfiles ok")
+                    //console.log("readfiles ok")
                     return Promise.all(instance.readFiles(listOfFiles, path));
                 })
                 .then(function (fileContents: any) {
-                    console.log("loadcourses ok")
+                    //console.log("loadcourses ok")
                     return instance.loadCoursesIntoArray(fileContents);
                 })
                 .then(function (result: any) {
-                    console.log("parsequery ok")
+                    //console.log("parsequery ok")
                     return instance.parseQuery(query);
                 })
                 .then(function (result: any) {
@@ -201,7 +202,7 @@ export default class InsightFacade implements IInsightFacade {
     readDataFiles(path: string): Promise<any> {
         return new Promise(function (fulfill, reject) {
             fs.readdir(path, function(err: any, files: any) {
-                console.log(path);
+                //console.log(path);
 
                 if (err)
                     reject({code: 404, body: {"error": "Source not previously added"}});
@@ -221,7 +222,7 @@ export default class InsightFacade implements IInsightFacade {
                 try {
                     fulfill(JSON.parse(fs.readFileSync(url, 'utf8')))
                 } catch (err) {
-                    console.log(err);
+                    //console.log(err);
                     reject(err);
                 }
             }))
@@ -488,7 +489,6 @@ export default class InsightFacade implements IInsightFacade {
                     fulfill(courseValue < paramValue);
                     break;
                 case "GT":
-                case "GT":
                     fulfill(courseValue > paramValue);
                     break;
                 case "EQ":
@@ -507,7 +507,6 @@ export default class InsightFacade implements IInsightFacade {
                         fulfill(courseValue === paramValue);
                     }
                     fulfill(courseValue.startsWith(paramValue.substring(0, lastWildCard)))
-
                     break;
             }
         })
@@ -550,7 +549,8 @@ export default class InsightFacade implements IInsightFacade {
             instance.load(buffer)
                 .then(function (okay: any)
                 {
-                    let content: any = "";
+                    let contentArray: any[] = [];
+                    var content: any = "";
                     var readfile: Promise<any>;
                     var dataParsing: Promise<any>;
                     var substring: string = "DEFAULT STRING";
@@ -579,19 +579,15 @@ export default class InsightFacade implements IInsightFacade {
                                 var buffer = new Buffer(text);
                                 dataParsing = instance.parseData(buffer.toString())
                                     .then( function (result: any) {
-                                        if (result !== "[]" && result !== "[" && result !== "]" && result !== ",") {
-                                            //if (content === "")
-                                            content = content + result;
-                                            //else
-                                              //  content = content + "," + result;
-                                        }
+                                        contentArray = contentArray.concat(result);
+                                        //console.log(contentArray);
                                     })
                                     .catch( function (err: any) {
                                         reject({code: 400, body: {"error": "parse data error-parsedata(buffer) block"}});
                                     });
                             })
                             .catch(function (err: any) {
-                                console.log("err catched for readfile:" + err);
+                                //console.log("err catched for readfile:" + err);
                                 //read file error
                                 reject({code: 400, body: {"error": "read-file error"}});
                             });
@@ -599,19 +595,20 @@ export default class InsightFacade implements IInsightFacade {
                     //console.log("fulfill");
                     if (dataParsing) {
                         Promise.all([readfile, dataParsing]).then(function () {
+                            content = JSON.stringify(contentArray, null, 4)
                             fulfill(content);
-
-
 
                         }).catch(function (err: any) {
                             reject({code: 400, body: {"error": err.toString()}});
                         });
                     }
                     else {
+
                         Promise.all([readfile]).then(function () {
+                            content = JSON.stringify(contentArray, null, 4)
                             instance.cacheData(content, instance.id)
                                 .then(function () {
-                                    console.log("WWWWWW: " + content.charAt(588), content.charAt(600));
+                                    //console.log("WWWWWW: " + content.charAt(588), content.charAt(600));
 
                                     fulfill(content);
                                 })
@@ -620,14 +617,12 @@ export default class InsightFacade implements IInsightFacade {
                                     "cachedata block with error: " + err.toString()}});
                                 });
 
-
-
                         }).catch(function (err: any) {
                             reject({code: 400, body: {"error": err.toString()}});
                         });
                     }
                 }).catch(function (err) {
-                console.log(err);
+                //console.log(err);
                 reject({code: 400, body: {"error": err.toString()}});
             });
         });
@@ -811,7 +806,7 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function (fulfill, reject) {
             fs.rmdir(path, function (err: any) {
                 if (err) {
-                    console.log(path)
+                    //console.log(path)
                     reject({code: 400, body: {"error:": "not empty"}});
                 }
                 fulfill({code: 204, body: {}})
@@ -844,7 +839,7 @@ export default class InsightFacade implements IInsightFacade {
                 output.push(course);
             });
 
-            fulfill(JSON.stringify(output, null, 4));
+            fulfill(output);
         })
     }
 }

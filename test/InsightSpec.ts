@@ -555,7 +555,7 @@ describe("InsightTest", function () {
 
         return insight.performQuery(validQuery)
             .then(function(response) {
-                console.log(response.body);
+                //console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
                 expect.fail();
@@ -566,7 +566,7 @@ describe("InsightTest", function () {
 
         return insight.performQuery(complexAutoSuiteQuery)
             .then(function(response) {
-                console.log(response.body);
+                //console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
                 expect.fail();
@@ -577,7 +577,7 @@ describe("InsightTest", function () {
 
         return insight.performQuery(complexQuery)
             .then(function(response) {
-                console.log(response.body);
+                //console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
                 expect.fail();
@@ -591,7 +591,7 @@ describe("InsightTest", function () {
                 expect.fail();
 
             }).catch(function(err) {
-                console.log(err);
+                //console.log(err);
                 expect(err.code).to.deep.equal(424);
             })
     });
@@ -603,7 +603,7 @@ describe("InsightTest", function () {
                 expect.fail();
 
             }).catch(function(err) {
-                console.log(err);
+                //console.log(err);
                 expect(err.code).to.deep.equal(424);
             })
     });
@@ -615,7 +615,7 @@ describe("InsightTest", function () {
                 expect.fail();
 
             }).catch(function(err) {
-                console.log(err);
+                //console.log(err);
                 expect(err.code).to.deep.equal(400);
             })
     });
@@ -627,7 +627,7 @@ describe("InsightTest", function () {
                 expect.fail();
 
             }).catch(function(err) {
-                console.log(err);
+                //console.log(err);
                 expect(err.code).to.deep.equal(400);
             })
     });
@@ -639,7 +639,7 @@ describe("InsightTest", function () {
                 expect.fail();
 
             }).catch(function(err) {
-                console.log(err);
+                //console.log(err);
                 expect(err.code).to.deep.equal(400);
             })
     });
@@ -651,7 +651,7 @@ describe("InsightTest", function () {
                 expect.fail();
 
             }).catch(function(err) {
-                console.log(err);
+                //console.log(err);
                 expect(err.code).to.deep.equal(400);
             })
     });
@@ -663,7 +663,7 @@ describe("InsightTest", function () {
                 expect.fail();
 
             }).catch(function(err) {
-                console.log(err);
+                //console.log(err);
                 expect(err.code).to.deep.equal(400);
             })
     });
@@ -674,7 +674,7 @@ describe("InsightTest", function () {
             .then(function(response) {
                 expect.fail();
             }).catch(function(err) {
-                console.log(err);
+                //console.log(err);
                 expect(err.code).to.deep.equal(400);
             })
     });
@@ -683,10 +683,10 @@ describe("InsightTest", function () {
 
         return insight.performQuery(ISNoWildQuery)
             .then(function(response) {
-                console.log(response.body);
+                //console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
-                console.log(err);
+                //console.log(err);
                 expect.fail();
             })
     });
@@ -695,10 +695,10 @@ describe("InsightTest", function () {
 
         return insight.performQuery(ISFrontWildQuery)
             .then(function(response) {
-                console.log(response.body);
+                //console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
-                console.log(err);
+                //console.log(err);
                 expect.fail();
             })
     });
@@ -707,10 +707,10 @@ describe("InsightTest", function () {
 
         return insight.performQuery(ISBackWildQuery)
             .then(function(response) {
-                console.log(response.body);
+                //console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
-                console.log(err);
+                //console.log(err);
                 expect.fail();
             })
     });
@@ -719,10 +719,10 @@ describe("InsightTest", function () {
 
         return insight.performQuery(ISBothWildQuery)
             .then(function(response) {
-                console.log(response.body);
+                //console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
-                console.log(err);
+                //console.log(err);
                 expect.fail();
             })
     });
@@ -731,10 +731,10 @@ describe("InsightTest", function () {
 
         return insight.performQuery(ISNoResultQuery)
             .then(function(response) {
-                console.log(response.body);
+                //console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
-                console.log(err);
+                //console.log(err);
                 expect.fail();
             })
     });
@@ -744,7 +744,7 @@ describe("InsightTest", function () {
 
         return insight.performQuery(noOrderQuery)
             .then(function(response) {
-                console.log(response.body)
+                //console.log(response.body)
                 expect(response.code).to.deep.equal(200)
             }).catch(function(err) {
                 expect.fail();
@@ -755,7 +755,7 @@ describe("InsightTest", function () {
 
         return insight.performQuery(ApolloQuery)
             .then(function(response) {
-                console.log(response.body)
+                //console.log(response.body)
                 expect(response.code).to.deep.equal(200)
             }).catch(function(err) {
                 expect.fail();
@@ -775,6 +775,7 @@ describe("InsightTest", function () {
                 expect(returned.body).to.deep.equal({"error": "Content Not Base64 Encoded"});
             })
     });
+
 
     it("remove a valid new data set", function () {
         return insight2.removeDataset('courses')
