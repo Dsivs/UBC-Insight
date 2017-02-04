@@ -1,3 +1,6 @@
+/**
+ * This is the main programmatic entry point for the project.
+ */
 import {IInsightFacade, InsightResponse, QueryRequest} from "./IInsightFacade";
 
 import Log from "../Util";
@@ -17,11 +20,9 @@ export default class InsightFacade implements IInsightFacade {
 
     private loadedCourses:  Course[];
     private id:string;
-    private invalidIDs: any[];
 
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
-        this.invalidIDs = [];
     }
 
 
@@ -71,8 +72,8 @@ export default class InsightFacade implements IInsightFacade {
                     code = 201;
                     //remove then add again if already exits
                     /*removal = instance.removeDataset(id).catch(function () {
-                     reject({code: 400, body: {"error": "Deletion error"}})
-                     });*/
+                        reject({code: 400, body: {"error": "Deletion error"}})
+                    });*/
                 }
                 else {
                     code = 204;
@@ -82,7 +83,7 @@ export default class InsightFacade implements IInsightFacade {
                 instance.decode(content).then(function () {
                     fulfill({code: code, body: {}});
                 }).catch(function (err) {
-                    //console.log(err);
+                    console.log(err);
                     reject({code: 400, body: {"error": err.toString()}});
                 });
             }
@@ -115,12 +116,12 @@ export default class InsightFacade implements IInsightFacade {
         var path = "./cache/" + id + "/";
         return new Promise(function (fulfill, reject) {
             instance.removeFolder(path)
-                .then(function (result) {
-                    fulfill(result);
-                })
-                .catch( function (err) {
-                    reject(err);
-                });
+            .then(function (result) {
+                fulfill(result);
+            })
+            .catch( function (err) {
+                reject(err);
+            });
         });
     }
     /**
@@ -144,33 +145,64 @@ export default class InsightFacade implements IInsightFacade {
     performQuery(query: QueryRequest): Promise <InsightResponse> {
         let instance = this;
         let path: string;
-        instance.invalidIDs = [];
         return new Promise(function (fulfill, reject) {
 
-            instance.getId("./cache")
+            instance.getId(query)
                 .then(function (dir: string){
                     path = dir;
-                    //console.log("perform for path= " + path);
-                    return instance.readDataFiles(path)
-                })
-                .then(function (listOfFiles: any) {
-                    //console.log("readfiles ok")
-                    return Promise.all(instance.readFiles(listOfFiles, path));
-                })
-                .then(function (fileContents: any) {
-                    //console.log("loadcourses ok")
-                    return instance.loadCoursesIntoArray(fileContents);
-                })
-                .then(function (result: any) {
-                    //console.log("parsequery ok")
-                    return instance.parseQuery(query);
-                })
-                .then(function (result: any) {
-                    fulfill(result);
-                })
-                .catch(function (err: any) {
-                    reject(err);
-                })
+                    console.log("perform for path= " + path);
+                    instance.readDataFiles(path).then( function (listOfFiles: any) {
+                        console.log("readfiles ok");
+                        Promise.all(instance.readFiles(listOfFiles, path+"/"))
+                            .then(function (fileContents: any){
+                                instance.loadCoursesIntoArray(fileContents).then( function (result: any) {
+                                    instance.parseQuery(query).then( function (result: any) {
+                                        fulfill(result);
+                                    }).catch( function (err) {
+                                        reject(err);
+                                    })
+                                }).catch( function(err)
+                                {
+                                    reject(err);
+                                })
+                            }).catch( function (err) {
+                            reject(err);
+                        })
+                    }).catch( function (err){
+                        reject(err);
+                    });
+
+                }).catch(function (err: any) {
+                reject(err);
+            });
+
+
+
+
+
+            /*instance.getId(query)
+            .then(function (dir: string){
+                path = dir;
+                console.log("perform for path= " + path);
+                return instance.readDataFiles(path)
+            })
+            .then(function (listOfFiles: any) {
+
+            })
+            .then(function (fileContents: any) {
+                console.log("loadcourses ok")
+                return instance.loadCoursesIntoArray(fileContents);
+            })
+            .then(function (result: any) {
+                console.log("parsequery ok")
+                return instance.parseQuery(query);
+            })
+            .then(function (result: any) {
+                fulfill(result);
+            })
+            .catch(function (err: any) {
+                reject(err);
+            })*/
         });
     }
 
@@ -200,54 +232,106 @@ export default class InsightFacade implements IInsightFacade {
     }
 
     readDataFiles(path: string): Promise<any> {
+        let listoffiles: any;
         return new Promise(function (fulfill, reject) {
-            fs.readdir(path, function(err: any, files: any) {
-                //console.log(path);
+            try {
+                listoffiles = fs.readdirSync(path);
+            }
+            catch (err)
+            {
+                reject({code: 404, body: {"error": "Source not previously added"}});
+            }
 
+            if (isUndefined(listoffiles))
+            {
+                reject({code: 404, body: {"error": "Source not previously added"}});
+            }
+
+            fulfill(listoffiles);
+
+            /*fs.readdir(path, function(err: any, files: any) {
                 if (err)
                     reject({code: 404, body: {"error": "Source not previously added"}});
                 else
                     fulfill(files);
-            })
+            })*/
         })
     }
 
 
     readFiles(files: string[], path: string): Promise<any>[] {
         let contents: any[] = [];
+
         files.forEach(function (element: any) {
             contents.push(new Promise(function (fulfill, reject) {
-                let url = path+element;
+                let url = path + element;
+                let data: any;
                 //console.log(url);
+
                 try {
-                    fulfill(JSON.parse(fs.readFileSync(url, 'utf8')))
-                } catch (err) {
-                    //console.log(err);
+
+                    data = fs.readFileSync(url, 'utf8');
+
+                }catch (err)
+                {
+                    console.log(err);
                     reject(err);
                 }
-            }))
-        });
 
+                if (isUndefined(data))
+                    reject(data);
+                fulfill(JSON.parse(data));
+                /*fs.readFile(url, 'utf8', function (err: any, data: any) {
+                    if (err) {
+                        console.log(err);
+                        reject(err);
+                    }
+                    else {
+                        fulfill(JSON.parse(data));
+                    }
+                });*/
+
+
+            }));
+            });
         return contents;
+
     }
     //returns a existing id path
-    getId(path: string): Promise<string>
+    getId(query: QueryRequest): Promise<string>
     {
+        let id:string;
         return new Promise( function(fulfill, reject){
+            var options: any;
+            var columns: any;
+            let path: string;
+            if (query.hasOwnProperty('WHERE') && query.hasOwnProperty('OPTIONS')) {
+                options = query.OPTIONS;
+            } else {
+                reject({code: 400, body: {"error": "Invalid Query"}})
+            }
+
+            if (options.hasOwnProperty("COLUMNS") && options.hasOwnProperty("FORM")) {
+                columns = options.COLUMNS;
+            } else {
+                reject({code: 400, body: {"error": "Invalid Query"}})
+            }
+            try {
+                id = columns[0].substr(0, columns[0].indexOf('_'));
+                path = "./cache/" + id;
+            }catch (err){
+                console.log(err);
+            }
+
             //if path is valid
             if( fs.existsSync(path) ) {
-                //go through each file in the folder and delete one by one
-                fs.readdirSync(path).forEach(function(file: any){
-                    var current = path + "/" + file + "/";
-                    //if current folder contains folder
-                    if(fs.existsSync(current)) {
-                        //found a valid file in cache
-                        fulfill(current);
-                    }
-                });
+                fulfill(path);
             }
-            //if cache folder is empty or cache folder does not exist
-            reject(null);
+            else
+            {
+                //if cache folder is empty or cache folder does not exist
+                reject({code: 404, body: {"missing": [id]}});
+            }
         });
     }
 
@@ -300,48 +384,48 @@ export default class InsightFacade implements IInsightFacade {
             })
 
             Promise.all(queryResults)
-                .then(function (result) {
-                    if (result.length == 0) {
-                        //console.log("GGG");
-                        fulfill({code: 200, body: result});
+            .then(function (result) {
+                if (result.length == 0) {
+                    //console.log("GGG");
+                    fulfill({code: 200, body: result});
+                }
+
+                //console.log("GGGGGGGGG");
+
+                for (var i = 0; i < instance.loadedCourses.length; i++) {
+                    if (result[i] === true) {
+                        queryOutput.push(instance.loadedCourses[i]);
                     }
+                }
 
-                    //console.log("GGGGGGGGG");
-
-                    for (var i = 0; i < instance.loadedCourses.length; i++) {
-                        if (result[i] === true) {
-                            queryOutput.push(instance.loadedCourses[i]);
+                //console.log(queryOutput);
+                queryOutput.forEach(function (ele) {
+                    columns.forEach(function (column) {
+                        if (!ele.hasOwnProperty(column)) {
+                            return reject({code: 400, body: {"error": "Invalid Query"}});
                         }
-                    }
-
-                    //console.log(queryOutput);
-                    queryOutput.forEach(function (ele) {
-                        columns.forEach(function (column) {
-                            if (!ele.hasOwnProperty(column)) {
-                                return reject({code: 400, body: {"error": "Invalid Query"}});
-                            }
-                        })
                     })
-                    columnsOnly = JSON.parse(JSON.stringify(queryOutput, columns));
-                    //console.log(columnsOnly);
-                    if (order != null) {
-                        columnsOnly.sort(function(a: any, b: any) {
-                            if (a[order] > b[order]) {
-                                return 1;
-                            } else if (a[order] < b[order]) {
-                                return -1;
-                            }
-                            return 0;
-                        })
-                    }
-
-                    //console.log(columnsOnly);
-
-                    fulfill({code: 200, body: {render: form, result: columnsOnly}});
                 })
-                .catch(function (err) {
-                    reject(err)
-                })
+                columnsOnly = JSON.parse(JSON.stringify(queryOutput, columns));
+                //console.log(columnsOnly);
+                if (order != null) {
+                    columnsOnly.sort(function(a: any, b: any) {
+                        if (a[order] > b[order]) {
+                            return 1;
+                        } else if (a[order] < b[order]) {
+                            return -1;
+                        }
+                        return 0;
+                    })
+                }
+
+                //console.log(columnsOnly);
+
+                fulfill({code: 200, body: {render: form, result: columnsOnly}});
+            })
+            .catch(function (err) {
+                reject(err)
+            })
         })
     }
 
@@ -427,10 +511,7 @@ export default class InsightFacade implements IInsightFacade {
                             var id = paramKey.substr(0, paramKey.indexOf("_"));
                             if (id !== "courses") {
                                 //console.log("id: " + id)
-                                if (!instance.invalidIDs.includes(id)) {
-                                    instance.invalidIDs.push(id);
-                                }
-                                reject(({code: 424, body: {"missing": instance.invalidIDs}}))
+                                reject(({code: 424, body: {"missing": [id]}}))
                             }
                         }
                         if (course.hasOwnProperty(paramKey)) {
@@ -451,10 +532,10 @@ export default class InsightFacade implements IInsightFacade {
                                 reject(({code: 400, body: {"error": "value of " + key + " must be a string"}}))
                             }
                         } else {
-                            if (typeof paramValue != "number") {
-                                reject(({code: 400, body: {"error": "value of " + key + " must be a number"}}))
+                                if (typeof paramValue != "number") {
+                                    reject(({code: 400, body: {"error": "value of " + key + " must be a number"}}))
+                                }
                             }
-                        }
 
                         instance.doOperation(paramValue, courseValue, key)
                             .then(function (result) {
@@ -484,31 +565,32 @@ export default class InsightFacade implements IInsightFacade {
 
     doOperation(paramValue: any, courseValue: any, operation: any): Promise<any> {
         return new Promise(function (fulfill, reject) {
-            switch (operation) {
-                case "LT":
-                    fulfill(courseValue < paramValue);
-                    break;
-                case "GT":
-                    fulfill(courseValue > paramValue);
-                    break;
-                case "EQ":
-                    fulfill(courseValue === paramValue);
-                    break;
-                case "IS":
-                    var firstWildCard = paramValue.indexOf("*");
-                    var lastWildCard = paramValue.lastIndexOf("*");
-                    //console.log(firstWildCard + " " + lastWildCard);
-                    if (firstWildCard == 0) {
-                        if (lastWildCard == paramValue.length-1) {
-                            fulfill(courseValue.includes(paramValue.substring(firstWildCard+1, lastWildCard)))
-                        }
-                        fulfill(courseValue.endsWith(paramValue.substring(1)))
-                    } else if (firstWildCard == -1) {
+                switch (operation) {
+                    case "LT":
+                        fulfill(courseValue < paramValue);
+                        break;
+                    case "GT":
+                        fulfill(courseValue > paramValue);
+                        break;
+                    case "EQ":
                         fulfill(courseValue === paramValue);
-                    }
-                    fulfill(courseValue.startsWith(paramValue.substring(0, lastWildCard)))
-                    break;
-            }
+                        break;
+                    case "IS":
+                        var firstWildCard = paramValue.indexOf("*");
+                        var lastWildCard = paramValue.lastIndexOf("*");
+                        //console.log(firstWildCard + " " + lastWildCard);
+                        if (firstWildCard == 0) {
+                            if (lastWildCard == paramValue.length-1) {
+                                fulfill(courseValue.includes(paramValue.substring(firstWildCard+1, lastWildCard)))
+                            }
+                            fulfill(courseValue.endsWith(paramValue.substring(1)))
+                        } else if (firstWildCard == -1) {
+                            fulfill(courseValue === paramValue);
+                        }
+                        fulfill(courseValue.startsWith(paramValue.substring(0, lastWildCard)))
+
+                        break;
+                }
         })
     }
     /**
@@ -527,104 +609,102 @@ export default class InsightFacade implements IInsightFacade {
             return false;
         //base64 string ends with "="
         /*if (input.charAt(input.length - 1) !== "=")
-         return false;*/
+            return false;*/
         let expression = new RegExp(pattern);
         if (!expression.test(input))
             return false;
         return true;
     }
-    /**
+     /**
      * decodes base64 dataset to JSON object
      *
      * @param input  given string needs to be decoded
      * @return JSON object
      */
     decode(input: string): Promise<any>{
-        let instance = this;
+         let instance = this;
 
         return new Promise( function (fulfill, reject) {
             //we need to convert the data back to buffer
             var buffer = new Buffer(input, 'base64');
 
-            instance.load(buffer)
-                .then(function (okay: any)
-                {
-                    let contentArray: any[] = [];
-                    var content: any = "";
-                    var readfile: Promise<any>;
-                    var dataParsing: Promise<any>;
-                    var substring: string = "DEFAULT STRING";
+             instance.load(buffer)
+                 .then(function (okay: any)
+                 {
+                     let content: any;
+                     var readfile: Promise<any>;
+                     var dataCache: Promise<any>;
+                     var substring: string = "DEFAULT STRING";
 
-                    for (var filename in okay.files) {
-                        let name: string = filename;
-                        if (filename.indexOf("/") >= 0)
-                        {
-                            substring = filename.substr(filename.indexOf('/')+1, filename.length + 1);
-                        }
-                        if (substring.length == 0 || substring.match(".DS_Store") || substring.match("__MAXOSX"))
-                            continue;
-                        //if got timeout, this line is the problem
-                        if (okay.file(filename) === null)
-                            continue;
-                        //console.log(filename);
-                        //inner promise is returned
-                        readfile = okay.file(filename).async("string")
-                            .then(function success(text: string) {
+                     for (var filename in okay.files) {
+                         let name: string = filename;
+                         if (filename.indexOf("/") >= 0)
+                         {
+                             substring = filename.substr(filename.indexOf('/')+1, filename.length + 1);
+                         }
+                         if (substring.length == 0 || substring.match(".DS_Store") || substring.match("__MAXOSX"))
+                             continue;
+                         //if got timeout, this line is the problem
+                         if (okay.file(filename) === null)
+                             continue;
+                         //console.log(filename);
+                         //inner promise is returned
+                         readfile = okay.file(filename).async("string")
+                             .then(function success(text: string) {
 
-                                //console.log("text: " + text);
+                                 //console.log("text: " + text);
 
-                                if (isUndefined(text) || (typeof text !== 'string') || !(instance.isJSON(text)))
-                                    reject({code: 400, body: {"error": "file content is invalid! because test = " + test}});
-                                //console.log(text);
-                                var buffer = new Buffer(text);
-                                dataParsing = instance.parseData(buffer.toString())
-                                    .then( function (result: any) {
-                                        contentArray = contentArray.concat(result);
-                                        //console.log(contentArray);
-                                    })
-                                    .catch( function (err: any) {
-                                        reject({code: 400, body: {"error": "parse data error-parsedata(buffer) block"}});
-                                    });
-                            })
-                            .catch(function (err: any) {
-                                //console.log("err catched for readfile:" + err);
-                                //read file error
+                                 if (isUndefined(text) || (typeof text !== 'string') || !(instance.isJSON(text)))
+                                     reject({code: 400, body: {"error": "file content is invalid! because test = " + test}});
+                                 //console.log(text);
+                                 var buffer = new Buffer(text);
+                                 instance.parseData(buffer.toString())
+                                     .then( function (result: any) {
+                                     dataCache = instance.cacheData(result, name)
+                                         .then(function () {
+                                            content = result;
+                                         })
+                                         .catch( function (err: any){
+                                            reject({code: 400, body: {"error": "cache data error-catch " +
+                                            "cachedata block with error: " + err.toString()}});
+                                         });
+                                     })
+                                     .catch( function (err: any) {
+                                     reject({code: 400, body: {"error": "parse data error-parsedata(buffer) block"}});
+                                 });
+
+                                 //cache data to disk
+                                 //instance.cacheData(text, name);
+
+                                 //content = content + text;
+                                 //console.log(content);
+                                 //console.log('for loop');
+                             })
+                             .catch(function (err: any) {
+                                 console.log("err catched for readfile:" + err);
+                                 //read file error
                                 reject({code: 400, body: {"error": "read-file error"}});
-                            });
-                    }
-                    //console.log("fulfill");
-                    if (dataParsing) {
-                        Promise.all([readfile, dataParsing]).then(function () {
-                            content = JSON.stringify(contentArray, null, 4)
-                            fulfill(content);
-
-                        }).catch(function (err: any) {
-                            reject({code: 400, body: {"error": err.toString()}});
-                        });
-                    }
-                    else {
-
-                        Promise.all([readfile]).then(function () {
-                            content = JSON.stringify(contentArray, null, 4)
-                            instance.cacheData(content, instance.id)
-                                .then(function () {
-                                    //console.log("WWWWWW: " + content.charAt(588), content.charAt(600));
-
-                                    fulfill(content);
-                                })
-                                .catch( function (err: any){
-                                    reject({code: 400, body: {"error": "cache data error-catch " +
-                                    "cachedata block with error: " + err.toString()}});
-                                });
-
-                        }).catch(function (err: any) {
-                            reject({code: 400, body: {"error": err.toString()}});
-                        });
-                    }
-                }).catch(function (err) {
-                //console.log(err);
-                reject({code: 400, body: {"error": err.toString()}});
-            });
+                             });
+                     }
+                     //console.log("fulfill");
+                     if (dataCache) {
+                         Promise.all([readfile, dataCache]).then(function () {
+                             fulfill(content);
+                         }).catch(function (err: any) {
+                             reject({code: 400, body: {"error": err.toString()}});
+                         });
+                     }
+                     else {
+                         Promise.all([readfile]).then(function () {
+                             fulfill(content);
+                         }).catch(function (err: any) {
+                             reject({code: 400, body: {"error": err.toString()}});
+                         });
+                     }
+                 }).catch(function (err) {
+                 console.log(err);
+                 reject({code: 400, body: {"error": err.toString()}});
+                });
         });
     }
 
@@ -735,36 +815,37 @@ export default class InsightFacade implements IInsightFacade {
      * @reference http://stackoverflow.com/questions/18052762
      */
     /*
-     removeFolder(path: string): Promise<any>
-     {
-     let instance = this;
-     return new Promise(function (fulfill, reject) {
-     //if path is valid
-     if( fs.existsSync(path) ) {
-     //go through each file in the folder and delete one by one
-     fs.readdirSync(path).forEach(function(file: any){
-     var current = path + "/" + file;
-     //if current folder contains folder
-     if(fs.lstatSync(current).isDirectory()) {
-     //recursive delete for multiple folder
-     instance.removeFolder(current).catch(function (err: any) {
-     console.log(err);
-     reject({code: 400, body: {"error": err.toString()}});
-     });
-     } else {
-     //delete each single file
-     fs.unlinkSync(current);
-     //console.log(current);
-     }
-     });
-     //remove entire folder when its empty
-     console.log(fs.readdirSync(path));
-     fs.rmdirSync(path);
-     }
-     fulfill();
-     });
-     }
-     */
+    removeFolder(path: string): Promise<any>
+    {
+        let instance = this;
+        return new Promise(function (fulfill, reject) {
+
+        //if path is valid
+        if( fs.existsSync(path) ) {
+            //go through each file in the folder and delete one by one
+            fs.readdirSync(path).forEach(function(file: any){
+                var current = path + "/" + file;
+                //if current folder contains folder
+                if(fs.lstatSync(current).isDirectory()) {
+                    //recursive delete for multiple folder
+                    instance.removeFolder(current).catch(function (err: any) {
+                        console.log(err);
+                        reject({code: 400, body: {"error": err.toString()}});
+                    });
+                } else {
+                    //delete each single file
+                    fs.unlinkSync(current);
+                    //console.log(current);
+                }
+            });
+            //remove entire folder when its empty
+            console.log(fs.readdirSync(path));
+            fs.rmdirSync(path);
+        }
+        fulfill();
+        });
+    }
+    */
     removeFolder(path: string): Promise<any> {
         let instance = this;
         return new Promise(function (fulfill, reject) {
@@ -806,7 +887,7 @@ export default class InsightFacade implements IInsightFacade {
         return new Promise(function (fulfill, reject) {
             fs.rmdir(path, function (err: any) {
                 if (err) {
-                    //console.log(path)
+                    console.log(path)
                     reject({code: 400, body: {"error:": "not empty"}});
                 }
                 fulfill({code: 204, body: {}})
@@ -839,7 +920,8 @@ export default class InsightFacade implements IInsightFacade {
                 output.push(course);
             });
 
-            fulfill(output);
+            //fulfill(JSON.stringify(output, null, 4));
+            fulfill(JSON.stringify(output));
         })
     }
 }
