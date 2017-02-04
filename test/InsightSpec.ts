@@ -421,7 +421,7 @@ describe("InsightTest", function () {
 
                 expect(returned.code).to.deep.equal(400);
                 expect(returned.body).to.have.property('error');
-                //console.log(returned.body);
+                console.log(returned.body);
                 //expect(response.body).to.deep.equal({"error" : "Invalid Zip file"});
             })
     });
@@ -437,7 +437,7 @@ describe("InsightTest", function () {
             }).catch(function(response) {
                 expect(response.code).to.deep.equal(400);
                 expect(response.body).to.have.property('error');
-                //console.log(response.body);
+                console.log(response.body);
                 //expect(response.body).to.deep.equal({"error" : "Invalid Zip file"});
             })
     });

@@ -518,12 +518,14 @@ export default class InsightFacade implements IInsightFacade {
      */
     decode(input: string): Promise<any>{
         let instance = this;
+        //console.log(input);
 
         return new Promise( function (fulfill, reject) {
             //we need to convert the data back to buffer
             try {
                 var buffer = Buffer.from(input, "base64");
             } catch (err) {
+                //console.log("buffer not loaded")
                 reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
             }
 
@@ -620,6 +622,7 @@ export default class InsightFacade implements IInsightFacade {
                 fulfill(okay);
             })
             .catch(function (err: any) {
+                //console.log(buffer);
                 reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
             });
         });
