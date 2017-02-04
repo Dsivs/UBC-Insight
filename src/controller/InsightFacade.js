@@ -49,7 +49,7 @@ var InsightFacade = (function () {
         var instance = this;
         var path;
         return new Promise(function (fulfill, reject) {
-            instance.getId(query)
+            instance.getId("./cache")
                 .then(function (dir) {
                 path = dir;
                 console.log("perform for path= " + path);
@@ -114,37 +114,17 @@ var InsightFacade = (function () {
         });
         return contents;
     };
-    InsightFacade.prototype.getId = function (query) {
-        var id;
+    InsightFacade.prototype.getId = function (path) {
         return new Promise(function (fulfill, reject) {
-            var options;
-            var columns;
-            var path;
-            if (query.hasOwnProperty('WHERE') && query.hasOwnProperty('OPTIONS')) {
-                options = query.OPTIONS;
-            }
-            else {
-                reject({ code: 400, body: { "error": "Invalid Query" } });
-            }
-            if (options.hasOwnProperty("COLUMNS") && options.hasOwnProperty("FORM")) {
-                columns = options.COLUMNS;
-            }
-            else {
-                reject({ code: 400, body: { "error": "Invalid Query" } });
-            }
-            try {
-                id = columns[0].substr(0, columns[0].indexOf('_'));
-                path = "./cache/" + id;
-            }
-            catch (err) {
-                console.log(err);
-            }
             if (fs.existsSync(path)) {
-                fulfill(path);
+                fs.readdirSync(path).forEach(function (file) {
+                    var current = path + "/" + file;
+                    if (fs.lstatSync(current).isDirectory()) {
+                        fulfill(current);
+                    }
+                });
             }
-            else {
-                reject({ code: 404, body: { "missing": [id] } });
-            }
+            reject(null);
         });
     };
     InsightFacade.prototype.parseQuery = function (query) {
