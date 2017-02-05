@@ -5,9 +5,7 @@
 import Server from "../src/rest/Server";
 import {expect} from 'chai';
 import Log from "../src/Util";
-import restify = require('restify');
 import {InsightResponse} from "../src/controller/IInsightFacade";
-import http = require('http');
 
 describe("EchoSpec", function () {
 
@@ -34,44 +32,7 @@ describe("EchoSpec", function () {
         Log.test('AfterTest: ' + (<any>this).currentTest.title);
     });
 
-    it("Should be able to establish server", function () {
-        let ser: Server = new Server(1098);
-        ser.start().then(function (status: any) {
-            expect(status).to.equal(true);
-            })
-            .catch(function (err: any){
-            console.log(err);
-           expect.fail();
-        });
-    });
-
-    it("Should be able to stop server", function () {
-        let ser: Server = new Server(1098);
-        ser.start().then(function (status: any) {
-            ser.stop().then( function (boo: any) {
-                expect(boo).to.equal(true);
-            }).catch(function (){
-                expect.fail();
-            });
-            expect(status).to.equal(true);
-        })
-            .catch(function (err: any){
-                //console.log(err);
-                expect.fail();
-            });
-    });
-
-    it("Should be able to force stop server", function () {
-        let ser: Server = new Server(1098);
-
-        ser.stop().then( function (status: any) {
-            expect(status).to.equal(true);
-        }).catch( function(){
-            expect.fail();
-        })
-    });
-
-    it("Should be able to echoing", function () {
+    it("Should be able to echo", function () {
         let out = Server.performEcho('echo');
         Log.test(JSON.stringify(out));
         sanityCheck(out);
@@ -102,37 +63,6 @@ describe("EchoSpec", function () {
         expect(out.code).to.equal(400);
         expect(out.body).to.have.property('error');
         expect(out.body).to.deep.equal({error: 'Message not provided'});
-    });
-
-    it("Should be able to echo", function () {
-        let server = http.createServer();
-        server.on('request', function(request: any, response: any) {
-            let out = Server.echo(request, response, null);
-            Log.test(JSON.stringify(out));
-            sanityCheck(out);
-            expect(out.code).to.equal(400);
-            expect(out.body).to.have.property('error');
-        });
-        //expect(out.body).to.deep.equal({error: 'Message not provided'});
-    });
-
-    it("Should be able to local echo", function () {
-        let server = http.createServer();
-        let local = new Server(1002);
-        local.start().then( function(status: any) {
-            server.on('request', function(request: any, response: any) {
-
-                let out = Server.echo(request, response, null);
-                Log.test(JSON.stringify(out));
-                sanityCheck(out);
-                expect(out.code).to.equal(400);
-                expect(out.body).to.have.property('error');
-            });
-        }).catch( function()
-        {
-           expect.fail();
-        });
-        //expect(out.body).to.deep.equal({error: 'Message not provided'});
     });
 
 });
