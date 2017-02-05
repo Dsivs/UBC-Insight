@@ -621,43 +621,45 @@ export default class InsightFacade implements IInsightFacade {
                     var arrayofFilters = filter[key];
                     if (!Array.isArray(arrayofFilters)) {
                         reject({code: 400, body: {"error": "Invalid Query"}})
-                    }
-                    Promise.all(arrayofFilters.map(function (ele: any) {
-                        return instance.parseFilter(ele, course);
-                    }))
-                        .then(function (result) {
-                            result.forEach(function (ele2) {
-                                if (ele2 === false) {
-                                    fulfill(false);
-                                }
+                    } else {
+                        Promise.all(arrayofFilters.map(function (ele: any) {
+                            return instance.parseFilter(ele, course);
+                        }))
+                            .then(function (result) {
+                                result.forEach(function (ele2) {
+                                    if (ele2 === false) {
+                                        fulfill(false);
+                                    }
+                                })
+                                fulfill(true);
                             })
-                            fulfill(true);
-                        })
-                        .catch(function (err) {
-                            reject(err);
-                        })
+                            .catch(function (err) {
+                                reject(err);
+                            })
+                    }
                     break;
                 case "OR":
                     var arrayofFilters = filter[key];
                     if (!Array.isArray(arrayofFilters)) {
                         reject({code: 400, body: {"error": "Invalid Query"}})
-                    }
-                    Promise.all(arrayofFilters.map(function (ele: any) {
-                        //console.log(ele);
-                        return instance.parseFilter(ele, course);
-                    }))
-                        .then(function (result) {
-                            //console.log(result);
-                            result.forEach(function (ele2) {
-                                if (ele2 === true) {
-                                    fulfill(true);
-                                }
+                    } else {
+                        Promise.all(arrayofFilters.map(function (ele: any) {
+                            //console.log(ele);
+                            return instance.parseFilter(ele, course);
+                        }))
+                            .then(function (result) {
+                                //console.log(result);
+                                result.forEach(function (ele2) {
+                                    if (ele2 === true) {
+                                        fulfill(true);
+                                    }
+                                });
+                                fulfill(false);
+                            })
+                            .catch(function (err) {
+                                reject(err);
                             });
-                            fulfill(false);
-                        })
-                        .catch(function (err) {
-                            reject(err);
-                        });
+                    }
                     break;
                 case "LT":
                 case "GT":
