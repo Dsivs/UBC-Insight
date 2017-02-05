@@ -61,6 +61,7 @@ export default class InsightFacade implements IInsightFacade {
         let code: number = 0;
 
         return new Promise(function (fulfill, reject) {
+
                 //check if data set has been added
                 if (instance.isExist(id)) {
                     //if so, delete and write again
@@ -110,13 +111,18 @@ export default class InsightFacade implements IInsightFacade {
         let instance = this;
         var path = "./cache/" + id + "/";
         return new Promise(function (fulfill, reject) {
-            instance.removeFolder(path)
-                .then(function (result) {
-                    fulfill(result);
-                })
-                .catch( function (err) {
-                    reject(err);
-                });
+            try {
+                instance.removeFolder(path)
+                    .then(function (result) {
+                        fulfill(result);
+                    })
+                    .catch(function (err) {
+                        reject(err);
+                    });
+            }catch (err)
+            {
+                reject(err);
+            }
         });
     }
     /**
@@ -529,7 +535,6 @@ export default class InsightFacade implements IInsightFacade {
 
         return new Promise( function (fulfill, reject) {
             //we need to convert the data back to buffer
-
             instance.load(input)
                 .then(function (okay: any) {
                     let contentArray: any[] = [];
@@ -648,16 +653,10 @@ export default class InsightFacade implements IInsightFacade {
                 }).catch(function () {
                     reject({code: 400, body: {"error": "Write File Failed!"}});
                 })
-
             }
-
-
             }catch (err)
             {
-                if(isUndefined(err.code))
-                {
-                    reject({code: 400, body: {"error": "unknown exception"}});
-                }
+                reject({code: 400, body: {"error": "Write File Failed!"}});
             }
         });
     }
