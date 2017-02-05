@@ -373,7 +373,6 @@ describe("InsightTest", function () {
                 //since given data is a array buffer, we can convert right away
                 content = data.toString('base64');
                 console.log("Before: content is done!");
-                done();
             }
 
 
@@ -389,27 +388,13 @@ describe("InsightTest", function () {
                 //since given data is a array buffer, we can convert right away
                 invalidContent = data.toString('base64');
                 console.log("Before: Invalidcontent is done!");
+                done()
             }
 
-        });// end of second fs.readfile for invalid content
-        //comprehensive course data is for local test only
-        //this read is omitted for auto test
-        /*
-         fs.readFile('./test/courses.zip', function(err: any, data: any) {
-         if (err) {
-         //invalid zip file is given
-         console.log(err);
-         }
-         else if (!isUndefined(data) || data !== null) {
-         //debug, if given content is invalid
-         //since given data is a array buffer, we can convert right away
-         longContent = data.toString('base64');
-         console.log("Before: long content is done!");
-         done();
-         }
-         });// end of third fs.readfile for invalid content*/
-
+        });
     });
+
+
 
     it("add invalid zip", function () {
         return insight.addDataset('test1', 'SW52YWxpZCBTdHJpbmc=')

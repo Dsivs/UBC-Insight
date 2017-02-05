@@ -1,7 +1,6 @@
 "use strict";
 var Util_1 = require("../Util");
 var Course_1 = require("./Course");
-var util_1 = require("util");
 var JSZip = require("jszip");
 var fs = require("fs");
 var pattern = "^[A-Za-z0-9+\/]+$";
@@ -12,20 +11,122 @@ var InsightFacade = (function () {
     }
     InsightFacade.prototype.addDataset = function (id, content) {
         var instance = this;
-        this.id = id;
-        var code = 0;
         return new Promise(function (fulfill, reject) {
-            if (instance.isExist(id)) {
-                code = 201;
+            instance.parseToZip(content)
+                .then(function (zipContents) {
+                return Promise.all(instance.readContents(zipContents));
+            })
+                .then(function (arrayOfFileContents) {
+                return instance.parseFileContents(arrayOfFileContents);
+            })
+                .then(function (arrayOfJSONObj) {
+                return instance.parseIntoResult(arrayOfJSONObj);
+            })
+                .then(function (jsonData) {
+                return instance.cacheData(JSON.stringify(jsonData, null, 4), id);
+            })
+                .then(function (result) {
+                fulfill(result);
+            })
+                .catch(function (err) {
+                reject(err);
+            });
+        });
+    };
+    InsightFacade.prototype.parseToZip = function (content) {
+        return new Promise(function (fulfill, reject) {
+            var zip = new JSZip();
+            zip.loadAsync(content, { base64: true })
+                .then(function (result) {
+                fulfill(result);
+            })
+                .catch(function (err) {
+                reject({ "code": 400, body: { "error": "Content is not a valid base64 zip" } });
+            });
+        });
+    };
+    InsightFacade.prototype.readContents = function (zipContents) {
+        var arrayOfFileContents = [];
+        for (var filename in zipContents.files) {
+            var file = zipContents.file(filename);
+            if (file != null) {
+                arrayOfFileContents.push(file.async("string"));
+            }
+        }
+        return arrayOfFileContents;
+    };
+    InsightFacade.prototype.parseFileContents = function (arrayOfFileContents) {
+        return new Promise(function (fulfill, reject) {
+            var arrayOfJSONObj = [];
+            for (var _i = 0, arrayOfFileContents_1 = arrayOfFileContents; _i < arrayOfFileContents_1.length; _i++) {
+                var fileContent = arrayOfFileContents_1[_i];
+                try {
+                    arrayOfJSONObj.push(JSON.parse(fileContent));
+                }
+                catch (err) {
+                }
+            }
+            if (arrayOfJSONObj.length == 0) {
+                reject({ "code": 400, "body": { "error": "Zip contained no valid data" } });
             }
             else {
-                code = 204;
+                fulfill(arrayOfJSONObj);
             }
-            instance.decode(content)
-                .then(function () {
-                fulfill({ code: code, body: {} });
-            }).catch(function (err) {
-                reject(err);
+        });
+    };
+    InsightFacade.prototype.parseIntoResult = function (arrayOfJSONObj) {
+        var finalResult = [];
+        return new Promise(function (fulfill, reject) {
+            for (var _i = 0, arrayOfJSONObj_1 = arrayOfJSONObj; _i < arrayOfJSONObj_1.length; _i++) {
+                var jsonObj = arrayOfJSONObj_1[_i];
+                var jsonObjResultProp = jsonObj.result;
+                if (Array.isArray(jsonObjResultProp)) {
+                    for (var _a = 0, jsonObjResultProp_1 = jsonObjResultProp; _a < jsonObjResultProp_1.length; _a++) {
+                        var section = jsonObjResultProp_1[_a];
+                        var course = {
+                            "courses_dept": section.Subject,
+                            "courses_id": section.Course,
+                            "courses_avg": section.Avg,
+                            "courses_instructor": section.Professor,
+                            "courses_title": section.Title,
+                            "courses_pass": section.Pass,
+                            "courses_fail": section.Fail,
+                            "courses_audit": section.Audit,
+                            "courses_uuid": section.id.toString()
+                        };
+                        finalResult.push(course);
+                    }
+                }
+            }
+            if (finalResult.length == 0) {
+                reject({ "code": 400, "body": { "error": "Zip contained no valid data" } });
+            }
+            else {
+                fulfill(finalResult);
+            }
+        });
+    };
+    InsightFacade.prototype.cacheData = function (jsonData, id) {
+        var fs = require("fs");
+        var path = "./cache/";
+        var code = 201;
+        return new Promise(function (fulfill, reject) {
+            if (!fs.existsSync(path)) {
+                fs.mkdirSync(path);
+            }
+            path = path + id + "/";
+            if (!fs.existsSync(path)) {
+                code = 204;
+                fs.mkdirSync(path);
+            }
+            path = path + id + ".JSON";
+            fs.writeFile(path, jsonData, function (err) {
+                if (err) {
+                    reject({ "code": 400, "body": { "error": "Write File Failed!" } });
+                }
+                else {
+                    fulfill({ "code": code, "body": {} });
+                }
             });
         });
     };
@@ -329,104 +430,6 @@ var InsightFacade = (function () {
                     }
                     fulfill(courseValue.startsWith(paramValue.substring(0, lastWildCard)));
                     break;
-            }
-        });
-    };
-    InsightFacade.prototype.decode = function (input) {
-        var instance = this;
-        return new Promise(function (fulfill, reject) {
-            instance.load(input)
-                .then(function (okay) {
-                var contentArray = [];
-                var content = "";
-                var readfile;
-                var dataParsing;
-                var substring = "DEFAULT STRING";
-                for (var filename in okay.files) {
-                    var name_1 = filename;
-                    if (filename.indexOf("/") >= 0) {
-                        substring = filename.substr(filename.indexOf('/') + 1, filename.length + 1);
-                    }
-                    if (substring.length == 0 || substring.match(".DS_Store") || substring.match("__MAXOSX"))
-                        continue;
-                    if (okay.file(filename) === null)
-                        continue;
-                    readfile = okay.file(filename).async("string")
-                        .then(function success(text) {
-                        if (util_1.isUndefined(text) || (typeof text !== 'string') || !(instance.isJSON(text)))
-                            reject({ code: 400, body: { "error": "file content is invalid! because test = " + test } });
-                        var buffer = new Buffer(text);
-                        dataParsing = instance.parseData(buffer.toString())
-                            .then(function (result) {
-                            contentArray = contentArray.concat(result);
-                        })
-                            .catch(function (err) {
-                            reject({ code: 400, body: { "error": "parse data error-parsedata(buffer) block" } });
-                        });
-                    })
-                        .catch(function (err) {
-                        reject({ code: 400, body: { "error": "read-file error" } });
-                    });
-                }
-                if (dataParsing) {
-                    Promise.all([readfile, dataParsing]).then(function () {
-                        content = JSON.stringify(contentArray, null, 4);
-                        fulfill(content);
-                    }).catch(function (err) {
-                        reject({ code: 400, body: { "error": err.toString() } });
-                    });
-                }
-                else {
-                    Promise.all([readfile]).then(function () {
-                        content = JSON.stringify(contentArray, null, 4);
-                        instance.cacheData(content, instance.id)
-                            .then(function () {
-                            fulfill(content);
-                        })
-                            .catch(function (err) {
-                            reject({ code: 400, body: { "error": "cache data error-catch " +
-                                        "cachedata block with error: " + err.toString() } });
-                        });
-                    }).catch(function (err) {
-                        reject({ code: 400, body: { "error": err.toString() } });
-                    });
-                }
-            }).catch(function (err) {
-                reject(err);
-            });
-        });
-    };
-    InsightFacade.prototype.load = function (content) {
-        return new Promise(function (fulfill, reject) {
-            var zip = new JSZip();
-            zip.loadAsync(content, { base64: true })
-                .then(function (okay) {
-                fulfill(okay);
-            }).catch(function (err) {
-                reject({ code: 400, body: { "error": "Content is not base64" } });
-            });
-        });
-    };
-    InsightFacade.prototype.cacheData = function (content, filename) {
-        while (filename.indexOf("/") >= 0) {
-            filename = filename.substr(filename.indexOf('/') + 1, filename.length + 1);
-        }
-        var instance = this;
-        return new Promise(function (fulfill, reject) {
-            if (!fs.existsSync("./cache/")) {
-                fs.mkdirSync("./cache/");
-            }
-            if (!util_1.isUndefined(instance.id)) {
-                if (!fs.existsSync("./cache/" + instance.id + "/")) {
-                    fs.mkdirSync("./cache/" + instance.id + "/");
-                }
-                var path = "./cache/" + instance.id + "/" + filename + ".JSON";
-                fs.writeFile(path, content, function (err) {
-                    if (err)
-                        reject({ code: 400, body: { "error": "Write File Failed!" } });
-                    else
-                        fulfill(0);
-                });
             }
         });
     };
