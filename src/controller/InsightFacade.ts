@@ -535,7 +535,6 @@ export default class InsightFacade implements IInsightFacade {
                     let contentArray: any[] = [];
                     var content: any = "";
                     var readfile: Promise<any>;
-                    var dataParsing: Promise<any>;
                     var substring: string = "DEFAULT STRING";
 
                     for (var filename in okay.files) {
@@ -553,46 +552,25 @@ export default class InsightFacade implements IInsightFacade {
                         //inner promise is returned
                         readfile = okay.file(filename).async("string")
                             .then(function success(text: string) {
-
-                                //console.log("text: " + text);
-
                                 if (isUndefined(text) || (typeof text !== 'string') || !(instance.isJSON(text)))
                                     reject({code: 400, body: {"error": "file content is invalid! because test = " + test}});
                                 //console.log(text);
                                 var buffer = new Buffer(text);
-                                dataParsing = instance.parseData(buffer.toString())
-                                    .then( function (result: any) {
-                                        contentArray = contentArray.concat(result);
-                                        //console.log(contentArray);
-                                    })
-                                    .catch( function (err: any) {
-                                        reject({code: 400, body: {"error": "parse data error-parsedata(buffer) block"}});
-                                    });
+                                return instance.parseData(buffer.toString())
+                            }).then( function (result: any) {
+                                contentArray = contentArray.concat(result);
+                                //console.log(contentArray);
                             })
                             .catch(function (err: any) {
                                 //console.log("err catched for readfile:" + err);
                                 //read file error
                                 reject({code: 400, body: {"error": "read-file error"}});
                             });
-                    }
-                    //console.log("fulfill");
-                    if (dataParsing) {
-                        Promise.all([readfile, dataParsing]).then(function () {
-                            content = JSON.stringify(contentArray, null, 4);
-                            fulfill(content);
-
-                        }).catch(function (err: any) {
-                            reject({code: 400, body: {"error": err.toString()}});
-                        });
-                    }
-                    else {
-
+                        }
                         Promise.all([readfile]).then(function () {
                             content = JSON.stringify(contentArray, null, 4);
                             instance.cacheData(content, instance.id)
                                 .then(function () {
-                                    //console.log("WWWWWW: " + content.charAt(588), content.charAt(600));
-
                                     fulfill(content);
                                 })
                                 .catch( function (err: any){
@@ -603,7 +581,6 @@ export default class InsightFacade implements IInsightFacade {
                         }).catch(function (err: any) {
                             reject({code: 400, body: {"error": err.toString()}});
                         });
-                    }
                 }).catch(function (err) {
                 //console.log(err);
                 reject(err);
@@ -615,13 +592,21 @@ export default class InsightFacade implements IInsightFacade {
     {
         return new Promise(function(fulfill, reject)
         {
-            let zip = new JSZip();
-            zip.loadAsync(content, {base64:true})
-            .then(function (okay: any) {
-                fulfill(okay);
-            }).catch(function (err: any) {
-                reject({code: 400, body: {"error": "Content is not base64"}});
-            });
+            try {
+                let zip = new JSZip();
+                zip.loadAsync(content, {base64: true})
+                    .then(function (okay: any) {
+                        fulfill(okay);
+                    }).catch(function (err: any) {
+                    reject({code: 400, body: {"error": "Content is not base64"}});
+                });
+            }catch (err)
+            {
+                if(isUndefined(err.code))
+                {
+                    reject({code: 400, body: {"error": "unknown exception"}});
+                }
+            }
         });
     }
 
@@ -638,6 +623,7 @@ export default class InsightFacade implements IInsightFacade {
         let instance = this;
         return new Promise( function (fulfill, reject) {
 
+            try {
 
             if (!fs.existsSync("./cache/")) {
                 fs.mkdirSync("./cache/");
@@ -652,14 +638,26 @@ export default class InsightFacade implements IInsightFacade {
 
                 var path = "./cache/" + instance.id + "/" + filename + ".JSON";
 
-                fs.writeFile(path, content,function (err: any) {
+                var filewriting = fs.writeFile(path, content, function (err: any) {
                     if (err)
                         reject({code: 400, body: {"error": "Write File Failed!"}});
-                    else
-                        fulfill(0);
                 });
 
+                Promise.all([filewriting]).then(function () {
+                    fulfill(0);
+                }).catch(function () {
+                    reject({code: 400, body: {"error": "Write File Failed!"}});
+                })
 
+            }
+
+
+            }catch (err)
+            {
+                if(isUndefined(err.code))
+                {
+                    reject({code: 400, body: {"error": "unknown exception"}});
+                }
             }
         });
     }
