@@ -4,7 +4,7 @@ var Course_1 = require("./Course");
 var util_1 = require("util");
 var JSZip = require("jszip");
 var fs = require("fs");
-var pattern = "^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)";
+var pattern = "^[A-Za-z0-9+\/=]+\Z";
 var InsightFacade = (function () {
     function InsightFacade() {
         Util_1.default.trace('InsightFacadeImpl::init()');
@@ -15,21 +15,17 @@ var InsightFacade = (function () {
         this.id = id;
         var code = 0;
         return new Promise(function (fulfill, reject) {
-            if (!(instance.isBase64(content)))
-                reject({ code: 400, body: { "error": "Content Not Base64 Encoded" } });
-            else {
-                if (instance.isExist(id)) {
-                    code = 201;
-                }
-                else {
-                    code = 204;
-                }
-                instance.decode(content).then(function () {
-                    fulfill({ code: code, body: {} });
-                }).catch(function (err) {
-                    reject({ code: 400, body: { "error": err.toString() } });
-                });
+            if (instance.isExist(id)) {
+                code = 201;
             }
+            else {
+                code = 204;
+            }
+            instance.decode(content).then(function () {
+                fulfill({ code: code, body: {} });
+            }).catch(function (err) {
+                reject({ code: 400, body: { "error": err.toString() } });
+            });
         });
     };
     InsightFacade.prototype.removeDataset = function (id) {
@@ -347,7 +343,6 @@ var InsightFacade = (function () {
     };
     InsightFacade.prototype.decode = function (input) {
         var instance = this;
-        console.log(input);
         return new Promise(function (fulfill, reject) {
             var buffer = new Buffer(input, 'base64');
             instance.load(buffer)

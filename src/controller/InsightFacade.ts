@@ -11,7 +11,7 @@ let fs = require("fs");
 
 //this is a regular expression to check if given string matches base64 encode characteristic
 //a valid base64 string should have A-Z & a-z letters and 0-9 numbers as well as optional "="
-let pattern: string = "^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{4}|[A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)"
+let pattern: string = "^[A-Za-z0-9+\/=]+\Z";
 
 export default class InsightFacade implements IInsightFacade {
 
@@ -61,10 +61,6 @@ export default class InsightFacade implements IInsightFacade {
         let code: number = 0;
 
         return new Promise(function (fulfill, reject) {
-
-            if (!(instance.isBase64(content)))
-                reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
-            else {
                 //check if data set has been added
                 if (instance.isExist(id)) {
                     //if so, delete and write again
@@ -85,11 +81,8 @@ export default class InsightFacade implements IInsightFacade {
                     //console.log(err);
                     reject({code: 400, body: {"error": err.toString()}});
                 });
-            }
-        });
+            })
     }
-
-
 
     /**
      * Remove a dataset from UBCInsight.
@@ -147,7 +140,7 @@ export default class InsightFacade implements IInsightFacade {
         instance.invalidIDs = [];
         return new Promise(function (fulfill, reject) {
 
-            instance.getId(query)
+            instance.getId("./cache")
                 .then(function (dir: string){
                     path = dir;
                     //console.log("perform for path= " + path);
@@ -155,7 +148,7 @@ export default class InsightFacade implements IInsightFacade {
                 })
                 .then(function (listOfFiles: any) {
                     //console.log("readfiles ok")
-                    return Promise.all(instance.readFiles(listOfFiles, path+"/"));
+                    return Promise.all(instance.readFiles(listOfFiles, path));
                 })
                 .then(function (fileContents: any) {
                     //console.log("loadcourses ok")
@@ -231,40 +224,23 @@ export default class InsightFacade implements IInsightFacade {
         return contents;
     }
     //returns a existing id path
-    getId(query: QueryRequest): Promise<string>
+    getId(path: string): Promise<string>
     {
-        let id:string;
         return new Promise( function(fulfill, reject){
-            var options: any;
-            var columns: any;
-            let path: string;
-            if (query.hasOwnProperty('WHERE') && query.hasOwnProperty('OPTIONS')) {
-                options = query.OPTIONS;
-            } else {
-                reject({code: 400, body: {"error": "Invalid Query"}})
-            }
-
-            if (options.hasOwnProperty("COLUMNS") && options.hasOwnProperty("FORM")) {
-                columns = options.COLUMNS;
-            } else {
-                reject({code: 400, body: {"error": "Invalid Query"}})
-            }
-            try {
-                id = columns[0].substr(0, columns[0].indexOf('_'));
-                path = "./cache/" + id;
-            }catch (err){
-                console.log(err);
-            }
-
             //if path is valid
             if( fs.existsSync(path) ) {
-                fulfill(path);
+                //go through each file in the folder and delete one by one
+                fs.readdirSync(path).forEach(function(file: any){
+                    var current = path + "/" + file + "/";
+                    //if current folder contains folder
+                    if(fs.existsSync(current)) {
+                        //found a valid file in cache
+                        fulfill(current);
+                    }
+                });
             }
-            else
-            {
-                //if cache folder is empty or cache folder does not exist
-                reject({code: 404, body: {"missing": [id]}});
-            }
+            //if cache folder is empty or cache folder does not exist
+            reject(null);
         });
     }
 
@@ -558,7 +534,6 @@ export default class InsightFacade implements IInsightFacade {
      */
     decode(input: string): Promise<any>{
         let instance = this;
-        console.log(input);
 
         return new Promise( function (fulfill, reject) {
             //we need to convert the data back to buffer
