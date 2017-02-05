@@ -15,13 +15,14 @@ let fs = require("fs");
 
 export default class InsightFacade implements IInsightFacade {
 
-    private loadedCourses:  Course[];
+    private loadedCourses:  any[];
     private id:string;
     private invalidIDs: any[];
 
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
         this.invalidIDs = [];
+        this.loadedCourses = [];
     }
 
 
@@ -428,7 +429,7 @@ export default class InsightFacade implements IInsightFacade {
 
         let instance = this;
         return new Promise(function (fulfill, reject) {
-            instance.loadedCourses = [];
+            instance.loadedCourses.length = 0
             fileContents.forEach(function (fileContent: any) {
                 fileContent.forEach(function (courseSection: any) {
                     var course = new Course(courseSection.courses_dept,

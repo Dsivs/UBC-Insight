@@ -9,6 +9,7 @@ var InsightFacade = (function () {
     function InsightFacade() {
         Util_1.default.trace('InsightFacadeImpl::init()');
         this.invalidIDs = [];
+        this.loadedCourses = [];
     }
     InsightFacade.prototype.addDataset = function (id, content) {
         var instance = this;
@@ -184,7 +185,7 @@ var InsightFacade = (function () {
     InsightFacade.prototype.loadCoursesIntoArray = function (fileContents) {
         var instance = this;
         return new Promise(function (fulfill, reject) {
-            instance.loadedCourses = [];
+            instance.loadedCourses.length = 0;
             fileContents.forEach(function (fileContent) {
                 fileContent.forEach(function (courseSection) {
                     var course = new Course_1.default(courseSection.courses_dept, courseSection.courses_id, courseSection.courses_avg, courseSection.courses_instructor, courseSection.courses_title, courseSection.courses_pass, courseSection.courses_fail, courseSection.courses_audit, courseSection.courses_uuid);
