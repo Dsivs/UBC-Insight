@@ -11,7 +11,7 @@ let fs = require("fs");
 
 //this is a regular expression to check if given string matches base64 encode characteristic
 //a valid base64 string should have A-Z & a-z letters and 0-9 numbers as well as optional "="
-let pattern: string = "^[A-Za-z0-9+\/=]+\Z";
+    let pattern: string = "^[A-Za-z0-9+\/]+$";
 
 export default class InsightFacade implements IInsightFacade {
 
@@ -59,8 +59,13 @@ export default class InsightFacade implements IInsightFacade {
         this.id = id;
         //code will be used for fulfill only
         let code: number = 0;
+        //console.log(window.atob("SGVsbG8gV29ybGQ="));
 
         return new Promise(function (fulfill, reject) {
+
+            if (!(instance.isBase64(content)))
+                reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
+            else {
                 //check if data set has been added
                 if (instance.isExist(id)) {
                     //if so, delete and write again
@@ -81,8 +86,11 @@ export default class InsightFacade implements IInsightFacade {
                     //console.log(err);
                     reject({code: 400, body: {"error": err.toString()}});
                 });
-            })
+            }
+        });
     }
+
+
 
     /**
      * Remove a dataset from UBCInsight.
@@ -513,18 +521,22 @@ export default class InsightFacade implements IInsightFacade {
      */
     isBase64(input: string): boolean
     {
+        let expression = new RegExp(pattern);
+
         if (isUndefined(input) || input === "" || input === null)
             return false;
         //base64 should be multiple of 4 byte string
         if (input.length % 4 !== 0)
             return false;
         //base64 string ends with "="
-        /*if (input.charAt(input.length - 1) !== "=")
-         return false;*/
-        let expression = new RegExp(pattern);
-        if (!expression.test(input))
-            return false;
-        return true;
+        if (input.charAt(input.length - 1) === "=") {
+            if (input.charAt(input.length - 2) === "=") {
+                return (expression.test(input.substring(0, input.length-2)))
+            } else {
+                return (expression.test(input.substring(0, input.length-1)))
+            }
+        }
+        return (expression.test(input))
     }
     /**
      * decodes base64 dataset to JSON object
