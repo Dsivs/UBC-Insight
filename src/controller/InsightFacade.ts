@@ -15,14 +15,13 @@ let fs = require("fs");
 
 export default class InsightFacade implements IInsightFacade {
 
-    private loadedCourses:  any[];
+    private loadedCourses:  Course[];
     private id:string;
     private invalidIDs: any[];
 
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
         this.invalidIDs = [];
-        this.loadedCourses = [];
     }
 
 
@@ -57,276 +56,35 @@ export default class InsightFacade implements IInsightFacade {
      */
     addDataset(id: string, content: string): Promise<InsightResponse> {
         const instance = this;
+        this.id = id;
+        //code will be used for fulfill only
+        let code: number = 0;
 
         return new Promise(function (fulfill, reject) {
 
-            instance.parseToZip(content)
-            .then(function (zipContents) {
-                //console.log(zipContents.files)
-                return Promise.all(instance.readContents(zipContents))
-            })
-            .then(function (arrayOfFileContents) {
-                //console.log(arrayOfFileContents);
-                return instance.parseFileContents(arrayOfFileContents)
-            })
-            .then(function (arrayOfJSONObj) {
-                //console.log(arrayOfJSONObj)
-                return instance.parseIntoResult(arrayOfJSONObj)
-            })
-            .then(function (jsonData) {
-                //console.log(result)
-
-                return instance.cacheData(JSON.stringify(jsonData, null, 4), id)
-            })
-            .then(function (result) {
-                fulfill(result)
-            })
-            .catch(function (err) {
-                //console.log(err);
-                reject(err);
-            });
-        });
-    }
-
-    //takes in a string and tries to parse it into a JSZip
-    parseToZip(content: string): Promise<any> {
-        return new Promise(function(fulfill, reject) {
-            let zip = new JSZip();
-            zip.loadAsync(content, {base64:true})
-                .then(function (result: any) {
-                    fulfill(result);
-                })
-                .catch(function (err: any) {
-                    reject({"code": 400, body: {"error": "Content is not a valid base64 zip"}});
-            })
-        })
-    }
-
-    //given a JSZip returns an array of the contents of the files in the JSZip
-    readContents(zipContents: any): Promise<any>[] {
-        var arrayOfFileContents: Promise<any>[] = []
-
-        for (var filename in zipContents.files) {
-            var file = zipContents.file(filename);
-            if (file != null) {
-                arrayOfFileContents.push(file.async("string"))
-            }
-        }
-
-        return arrayOfFileContents;
-    }
-
-    //given an array of file contents returns an array of file contents that are valid json
-    parseFileContents(arrayOfFileContents: string[]): Promise<any> {
-        return new Promise(function (fulfill, reject) {
-            var arrayOfJSONObj: any[] = []
-
-            for (var fileContent of arrayOfFileContents) {
-                try {
-                    arrayOfJSONObj.push(JSON.parse(fileContent));
-                } catch (err) {
-                    //console.log("This is not valid JSON:")
-                    //console.log(fileContent)
+                //check if data set has been added
+                if (instance.isExist(id)) {
+                    //if so, delete and write again
+                    code = 201;
+                    //remove then add again if already exits
+                    /*removal = instance.removeDataset(id).catch(function () {
+                     reject({code: 400, body: {"error": "Deletion error"}})
+                     });*/
                 }
-            }
-
-            if (arrayOfJSONObj.length == 0) {
-                reject({"code": 400, "body": {"error": "Zip contained no valid data"}})
-            } else {
-                fulfill(arrayOfJSONObj)
-            }
-        })
-    }
-
-    //given an array of jsonobjects each corresponding to a file, parse any valid ones into the final content to be cached
-    parseIntoResult(arrayOfJSONObj: any[]): Promise<any> {
-        var finalResult: any[] = []
-
-        return new Promise(function (fulfill, reject) {
-            for (var jsonObj of arrayOfJSONObj) {
-                var jsonObjResultProp = jsonObj.result
-                if (Array.isArray(jsonObjResultProp)) {
-                    for (var section of jsonObjResultProp) {
-                        var course = {
-                            "courses_dept": section.Subject,
-                            "courses_id": section.Course,
-                            "courses_avg": section.Avg,
-                            "courses_instructor": section.Professor,
-                            "courses_title": section.Title,
-                            "courses_pass": section.Pass,
-                            "courses_fail": section.Fail,
-                            "courses_audit": section.Audit,
-                            "courses_uuid": section.id.toString()
-                        }
-                        finalResult.push(course);
-                    }
-                }
-            }
-            if (finalResult.length == 0) {
-                reject({"code": 400, "body": {"error": "Zip contained no valid data"}})
-            } else {
-                fulfill(finalResult)
-            }
-        })
-    }
-
-    //given the array of course sections, cache it to disk
-    cacheData(jsonData: string, id: string): Promise<any> {
-        var fs = require("fs");
-        var path = "./cache/";
-        var code: number = 201;
-        return new Promise(function (fulfill, reject) {
-            if (!fs.existsSync(path)) {
-                fs.mkdirSync(path);
-            }
-            path = path + id + "/";
-            if (!fs.existsSync(path)) {
-                code = 204;
-                fs.mkdirSync(path);
-            }
-
-            path = path + id + ".JSON";
-
-            fs.writeFile(path, jsonData, function (err: any) {
-                if (err) {
-                    reject({"code": 400, "body": {"error": "Write File Failed!"}})
-                } else {
-                    fulfill({"code": code, "body": {}})
-                }
-            })
-        })
-    }
-
-    /*
-    decode(input: string): Promise<any>{
-        let instance = this;
-
-        return new Promise( function (fulfill, reject) {
-            //we need to convert the data back to buffer
-
-            instance.load(input)
-                .then(function (okay: any) {
-                    let contentArray: any[] = [];
-                    var content: any = "";
-                    var readfile: Promise<any>;
-                    var dataParsing: Promise<any>;
-                    var substring: string = "DEFAULT STRING";
-
-                    for (var filename in okay.files) {
-                        let name: string = filename;
-                        if (filename.indexOf("/") >= 0)
-                        {
-                            substring = filename.substr(filename.indexOf('/')+1, filename.length + 1);
-                        }
-                        if (substring.length == 0 || substring.match(".DS_Store") || substring.match("__MAXOSX"))
-                            continue;
-                        //if got timeout, this line is the problem
-                        if (okay.file(filename) === null)
-                            continue;
-                        //console.log(filename);
-                        //inner promise is returned
-                        readfile = okay.file(filename).async("string")
-                            .then(function success(text: string) {
-
-                                //console.log("text: " + text);
-
-                                if (isUndefined(text) || (typeof text !== 'string') || !(instance.isJSON(text)))
-                                    reject({code: 400, body: {"error": "file content is invalid! because test = " + test}});
-                                //console.log(text);
-                                var buffer = new Buffer(text);
-                                dataParsing = instance.parseData(buffer.toString())
-                                    .then( function (result: any) {
-                                        contentArray = contentArray.concat(result);
-                                        //console.log(contentArray);
-                                    })
-                                    .catch( function (err: any) {
-                                        reject({code: 400, body: {"error": "parse data error-parsedata(buffer) block"}});
-                                    });
-                            })
-                            .catch(function (err: any) {
-                                //console.log("err catched for readfile:" + err);
-                                //read file error
-                                reject({code: 400, body: {"error": "read-file error"}});
-                            });
-                    }
-                    //console.log("fulfill");
-                    if (dataParsing) {
-                        Promise.all([readfile, dataParsing]).then(function () {
-                            content = JSON.stringify(contentArray, null, 4)
-                            fulfill(content);
-
-                        }).catch(function (err: any) {
-                            reject({code: 400, body: {"error": err.toString()}});
-                        });
-                    }
-                    else {
-
-                        Promise.all([readfile]).then(function () {
-                            content = JSON.stringify(contentArray, null, 4)
-                            instance.cacheData(content, instance.id)
-                                .then(function () {
-                                    //console.log("WWWWWW: " + content.charAt(588), content.charAt(600));
-
-                                    fulfill(content);
-                                })
-                                .catch( function (err: any){
-                                    reject({code: 400, body: {"error": "cache data error-catch " +
-                                    "cachedata block with error: " + err.toString()}});
-                                });
-
-                        }).catch(function (err: any) {
-                            reject({code: 400, body: {"error": err.toString()}});
-                        });
-                    }
-                }).catch(function (err: any) {
-                //console.log(err);
-                reject(err);
-            });
-        });
-    }
-    */
-
-
-/*
-    cacheData(content: any, filename: string): Promise<any>
-    {
-
-        //case inner folder is found
-        while (filename.indexOf("/") >= 0)
-        {
-            filename = filename.substr(filename.indexOf('/')+1, filename.length + 1);
-        }
-
-        //console.log("cache requested for (" + filename + ")");
-        let instance = this;
-        return new Promise( function (fulfill, reject) {
-
-
-            if (!fs.existsSync("./cache/")) {
-                fs.mkdirSync("./cache/");
-                //console.log("new directory created!");
-            }
-
-            if (!isUndefined(instance.id)) {
-                if (!fs.existsSync("./cache/" + instance.id + "/")) {
-                    fs.mkdirSync("./cache/" + instance.id + "/");
-                    //console.log("new directory created!");
+                else {
+                    code = 204;
                 }
 
-                var path = "./cache/" + instance.id + "/" + filename + ".JSON";
-
-                fs.writeFile(path, content,function (err: any) {
-                    if (err)
-                        reject({code: 400, body: {"error": "Write File Failed!"}});
-                    else
-                        fulfill(0);
+                //decode base64 content and cache on disk
+                instance.decode(content)
+                .then(function () {
+                    fulfill({code: code, body: {}});
+                }).catch(function (err) {
+                    //console.log(err);
+                    reject(err);
                 });
-
-
-            }
         });
     }
-    */
 
 
 
@@ -429,7 +187,7 @@ export default class InsightFacade implements IInsightFacade {
 
         let instance = this;
         return new Promise(function (fulfill, reject) {
-            instance.loadedCourses.length = 0
+            instance.loadedCourses = [];
             fileContents.forEach(function (fileContent: any) {
                 fileContent.forEach(function (courseSection: any) {
                     var course = new Course(courseSection.courses_dept,
@@ -576,7 +334,7 @@ export default class InsightFacade implements IInsightFacade {
                                 return reject({code: 400, body: {"error": "Invalid Query"}});
                             }
                         })
-                    })
+                    });
                     columnsOnly = JSON.parse(JSON.stringify(queryOutput, columns));
                     //console.log(columnsOnly);
                     if (order != null) {
@@ -622,12 +380,10 @@ export default class InsightFacade implements IInsightFacade {
                     var arrayofFilters = filter[key];
                     if (!Array.isArray(arrayofFilters)) {
                         reject({code: 400, body: {"error": "Invalid Query"}})
-                    } else {
-                        var filterArrayResults: Promise<any>[] = []
-                        arrayofFilters.forEach(function (filter) {
-                            filterArrayResults.push(instance.parseFilter(filter, course))
-                        })
-                        Promise.all(filterArrayResults)
+                    }
+                    Promise.all(arrayofFilters.map(function (ele: any) {
+                        return instance.parseFilter(ele, course);
+                    }))
                         .then(function (result) {
                             result.forEach(function (ele2) {
                                 if (ele2 === false) {
@@ -639,18 +395,16 @@ export default class InsightFacade implements IInsightFacade {
                         .catch(function (err) {
                             reject(err);
                         })
-                    }
                     break;
                 case "OR":
                     var arrayofFilters = filter[key];
                     if (!Array.isArray(arrayofFilters)) {
                         reject({code: 400, body: {"error": "Invalid Query"}})
-                    } else {
-                        var filterArrayResults: Promise<any>[] = []
-                        arrayofFilters.forEach(function (filter) {
-                            filterArrayResults.push(instance.parseFilter(filter, course))
-                        })
-                        Promise.all(filterArrayResults)
+                    }
+                    Promise.all(arrayofFilters.map(function (ele: any) {
+                        //console.log(ele);
+                        return instance.parseFilter(ele, course);
+                    }))
                         .then(function (result) {
                             //console.log(result);
                             result.forEach(function (ele2) {
@@ -663,7 +417,6 @@ export default class InsightFacade implements IInsightFacade {
                         .catch(function (err) {
                             reject(err);
                         });
-                    }
                     break;
                 case "LT":
                 case "GT":
@@ -707,30 +460,22 @@ export default class InsightFacade implements IInsightFacade {
                         }
 
                         if (key === "IS") {
-                            if (typeof paramValue != "string" || typeof courseValue != "string") {
+                            if (typeof paramValue != "string") {
                                 reject(({code: 400, body: {"error": "value of " + key + " must be a string"}}))
-                            } else {
-                                instance.doOperation(paramValue, courseValue, key)
-                                    .then(function (result) {
-                                        fulfill(result);
-                                    })
-                                    .catch(function (err) {
-                                        reject(err)
-                                    })
                             }
                         } else {
-                            if (typeof paramValue != "number" || typeof courseValue != "number") {
+                            if (typeof paramValue != "number") {
                                 reject(({code: 400, body: {"error": "value of " + key + " must be a number"}}))
-                            } else {
-                                instance.doOperation(paramValue, courseValue, key)
-                                    .then(function (result) {
-                                        fulfill(result);
-                                    })
-                                    .catch(function (err) {
-                                        reject(err)
-                                    })
                             }
                         }
+
+                        instance.doOperation(paramValue, courseValue, key)
+                            .then(function (result) {
+                                fulfill(result);
+                            })
+                            .catch(function (err) {
+                                reject(err)
+                            })
                     }
                     break;
                 case "NOT":
@@ -766,21 +511,163 @@ export default class InsightFacade implements IInsightFacade {
                     var firstWildCard = paramValue.indexOf("*");
                     var lastWildCard = paramValue.lastIndexOf("*");
                     //console.log(firstWildCard + " " + lastWildCard);
-                    if (firstWildCard == 0) {
-                        if (lastWildCard == paramValue.length-1) {
+                    if (firstWildCard === 0) {
+                        if (lastWildCard === paramValue.length-1) {
                             fulfill(courseValue.includes(paramValue.substring(firstWildCard+1, lastWildCard)))
                         }
-                        fulfill(courseValue.endsWith(paramValue.substring(1)))
-                    } else if (firstWildCard == -1) {
+                        else {
+                            fulfill(courseValue.endsWith(paramValue.substring(1)))
+                        }
+                    } else if (firstWildCard === -1) {
                         fulfill(courseValue === paramValue);
                     }
-                    fulfill(courseValue.startsWith(paramValue.substring(0, lastWildCard)))
+                    else {
+                        fulfill(courseValue.startsWith(paramValue.substring(0, lastWildCard)))
+                    }
                     break;
                 default:
-                    reject({code: 400, body: {"error": "Invalid Query"}})
+                    reject({code: 400, body: {"error": "Invalid operation"}});
             }
         })
     }
+    /**
+     * decodes base64 dataset to JSON object
+     *
+     * @param input  given string needs to be decoded
+     * @return JSON object
+     */
+    decode(input: string): Promise<any>{
+        let instance = this;
+
+        return new Promise( function (fulfill, reject) {
+            //we need to convert the data back to buffer
+            instance.load(input)
+                .then(function (okay: any) {
+                    let contentArray: any[] = [];
+                    var content: any = "";
+                    var readfile: Promise<any>;
+                    var substring: string = "DEFAULT STRING";
+
+                    for (var filename in okay.files) {
+                        let name: string = filename;
+                        if (filename.indexOf("/") >= 0)
+                        {
+                            substring = filename.substr(filename.indexOf('/')+1, filename.length + 1);
+                        }
+                        if (substring.length == 0 || substring.match(".DS_Store") || substring.match("__MAXOSX"))
+                            continue;
+                        //if got timeout, this line is the problem
+                        if (okay.file(filename) === null)
+                            continue;
+                        //console.log(filename);
+                        //inner promise is returned
+                        readfile = okay.file(filename).async("string")
+                            .then(function success(text: string) {
+                                if (isUndefined(text) || (typeof text !== 'string') || !(instance.isJSON(text)))
+                                    reject({code: 400, body: {"error": "file content is invalid! because test = " + test}});
+                                //console.log(text);
+                                var buffer = new Buffer(text);
+                                return instance.parseData(buffer.toString())
+                            }).then( function (result: any) {
+                                contentArray = contentArray.concat(result);
+                                //console.log(contentArray);
+                            })
+                            .catch(function (err: any) {
+                                //console.log("err catched for readfile:" + err);
+                                //read file error
+                                reject({code: 400, body: {"error": "read-file error"}});
+                            });
+                        }
+                        Promise.all([readfile]).then(function () {
+                            content = JSON.stringify(contentArray, null, 4);
+                            instance.cacheData(content, instance.id)
+                                .then(function () {
+                                    fulfill(content);
+                                })
+                                .catch( function (err: any){
+                                    reject({code: 400, body: {"error": "cache data error-catch " +
+                                    "cachedata block with error: " + err.toString()}});
+                                });
+
+                        }).catch(function (err: any) {
+                            reject({code: 400, body: {"error": err.toString()}});
+                        });
+                }).catch(function (err) {
+                //console.log(err);
+                reject(err);
+            });
+        });
+    }
+
+    load(content: any): Promise<any>
+    {
+        return new Promise(function(fulfill, reject)
+        {
+            try {
+                let zip = new JSZip();
+                zip.loadAsync(content, {base64: true})
+                    .then(function (okay: any) {
+                        fulfill(okay);
+                    }).catch(function (err: any) {
+                    reject({code: 400, body: {"error": "Content is not base64"}});
+                });
+            }catch (err)
+            {
+                if(isUndefined(err.code))
+                {
+                    reject({code: 400, body: {"error": "unknown exception"}});
+                }
+            }
+        });
+    }
+
+    cacheData(content: any, filename: string): Promise<any>
+    {
+
+        //case inner folder is found
+        while (filename.indexOf("/") >= 0)
+        {
+            filename = filename.substr(filename.indexOf('/')+1, filename.length + 1);
+        }
+
+        //console.log("cache requested for (" + filename + ")");
+        let instance = this;
+        return new Promise( function (fulfill, reject) {
+
+            try {
+
+            if (!fs.existsSync("./cache/")) {
+                fs.mkdirSync("./cache/");
+                //console.log("new directory created!");
+            }
+
+            if (!isUndefined(instance.id)) {
+                if (!fs.existsSync("./cache/" + instance.id + "/")) {
+                    fs.mkdirSync("./cache/" + instance.id + "/");
+                    //console.log("new directory created!");
+                }
+
+                var path = "./cache/" + instance.id + "/" + filename + ".JSON";
+
+                var filewriting = fs.writeFile(path, content, function (err: any) {
+                    if (err)
+                        reject({code: 400, body: {"error": "Write File Failed!"}});
+                });
+
+                Promise.all([filewriting]).then(function () {
+                    fulfill(0);
+                }).catch(function () {
+                    reject({code: 400, body: {"error": "Write File Failed!"}});
+                })
+            }
+            }catch (err)
+            {
+                reject({code: 400, body: {"error": "Write File Failed!"}});
+            }
+        });
+    }
+
+
 
     /**
      * check if given id exists
