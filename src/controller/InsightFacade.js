@@ -1,6 +1,7 @@
 "use strict";
 var Util_1 = require("../Util");
 var Course_1 = require("./Course");
+var util_1 = require("util");
 var JSZip = require("jszip");
 var fs = require("fs");
 var pattern = "^[A-Za-z0-9+\/]+$";
@@ -134,13 +135,18 @@ var InsightFacade = (function () {
         var instance = this;
         var path = "./cache/" + id + "/";
         return new Promise(function (fulfill, reject) {
-            instance.removeFolder(path)
-                .then(function (result) {
-                fulfill(result);
-            })
-                .catch(function (err) {
+            try {
+                instance.removeFolder(path)
+                    .then(function (result) {
+                    fulfill(result);
+                })
+                    .catch(function (err) {
+                    reject(err);
+                });
+            }
+            catch (err) {
                 reject(err);
-            });
+            }
         });
     };
     InsightFacade.prototype.performQuery = function (query) {
@@ -166,7 +172,12 @@ var InsightFacade = (function () {
                 fulfill(result);
             })
                 .catch(function (err) {
-                reject(err);
+                if (err === null) {
+                    reject({ code: 424, body: { "missing": instance.invalidIDs } });
+                }
+                else {
+                    reject(err);
+                }
             });
         });
     };
@@ -185,12 +196,17 @@ var InsightFacade = (function () {
     };
     InsightFacade.prototype.readDataFiles = function (path) {
         return new Promise(function (fulfill, reject) {
-            fs.readdir(path, function (err, files) {
-                if (err)
-                    reject({ code: 404, body: { "error": "Source not previously added" } });
-                else
-                    fulfill(files);
-            });
+            try {
+                fs.readdir(path, function (err, files) {
+                    if (err)
+                        reject({ code: 400, body: { "error": "Source not previously added" } });
+                    else
+                        fulfill(files);
+                });
+            }
+            catch (err) {
+                reject({ code: 400, body: { "error": "Source not previously added" } });
+            }
         });
     };
     InsightFacade.prototype.readFiles = function (files, path) {
@@ -218,7 +234,9 @@ var InsightFacade = (function () {
                     }
                 });
             }
-            reject(null);
+            else {
+                reject(null);
+            }
         });
     };
     InsightFacade.prototype.parseQuery = function (query) {
@@ -440,13 +458,6 @@ var InsightFacade = (function () {
         }
         return false;
     };
-    InsightFacade.prototype.isCached = function () {
-        var path = "./cache/";
-        if (fs.existsSync(path)) {
-            return true;
-        }
-        return false;
-    };
     InsightFacade.prototype.isJSON = function (str) {
         try {
             JSON.parse(str);
@@ -470,7 +481,11 @@ var InsightFacade = (function () {
                 fulfill(result2);
             })
                 .catch(function (err) {
-                reject(err);
+                if (!util_1.isUndefined(err) && err.code === 400) {
+                    reject({ code: 404, body: { "error": "Source not previously added" } });
+                }
+                else
+                    reject(err);
             });
         });
     };
@@ -494,7 +509,7 @@ var InsightFacade = (function () {
         return new Promise(function (fulfill, reject) {
             fs.rmdir(path, function (err) {
                 if (err) {
-                    reject({ code: 400, body: { "error:": "not empty" } });
+                    reject({ code: 404, body: { "error:": "not empty" } });
                 }
                 fulfill({ code: 204, body: {} });
             });
