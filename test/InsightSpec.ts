@@ -83,8 +83,8 @@ describe("InsightTest", function () {
 
     var invalidValueQuery = {
         "WHERE":{
-            "OR":{
-                "courses_avg": "abd"
+            "IS":{
+                "courses_dept": 12
             }
         },
         "OPTIONS":{
@@ -480,7 +480,6 @@ describe("InsightTest", function () {
             })
     });
 
-
     it("overwrite valid existing data set", function () {
         return insight.addDataset('courses', content)
             .then(function(response) {
@@ -536,6 +535,7 @@ describe("InsightTest", function () {
     });
 
 
+
     it("perform valid query", function () {
 
         return insight.performQuery(validQuery)
@@ -546,6 +546,20 @@ describe("InsightTest", function () {
                 expect.fail();
             })
     });
+
+
+    it("perform invalid value query", function () {
+
+        return insight.performQuery(invalidValueQuery)
+            .then(function(response) {
+                expect.fail();
+
+            }).catch(function(err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(400);
+            })
+    });
+
 
     it("perform complex autosuite query", function () {
 
@@ -590,18 +604,6 @@ describe("InsightTest", function () {
             }).catch(function(err) {
                 //console.log(err);
                 expect(err.code).to.deep.equal(424);
-            })
-    });
-
-    it("perform invalid value query", function () {
-
-        return insight.performQuery(invalidValueQuery)
-            .then(function(response) {
-                expect.fail();
-
-            }).catch(function(err) {
-                //console.log(err);
-                expect(err.code).to.deep.equal(400);
             })
     });
 
@@ -740,6 +742,7 @@ describe("InsightTest", function () {
 
         return insight.performQuery(ApolloQuery)
             .then(function(response) {
+                console.trace()
                 console.log(response.body)
                 expect(response.code).to.deep.equal(200)
             }).catch(function(err) {
@@ -758,8 +761,6 @@ describe("InsightTest", function () {
                 expect.fail();
             })
     });
-
-
 
     it("remove non-existing data set", function () {
         return insight3.removeDataset('dddd')

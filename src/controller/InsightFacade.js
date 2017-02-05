@@ -176,6 +176,7 @@ var InsightFacade = (function () {
                     reject({ code: 424, body: { "missing": instance.invalidIDs } });
                 }
                 else {
+                    console.trace();
                     reject(err);
                 }
             });
@@ -389,22 +390,33 @@ var InsightFacade = (function () {
                             reject({ code: 400, body: { "error": "Invalid Query" } });
                         }
                         if (key === "IS") {
-                            if (typeof paramValue != "string") {
+                            if (typeof paramValue != "string" || typeof courseValue != "string") {
                                 reject(({ code: 400, body: { "error": "value of " + key + " must be a string" } }));
+                            }
+                            else {
+                                instance.doOperation(paramValue, courseValue, key)
+                                    .then(function (result) {
+                                    fulfill(result);
+                                })
+                                    .catch(function (err) {
+                                    reject(err);
+                                });
                             }
                         }
                         else {
-                            if (typeof paramValue != "number") {
+                            if (typeof paramValue != "number" || typeof courseValue != "number") {
                                 reject(({ code: 400, body: { "error": "value of " + key + " must be a number" } }));
                             }
+                            else {
+                                instance.doOperation(paramValue, courseValue, key)
+                                    .then(function (result) {
+                                    fulfill(result);
+                                })
+                                    .catch(function (err) {
+                                    reject(err);
+                                });
+                            }
                         }
-                        instance.doOperation(paramValue, courseValue, key)
-                            .then(function (result) {
-                            fulfill(result);
-                        })
-                            .catch(function (err) {
-                            reject(err);
-                        });
                     }
                     break;
                 case "NOT":
@@ -448,6 +460,8 @@ var InsightFacade = (function () {
                     }
                     fulfill(courseValue.startsWith(paramValue.substring(0, lastWildCard)));
                     break;
+                default:
+                    reject({ code: 400, body: { "error": "Invalid Query" } });
             }
         });
     };
