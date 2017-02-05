@@ -165,7 +165,14 @@ export default class InsightFacade implements IInsightFacade {
                     fulfill(result);
                 })
                 .catch(function (err: any) {
-                    reject(err);
+                    if (err === null)
+                    {
+                        //null is caught since cache is empty or not exsit
+                        reject({code: 424, body: {"missing": instance.invalidIDs}})
+                    }
+                    else {
+                        reject(err);
+                    }
                 })
         });
     }
@@ -185,7 +192,7 @@ export default class InsightFacade implements IInsightFacade {
                         courseSection.courses_pass,
                         courseSection.courses_fail,
                         courseSection.courses_audit,
-                        courseSection.courses_uuid)
+                        courseSection.courses_uuid);
                     instance.loadedCourses.push(course);
                     //console.log(course);
                 })
@@ -197,14 +204,18 @@ export default class InsightFacade implements IInsightFacade {
 
     readDataFiles(path: string): Promise<any> {
         return new Promise(function (fulfill, reject) {
-            fs.readdir(path, function(err: any, files: any) {
-                //console.log(path);
-
-                if (err)
-                    reject({code: 404, body: {"error": "Source not previously added"}});
-                else
-                    fulfill(files);
-            })
+            try {
+                fs.readdir(path, function (err: any, files: any) {
+                    //console.log(path);
+                    if (err)
+                        reject({code: 400, body: {"error": "Source not previously added"}});
+                    else
+                        fulfill(files);
+                })
+            }catch (err)
+            {
+                reject({code: 400, body: {"error": "Source not previously added"}});
+            }
         })
     }
 
@@ -242,8 +253,10 @@ export default class InsightFacade implements IInsightFacade {
                     }
                 });
             }
-            //if cache folder is empty or cache folder does not exist
-            reject(null);
+            else {
+                //if cache folder is empty or cache folder does not exist
+                reject(null);
+            }
         });
     }
 
@@ -293,7 +306,7 @@ export default class InsightFacade implements IInsightFacade {
 
             instance.loadedCourses.forEach(function (course: any) {
                 queryResults.push(instance.parseFilter(filter, course));
-            })
+            });
 
             Promise.all(queryResults)
                 .then(function (result) {
@@ -301,8 +314,6 @@ export default class InsightFacade implements IInsightFacade {
                         //console.log("GGG");
                         fulfill({code: 200, body: result});
                     }
-
-                    //console.log("GGGGGGGGG");
 
                     for (var i = 0; i < instance.loadedCourses.length; i++) {
                         if (result[i] === true) {
@@ -394,12 +405,12 @@ export default class InsightFacade implements IInsightFacade {
                                 if (ele2 === true) {
                                     fulfill(true);
                                 }
-                            })
+                            });
                             fulfill(false);
                         })
                         .catch(function (err) {
                             reject(err);
-                        })
+                        });
                     break;
                 case "LT":
                 case "GT":
@@ -567,7 +578,7 @@ export default class InsightFacade implements IInsightFacade {
                     //console.log("fulfill");
                     if (dataParsing) {
                         Promise.all([readfile, dataParsing]).then(function () {
-                            content = JSON.stringify(contentArray, null, 4)
+                            content = JSON.stringify(contentArray, null, 4);
                             fulfill(content);
 
                         }).catch(function (err: any) {
@@ -577,7 +588,7 @@ export default class InsightFacade implements IInsightFacade {
                     else {
 
                         Promise.all([readfile]).then(function () {
-                            content = JSON.stringify(contentArray, null, 4)
+                            content = JSON.stringify(contentArray, null, 4);
                             instance.cacheData(content, instance.id)
                                 .then(function () {
                                     //console.log("WWWWWW: " + content.charAt(588), content.charAt(600));
@@ -673,16 +684,6 @@ export default class InsightFacade implements IInsightFacade {
         return false;
     }
 
-
-    isCached(): boolean
-    {
-        var path = "./cache/";
-        if (fs.existsSync(path)) {
-            return true;
-        }
-        return false;
-    }
-
     isJSON(str: string): boolean
     {
         try
@@ -752,13 +753,18 @@ export default class InsightFacade implements IInsightFacade {
                     fulfill(result2)
                 })
                 .catch(function (err) {
-                    reject(err)
+                    if (!isUndefined(err) && err.code === 404)
+                    {
+                        reject({code: 404, body: {"error": "Source not previously added"}});
+                    }
+                    else
+                        reject(err)
                 })
         })
     }
 
     removeFiles(path: string, listofFiles: any[]): Promise<any>[] {
-        var output: Promise<any>[] = []
+        var output: Promise<any>[] = [];
         listofFiles.forEach(function (file) {
             output.push(new Promise(function (fulfill, reject) {
                 fs.unlink(path+file, function(err: any) {
@@ -769,7 +775,7 @@ export default class InsightFacade implements IInsightFacade {
                     }
                 })
             }))
-        })
+        });
 
         return output;
     }
@@ -779,7 +785,7 @@ export default class InsightFacade implements IInsightFacade {
             fs.rmdir(path, function (err: any) {
                 if (err) {
                     //console.log(path)
-                    reject({code: 400, body: {"error:": "not empty"}});
+                    reject({code: 404, body: {"error:": "not empty"}});
                 }
                 fulfill({code: 204, body: {}})
             })
