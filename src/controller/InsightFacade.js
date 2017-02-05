@@ -176,7 +176,6 @@ var InsightFacade = (function () {
                     reject({ code: 424, body: { "missing": instance.invalidIDs } });
                 }
                 else {
-                    console.trace();
                     reject(err);
                 }
             });
@@ -327,40 +326,48 @@ var InsightFacade = (function () {
                     if (!Array.isArray(arrayofFilters)) {
                         reject({ code: 400, body: { "error": "Invalid Query" } });
                     }
-                    Promise.all(arrayofFilters.map(function (ele) {
-                        return instance.parseFilter(ele, course);
-                    }))
-                        .then(function (result) {
-                        result.forEach(function (ele2) {
-                            if (ele2 === false) {
-                                fulfill(false);
-                            }
+                    else {
+                        var filterArrayResults = [];
+                        arrayofFilters.forEach(function (filter) {
+                            filterArrayResults.push(instance.parseFilter(filter, course));
                         });
-                        fulfill(true);
-                    })
-                        .catch(function (err) {
-                        reject(err);
-                    });
+                        Promise.all(filterArrayResults)
+                            .then(function (result) {
+                            result.forEach(function (ele2) {
+                                if (ele2 === false) {
+                                    fulfill(false);
+                                }
+                            });
+                            fulfill(true);
+                        })
+                            .catch(function (err) {
+                            reject(err);
+                        });
+                    }
                     break;
                 case "OR":
                     var arrayofFilters = filter[key];
                     if (!Array.isArray(arrayofFilters)) {
                         reject({ code: 400, body: { "error": "Invalid Query" } });
                     }
-                    Promise.all(arrayofFilters.map(function (ele) {
-                        return instance.parseFilter(ele, course);
-                    }))
-                        .then(function (result) {
-                        result.forEach(function (ele2) {
-                            if (ele2 === true) {
-                                fulfill(true);
-                            }
+                    else {
+                        var filterArrayResults = [];
+                        arrayofFilters.forEach(function (filter) {
+                            filterArrayResults.push(instance.parseFilter(filter, course));
                         });
-                        fulfill(false);
-                    })
-                        .catch(function (err) {
-                        reject(err);
-                    });
+                        Promise.all(filterArrayResults)
+                            .then(function (result) {
+                            result.forEach(function (ele2) {
+                                if (ele2 === true) {
+                                    fulfill(true);
+                                }
+                            });
+                            fulfill(false);
+                        })
+                            .catch(function (err) {
+                            reject(err);
+                        });
+                    }
                     break;
                 case "LT":
                 case "GT":

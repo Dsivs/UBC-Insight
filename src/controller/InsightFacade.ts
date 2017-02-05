@@ -622,20 +622,22 @@ export default class InsightFacade implements IInsightFacade {
                     if (!Array.isArray(arrayofFilters)) {
                         reject({code: 400, body: {"error": "Invalid Query"}})
                     } else {
-                        Promise.all(arrayofFilters.map(function (ele: any) {
-                            return instance.parseFilter(ele, course);
-                        }))
-                            .then(function (result) {
-                                result.forEach(function (ele2) {
-                                    if (ele2 === false) {
-                                        fulfill(false);
-                                    }
-                                })
-                                fulfill(true);
+                        var filterArrayResults: Promise<any>[] = []
+                        arrayofFilters.forEach(function (filter) {
+                            filterArrayResults.push(instance.parseFilter(filter, course))
+                        })
+                        Promise.all(filterArrayResults)
+                        .then(function (result) {
+                            result.forEach(function (ele2) {
+                                if (ele2 === false) {
+                                    fulfill(false);
+                                }
                             })
-                            .catch(function (err) {
-                                reject(err);
-                            })
+                            fulfill(true);
+                        })
+                        .catch(function (err) {
+                            reject(err);
+                        })
                     }
                     break;
                 case "OR":
@@ -643,22 +645,23 @@ export default class InsightFacade implements IInsightFacade {
                     if (!Array.isArray(arrayofFilters)) {
                         reject({code: 400, body: {"error": "Invalid Query"}})
                     } else {
-                        Promise.all(arrayofFilters.map(function (ele: any) {
-                            //console.log(ele);
-                            return instance.parseFilter(ele, course);
-                        }))
-                            .then(function (result) {
-                                //console.log(result);
-                                result.forEach(function (ele2) {
-                                    if (ele2 === true) {
-                                        fulfill(true);
-                                    }
-                                });
-                                fulfill(false);
-                            })
-                            .catch(function (err) {
-                                reject(err);
+                        var filterArrayResults: Promise<any>[] = []
+                        arrayofFilters.forEach(function (filter) {
+                            filterArrayResults.push(instance.parseFilter(filter, course))
+                        })
+                        Promise.all(filterArrayResults)
+                        .then(function (result) {
+                            //console.log(result);
+                            result.forEach(function (ele2) {
+                                if (ele2 === true) {
+                                    fulfill(true);
+                                }
                             });
+                            fulfill(false);
+                        })
+                        .catch(function (err) {
+                            reject(err);
+                        });
                     }
                     break;
                 case "LT":
