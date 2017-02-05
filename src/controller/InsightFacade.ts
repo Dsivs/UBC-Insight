@@ -753,7 +753,7 @@ export default class InsightFacade implements IInsightFacade {
                     fulfill(result2)
                 })
                 .catch(function (err) {
-                    if (!isUndefined(err) && err.code === 404)
+                    if (!isUndefined(err) && err.code === 400)
                     {
                         reject({code: 404, body: {"error": "Source not previously added"}});
                     }
