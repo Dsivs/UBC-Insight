@@ -59,13 +59,8 @@ export default class InsightFacade implements IInsightFacade {
         this.id = id;
         //code will be used for fulfill only
         let code: number = 0;
-        //console.log(window.atob("SGVsbG8gV29ybGQ="));
 
         return new Promise(function (fulfill, reject) {
-
-            if (!(instance.isBase64(content)))
-                reject({code: 400, body: {"error": "Content Not Base64 Encoded"}});
-            else {
                 //check if data set has been added
                 if (instance.isExist(id)) {
                     //if so, delete and write again
@@ -80,13 +75,13 @@ export default class InsightFacade implements IInsightFacade {
                 }
 
                 //decode base64 content and cache on disk
-                instance.decode(content).then(function () {
+                instance.decode(content)
+                .then(function () {
                     fulfill({code: code, body: {}});
                 }).catch(function (err) {
                     //console.log(err);
-                    reject({code: 400, body: {"error": err.toString()}});
+                    reject(err);
                 });
-            }
         });
     }
 
@@ -513,32 +508,6 @@ export default class InsightFacade implements IInsightFacade {
         })
     }
     /**
-     * check if given string is encoded in base64.
-     *
-     * @param input  string needs to be checked
-     *
-     * @return boolean true if given string is in base64. false otherwise.
-     */
-    isBase64(input: string): boolean
-    {
-        let expression = new RegExp(pattern);
-
-        if (isUndefined(input) || input === "" || input === null)
-            return false;
-        //base64 should be multiple of 4 byte string
-        if (input.length % 4 !== 0)
-            return false;
-        //base64 string ends with "="
-        if (input.charAt(input.length - 1) === "=") {
-            if (input.charAt(input.length - 2) === "=") {
-                return (expression.test(input.substring(0, input.length-2)))
-            } else {
-                return (expression.test(input.substring(0, input.length-1)))
-            }
-        }
-        return (expression.test(input))
-    }
-    /**
      * decodes base64 dataset to JSON object
      *
      * @param input  given string needs to be decoded
@@ -549,11 +518,9 @@ export default class InsightFacade implements IInsightFacade {
 
         return new Promise( function (fulfill, reject) {
             //we need to convert the data back to buffer
-            var buffer = new Buffer(input, 'base64');
 
-            instance.load(buffer)
-                .then(function (okay: any)
-                {
+            instance.load(input)
+                .then(function (okay: any) {
                     let contentArray: any[] = [];
                     var content: any = "";
                     var readfile: Promise<any>;
@@ -628,21 +595,21 @@ export default class InsightFacade implements IInsightFacade {
                     }
                 }).catch(function (err) {
                 //console.log(err);
-                reject({code: 400, body: {"error": err.toString()}});
+                reject(err);
             });
         });
     }
 
-
-    load(buffer: any): Promise<any>
+    load(content: any): Promise<any>
     {
         return new Promise(function(fulfill, reject)
         {
             let zip = new JSZip();
-            zip.loadAsync(buffer).then(function (okay: any) {
+            zip.loadAsync(content, {base64:true})
+            .then(function (okay: any) {
                 fulfill(okay);
             }).catch(function (err: any) {
-                reject({code: 400, body: {"error": err.toString()}});
+                reject({code: 400, body: {"error": "Content is not base64"}});
             });
         });
     }

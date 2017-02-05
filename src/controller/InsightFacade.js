@@ -15,21 +15,18 @@ var InsightFacade = (function () {
         this.id = id;
         var code = 0;
         return new Promise(function (fulfill, reject) {
-            if (!(instance.isBase64(content)))
-                reject({ code: 400, body: { "error": "Content Not Base64 Encoded" } });
-            else {
-                if (instance.isExist(id)) {
-                    code = 201;
-                }
-                else {
-                    code = 204;
-                }
-                instance.decode(content).then(function () {
-                    fulfill({ code: code, body: {} });
-                }).catch(function (err) {
-                    reject({ code: 400, body: { "error": err.toString() } });
-                });
+            if (instance.isExist(id)) {
+                code = 201;
             }
+            else {
+                code = 204;
+            }
+            instance.decode(content)
+                .then(function () {
+                fulfill({ code: code, body: {} });
+            }).catch(function (err) {
+                reject(err);
+            });
         });
     };
     InsightFacade.prototype.removeDataset = function (id) {
@@ -335,27 +332,10 @@ var InsightFacade = (function () {
             }
         });
     };
-    InsightFacade.prototype.isBase64 = function (input) {
-        var expression = new RegExp(pattern);
-        if (util_1.isUndefined(input) || input === "" || input === null)
-            return false;
-        if (input.length % 4 !== 0)
-            return false;
-        if (input.charAt(input.length - 1) === "=") {
-            if (input.charAt(input.length - 2) === "=") {
-                return (expression.test(input.substring(0, input.length - 2)));
-            }
-            else {
-                return (expression.test(input.substring(0, input.length - 1)));
-            }
-        }
-        return (expression.test(input));
-    };
     InsightFacade.prototype.decode = function (input) {
         var instance = this;
         return new Promise(function (fulfill, reject) {
-            var buffer = new Buffer(input, 'base64');
-            instance.load(buffer)
+            instance.load(input)
                 .then(function (okay) {
                 var contentArray = [];
                 var content = "";
@@ -412,17 +392,18 @@ var InsightFacade = (function () {
                     });
                 }
             }).catch(function (err) {
-                reject({ code: 400, body: { "error": err.toString() } });
+                reject(err);
             });
         });
     };
-    InsightFacade.prototype.load = function (buffer) {
+    InsightFacade.prototype.load = function (content) {
         return new Promise(function (fulfill, reject) {
             var zip = new JSZip();
-            zip.loadAsync(buffer).then(function (okay) {
+            zip.loadAsync(content, { base64: true })
+                .then(function (okay) {
                 fulfill(okay);
             }).catch(function (err) {
-                reject({ code: 400, body: { "error": err.toString() } });
+                reject({ code: 400, body: { "error": "Content is not base64" } });
             });
         });
     };

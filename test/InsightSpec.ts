@@ -411,7 +411,6 @@ describe("InsightTest", function () {
 
     });
 
-
     it("add invalid zip", function () {
         return insight.addDataset('test1', 'SW52YWxpZCBTdHJpbmc=')
             .then(function(response) {
@@ -442,20 +441,20 @@ describe("InsightTest", function () {
             })
     });
 
-    /*
+
     it("add valid zip with invalid content", function () {
         return insight.addDataset('test2', invalidContent)
-            .then(function(err) {
-                console.log(err);
+            .then(function(result) {
+                console.log(result);
                 expect.fail();
-            }).catch(function(response) {
-                expect(response.code).to.deep.equal(400);
-                expect(response.body).to.have.property('error');
-                //console.log(response.body);
+            }).catch(function(err) {
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.have.property('error');
+                console.log(err.body);
                 //expect(response.body).to.deep.equal({"error" : "Invalid Zip file"});
             })
     });
-    */
+
 
     it("add null", function () {
         return insight.addDataset(null, null)
@@ -465,7 +464,7 @@ describe("InsightTest", function () {
             }).catch(function(response) {
                 expect(response.code).to.deep.equal(400);
                 expect(response.body).to.have.property('error');
-                //console.log(response.body);
+                console.log(response.body);
                 //expect(response.body).to.deep.equal({"error" : "Invalid Zip file"});
             })
     });
