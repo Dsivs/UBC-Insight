@@ -131,6 +131,8 @@ var InsightFacade = (function () {
     };
     InsightFacade.prototype.removeDataset = function (id) {
         var instance = this;
+        instance.loadedCourses.length = 0;
+        instance.invalidIDs.length = 0;
         var path = "./cache/" + id + "/";
         return new Promise(function (fulfill, reject) {
             instance.removeFolder(path)
@@ -206,6 +208,7 @@ var InsightFacade = (function () {
         var instance = this;
         var path;
         var resultsArray = [];
+        instance.invalidIDs = [];
         return new Promise(function (fulfill, reject) {
             var where = query.WHERE;
             var options = query.OPTIONS;
