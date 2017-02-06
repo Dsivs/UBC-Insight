@@ -392,6 +392,8 @@ export default class InsightFacade implements IInsightFacade {
                 let arrayOfFilterFn: any[] = [];
                 if (!Array.isArray(keyValue))
                     throw ({code: 400, body: {error: "value of " + key + " must be an array"}});
+                if (keyValue.length == 0)
+                    throw ({code: 400, body: {error: key + " must have at least one key"}});
                 for (let filter of keyValue) {
                     arrayOfFilterFn.push(instance.parseFilter(filter))
                 }
