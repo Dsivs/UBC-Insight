@@ -212,6 +212,8 @@ export default class InsightFacade implements IInsightFacade {
      */
     removeDataset(id: string): Promise<InsightResponse> {
         let instance = this;
+        instance.loadedCourses.length = 0;
+        instance.invalidIDs.length = 0;
         var path = "./cache/" + id + "/";
         return new Promise(function (fulfill, reject) {
             instance.removeFolder(path)
@@ -313,6 +315,8 @@ export default class InsightFacade implements IInsightFacade {
         let instance = this;
         let path: string;
         let resultsArray: any[] = [];
+        instance.invalidIDs = [];
+
         return new Promise(function (fulfill, reject) {
             let where: any = query.WHERE;
             let options: any = query.OPTIONS;
@@ -350,9 +354,9 @@ export default class InsightFacade implements IInsightFacade {
 
 
     checkOptions(options: any) {
-        let columns = options.COLUMNS
-        let order = options.ORDER
-        let form = options.FORM
+        let columns = options.COLUMNS;
+        let order = options.ORDER;
+        let form = options.FORM;
         //console.log(columns)
         //console.log(order)
         //console.log(form)
