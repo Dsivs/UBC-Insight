@@ -316,12 +316,17 @@ export default class InsightFacade implements IInsightFacade {
         let path: string;
         let resultsArray: any[] = [];
         instance.invalidIDs = [];
+        let queryObj: any = query;
 
         return new Promise(function (fulfill, reject) {
-            let where: any = query.WHERE;
-            let options: any = query.OPTIONS;
-
+            let where: any = queryObj.WHERE;
+            let options: any = queryObj.OPTIONS;
             try {
+                if (where == undefined)
+                    throw({code: 400, body: {error: "WHERE is missing"}})
+                if (options == undefined)
+                    throw({code: 400, body: {error: "OPTIONS is missing"}})
+
                 instance.checkOptions(options);
                 let filterFun = instance.parseFilter(where);
                 //console.log(filterFun.toString())
@@ -351,7 +356,6 @@ export default class InsightFacade implements IInsightFacade {
             }
         });
     }
-
 
     checkOptions(options: any) {
         let columns = options.COLUMNS;

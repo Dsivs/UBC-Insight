@@ -209,10 +209,15 @@ var InsightFacade = (function () {
         var path;
         var resultsArray = [];
         instance.invalidIDs = [];
+        var queryObj = query;
         return new Promise(function (fulfill, reject) {
-            var where = query.WHERE;
-            var options = query.OPTIONS;
+            var where = queryObj.WHERE;
+            var options = queryObj.OPTIONS;
             try {
+                if (where == undefined)
+                    throw ({ code: 400, body: { error: "WHERE is missing" } });
+                if (options == undefined)
+                    throw ({ code: 400, body: { error: "OPTIONS is missing" } });
                 instance.checkOptions(options);
                 var filterFun = instance.parseFilter(where);
                 for (var _i = 0, _a = instance.loadedCourses; _i < _a.length; _i++) {

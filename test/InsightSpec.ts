@@ -703,6 +703,81 @@ describe("InsightTest", function () {
     });
 
 
+    var missingWhereQuery = {
+        "OPTIONS": {
+            "COLUMNS": [
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER": "courses_dept",
+            "FORM": "TABLE"
+        }
+    }
+
+    it("perform no WHERE query", function () {
+
+        return insight.performQuery(missingWhereQuery)
+            .then(function(response) {
+                expect.fail();
+
+            }).catch(function(err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(400);
+            })
+    });
+
+    var noOptionsQuery = {
+        "WHERE":{
+            "GT":{
+                "courses_avg":97
+            }
+        },
+    }
+
+    it("perform no OPTIONS query", function () {
+
+        return insight.performQuery(noOptionsQuery)
+            .then(function(response) {
+                expect.fail();
+
+            }).catch(function(err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(400);
+            })
+    });
+
+    /*
+    var testQuery = {
+        "WHERE":{
+            "GT":{
+                "courses_avg":97
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE",
+            "HELLO": 4
+        }
+    }
+
+    it("perform test query", function () {
+
+        return insight.performQuery(testQuery)
+            .then(function(response) {
+                console.log(response)
+                expect.fail();
+
+            }).catch(function(err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(400);
+            })
+    });
+    */
+
     it("perform valid query", function () {
         return insight.performQuery(validQuery)
             .then(function(response) {
