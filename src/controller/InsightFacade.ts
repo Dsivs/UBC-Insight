@@ -212,60 +212,78 @@ export default class InsightFacade implements IInsightFacade {
      */
     removeDataset(id: string): Promise<InsightResponse> {
         let instance = this;
-        instance.loadedCourses.length = 0;
-        instance.invalidIDs.length = 0;
-        let path = "./cache/" + id + "/";
+        var path = "./cache/" + id + "/";
         return new Promise(function (fulfill, reject) {
-            instance.readFilesInDir(path)
-            .then(function (files) {
-                return Promise.all(instance.deleteFilesInDir(files, path))
-            })
-            .then(function (result) {
-                return instance.removeDirectory(path)
-            })
-            .then(function (result2) {
-                fulfill(result2)
-            })
-            .catch(function (err) {
-                reject(err);
-            });
+            instance.removeFolder(path)
+                .then(function (result) {
+                    fulfill(result);
+                })
+                .catch( function (err) {
+                    reject(err);
+                });
         });
     }
 
-    readFilesInDir(path: string): Promise<any> {
+    removeFolder(path: string): Promise<any> {
+        let instance = this;
         return new Promise(function (fulfill, reject) {
-            fs.readdir(path, function (err: any, files: any) {
-                if (err) {
-                    reject({code: 404, "body": {"error": "source not previously added"}})
-                } else {
+            instance.getFiles(path)
+                .then(function (files: any) {
+                    return Promise.all(instance.removeFiles(path, files))
+                })
+                .then(function () {
+                    return instance.removeDirectory(path);
+                })
+                .then(function (result) {
+                    try {
+                        fs.rmdirSync("./cache/");
+                    }
+                    catch (err)
+                    {
+                        //console.log(err);
+                        //non empty, ignre
+                    }
+                    fulfill(result)
+                })
+                .catch(function (err) {
+                    reject(err)
+                })
+        })
+    }
+
+    getFiles(path: string): Promise<any> {
+        return new Promise(function (fulfill, reject) {
+            fs.readdir(path, function(err: any, files: any) {
+                if (err)
+                    reject({code: 404, body: {"error": "Source not previously added"}});
+                else
                     fulfill(files);
-                }
             })
         })
     }
 
-    deleteFilesInDir(files: any[], path: string): Promise<any>[] {
-        let results: Promise<any>[] = [];
-
-        for (let file of files) {
-            results.push(new Promise(function (fulfill, reject) {
-                fs.unlink(path+file, function (err: any) {
+    removeFiles(path: string, listofFiles: any[]): Promise<any>[] {
+        var output: Promise<any>[] = [];
+        listofFiles.forEach(function (file) {
+            output.push(new Promise(function (fulfill, reject) {
+                fs.unlink(path+file, function(err: any) {
                     if (err) {
-                        reject({code: 404, body: {"error": "error deleting file"}})
+                        reject({code: 404, body: {"error": "Source not previously added"}});
+                    } else {
+                        fulfill({code: 204, body: {}})
                     }
-                    fulfill({code: 204, body: {}})
                 })
             }))
-        }
+        });
 
-        return results;
+        return output;
     }
 
     removeDirectory(path: string): Promise<any> {
         return new Promise(function (fulfill, reject) {
             fs.rmdir(path, function (err: any) {
                 if (err) {
-                    //console.log(path)
+                    console.log(path);
                     reject({code: 404, body: {"error:": "not empty"}});
                 }
                 fulfill({code: 204, body: {}})
@@ -301,7 +319,7 @@ export default class InsightFacade implements IInsightFacade {
 
             try {
                 instance.checkOptions(options);
-                let filterFun = instance.parseFilter(where)
+                let filterFun = instance.parseFilter(where);
                 //console.log(filterFun.toString())
                 for (var course of instance.loadedCourses) {
                     if(filterFun(course)) {
@@ -310,7 +328,7 @@ export default class InsightFacade implements IInsightFacade {
                 }
                 //console.log(resultsArray)
                 let columns: any[] = options.COLUMNS;
-                let outputArray = JSON.parse(JSON.stringify(resultsArray, columns, 4))
+                let outputArray = JSON.parse(JSON.stringify(resultsArray, columns, 4));
                 //console.log(outputArray);
                 let order = options.ORDER;
                 if (order != undefined) {
@@ -329,23 +347,7 @@ export default class InsightFacade implements IInsightFacade {
             }
         });
     }
-/*
-{
-    "WHERE":{
-        "GT":{
-            "courses_avg":71
-        }
-    },
-    "OPTIONS":{
-        "COLUMNS":[
-            "courses_dept",
-            "courses_avg"
-            ],
-        "ORDER":"courses_avg",
-        "FORM":"TABLE"
-    }
-}
-*/
+
 
     checkOptions(options: any) {
         let columns = options.COLUMNS
