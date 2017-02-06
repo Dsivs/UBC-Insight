@@ -11,4 +11,3 @@ node_modules/
 .yarnclean
 coverage/
 cache/
-*.md
