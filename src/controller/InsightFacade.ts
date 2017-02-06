@@ -16,6 +16,7 @@ export default class InsightFacade implements IInsightFacade {
 
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
+        this.loadedCourses = [];
         this.invalidIDs = [];
     }
 
@@ -242,12 +243,15 @@ export default class InsightFacade implements IInsightFacade {
                     }
                     catch (err)
                     {
-                        //console.log(err);
+                        console.log(err);
                         //non empty, ignre
                     }
-                    fulfill(result)
+                    finally {
+                        fulfill(result);
+                    }
                 })
                 .catch(function (err) {
+                    console.log("reject@254");
                     reject(err)
                 })
         })
@@ -256,8 +260,10 @@ export default class InsightFacade implements IInsightFacade {
     getFiles(path: string): Promise<any> {
         return new Promise(function (fulfill, reject) {
             fs.readdir(path, function(err: any, files: any) {
-                if (err)
+                if (err) {
+                    console.log("reject@263");
                     reject({code: 404, body: {"error": "Source not previously added"}});
+                }
                 else
                     fulfill(files);
             })
@@ -270,6 +276,7 @@ export default class InsightFacade implements IInsightFacade {
             output.push(new Promise(function (fulfill, reject) {
                 fs.unlink(path+file, function(err: any) {
                     if (err) {
+                        console.log("reject@276 = " + path+file + err);
                         reject({code: 404, body: {"error": "Source not previously added"}});
                     } else {
                         fulfill({code: 204, body: {}})
@@ -286,6 +293,7 @@ export default class InsightFacade implements IInsightFacade {
             fs.rmdir(path, function (err: any) {
                 if (err) {
                     console.log(path);
+                    console.log("reject@296");
                     reject({code: 404, body: {"error:": "not empty"}});
                 }
                 fulfill({code: 204, body: {}})
