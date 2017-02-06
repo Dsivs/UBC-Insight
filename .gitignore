@@ -11,4 +11,4 @@ node_modules/
 .yarnclean
 coverage/
 cache/
-D1-contrib_<24946428>.md
+*.md
