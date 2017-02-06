@@ -122,7 +122,6 @@ var InsightFacade = (function () {
             path = path + id + ".JSON";
             fs.writeFile(path, jsonData, function (err) {
                 if (err) {
-                    reject({ "code": 400, "body": { "error": "Write File Failed!" } });
                 }
                 else {
                     fulfill({ "code": code, "body": {} });
@@ -132,59 +131,71 @@ var InsightFacade = (function () {
     };
     InsightFacade.prototype.removeDataset = function (id) {
         var instance = this;
-        instance.loadedCourses.length = 0;
-        instance.invalidIDs.length = 0;
         var path = "./cache/" + id + "/";
         return new Promise(function (fulfill, reject) {
-            instance.readFilesInDir(path)
-                .then(function (files) {
-                return Promise.all(instance.deleteFilesInDir(files, path));
-            })
+            instance.removeFolder(path)
                 .then(function (result) {
-                return instance.removeDirectory(path);
-            })
-                .then(function (result2) {
-                fulfill(result2);
+                fulfill(result);
             })
                 .catch(function (err) {
                 reject(err);
             });
         });
     };
-    InsightFacade.prototype.readFilesInDir = function (path) {
+    InsightFacade.prototype.removeFolder = function (path) {
+        var instance = this;
         return new Promise(function (fulfill, reject) {
-            fs.readdir(path, function (err, files) {
-                if (err) {
-                    reject({ code: 404, "body": { "error": "source not previously added" } });
+            instance.getFiles(path)
+                .then(function (files) {
+                return Promise.all(instance.removeFiles(path, files));
+            })
+                .then(function () {
+                return instance.removeDirectory(path);
+            })
+                .then(function (result) {
+                try {
+                    fs.rmdirSync("./cache/");
                 }
-                else {
-                    fulfill(files);
+                catch (err) {
                 }
+                fulfill(result);
+            })
+                .catch(function (err) {
+                reject(err);
             });
         });
     };
-    InsightFacade.prototype.deleteFilesInDir = function (files, path) {
-        var results = [];
-        var _loop_1 = function (file) {
-            results.push(new Promise(function (fulfill, reject) {
+    InsightFacade.prototype.getFiles = function (path) {
+        return new Promise(function (fulfill, reject) {
+            fs.readdir(path, function (err, files) {
+                if (err)
+                    reject({ code: 404, body: { "error": "Source not previously added" } });
+                else
+                    fulfill(files);
+            });
+        });
+    };
+    InsightFacade.prototype.removeFiles = function (path, listofFiles) {
+        var output = [];
+        listofFiles.forEach(function (file) {
+            output.push(new Promise(function (fulfill, reject) {
                 fs.unlink(path + file, function (err) {
                     if (err) {
-                        reject({ code: 404, body: { "error": "error deleting file" } });
+                        reject({ code: 404, body: { "error": "Source not previously added" } });
                     }
-                    fulfill({ code: 204, body: {} });
+                    else {
+                        fulfill({ code: 204, body: {} });
+                    }
                 });
             }));
-        };
-        for (var _i = 0, files_1 = files; _i < files_1.length; _i++) {
-            var file = files_1[_i];
-            _loop_1(file);
-        }
-        return results;
+        });
+        return output;
     };
     InsightFacade.prototype.removeDirectory = function (path) {
         return new Promise(function (fulfill, reject) {
             fs.rmdir(path, function (err) {
                 if (err) {
+                    console.log(path);
                     reject({ code: 404, body: { "error:": "not empty" } });
                 }
                 fulfill({ code: 204, body: {} });
@@ -244,8 +255,7 @@ var InsightFacade = (function () {
                 throw ({ code: 400, body: { error: column + " is not a valid key" } });
             var id = column.substring(0, column.indexOf("_"));
             if (id != "courses") {
-                if (!this.invalidIDs.includes(id))
-                    this.invalidIDs.push(id);
+                this.invalidIDs.push(id);
                 throw ({ code: 424, body: { missing: this.invalidIDs } });
             }
         }
@@ -289,7 +299,6 @@ var InsightFacade = (function () {
                             return result;
                         };
                 }
-                break;
             case "GT":
             case "EQ":
             case "LT":

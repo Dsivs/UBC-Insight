@@ -183,7 +183,7 @@ export default class InsightFacade implements IInsightFacade {
 
             fs.writeFile(path, jsonData, function (err: any) {
                 if (err) {
-                    reject({"code": 400, "body": {"error": "Write File Failed!"}})
+
                 } else {
                     fulfill({"code": code, "body": {}})
                 }
@@ -370,8 +370,7 @@ export default class InsightFacade implements IInsightFacade {
                 throw ({code: 400, body: {error: column + " is not a valid key"}});
             let id = column.substring(0, column.indexOf("_"));
             if (id != "courses") {
-                if (!this.invalidIDs.includes(id))
-                    this.invalidIDs.push(id);
+                this.invalidIDs.push(id);
                 throw ({code: 424, body: {missing: this.invalidIDs}})
             }
         }
@@ -419,7 +418,6 @@ export default class InsightFacade implements IInsightFacade {
                             return result;
                         }
                 }
-                break;
             case "GT":
             case "EQ":
             case "LT":

@@ -15,6 +15,7 @@ let JSZip = require("jszip");
 let fs = require("fs");
 let content: string = "";
 let invalidContent: string = "";
+let novalidContent: string = "";
 let longContent: string = "";
 
 describe("InsightTest", function () {
@@ -112,6 +113,22 @@ describe("InsightTest", function () {
         }
     };
 
+    var invalidFilterQuery = {
+        "WHERE":{
+            "BO":{
+                "courses_avg":71
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    };
+
     var invalidColumnsQuery = {
         "WHERE":{
             "GT":{
@@ -158,6 +175,172 @@ describe("InsightTest", function () {
             "FORM":"TAdBLE"
         }
     };
+
+    var invalidFormQuery2 = {
+        "WHERE":{
+            "GT":{
+                "courses_avg":71
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    }
+
+    var invalidFormQuery3 = {
+        "WHERE":{
+            "GT":{
+                "courses_avg":71
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courdses_avg"
+            ],
+            "ORDER":"courdses_avg",
+            "FORM":"TABLE"
+        }
+    }
+
+    var notArrayQuery = {
+        "WHERE":{
+            "OR":{
+                "courses_avg":71
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    }
+
+    var emptyArray: any[] = []
+
+    var emptyArrayQuery = {
+        "WHERE":{
+            "OR": emptyArray
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    }
+
+    var tooManyKeysQuery = {
+        "WHERE":{
+            "GT": {
+                "courses_avg": 97,
+                "courses_fail": 0
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    }
+
+    var noIDKeyQuery = {
+        "WHERE":{
+            "GT": {
+                "avg": 97,
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    }
+
+    var tooManyFiltersQuery = {
+        "WHERE":{
+            "GT": {
+                "courses_avg": 97,
+            },
+            "EQ": {
+                "courses_avg": 90
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    }
+
+    var notNumQuery = {
+        "WHERE":{
+            "LT": {
+                "courses_avg": "ayy",
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    }
+
+    var validLTQuery = {
+        "WHERE":{
+            "LT": {
+                "courses_avg": 60,
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    }
+
+    var validNotQuery = {
+        "WHERE":{
+            "NOT": {
+                "LT": {
+                    "courses_avg": 80,
+                }
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    }
 
     var ColumnOrderMismatchQuery = {
         "WHERE":{
@@ -360,7 +543,6 @@ describe("InsightTest", function () {
 
     before(function (done) {
         Log.test('Before: ' + (<any>this).test.parent.title);
-        var zip = new JSZip();
         fs.readFile('./test/demo.zip', function(err: any, data: any){
             if (err) {
                 //invalid zip file is given
@@ -373,9 +555,21 @@ describe("InsightTest", function () {
                 content = data.toString('base64');
                 console.log("Before: content is done!");
             }
+        });
 
-
-        });// end of first fs.readfile for valid content
+        fs.readFile('./test/novalid.zip', function(err: any, data: any){
+            if (err) {
+                //invalid zip file is given
+                console.log(err);
+            }
+            else if (!isUndefined(data) || data !== null)
+            {
+                //debug, if given content is invalid
+                //since given data is a array buffer, we can convert right away
+                novalidContent = data.toString('base64');
+                console.log("Before: content is done!");
+            }
+        });
 
         fs.readFile('./test/invalidContent.zip', function(err: any, data: any) {
             if (err) {
@@ -389,7 +583,6 @@ describe("InsightTest", function () {
                 console.log("Before: Invalidcontent is done!");
                 done()
             }
-
         });
     });
 
@@ -434,6 +627,19 @@ describe("InsightTest", function () {
 
     it("add valid zip with invalid content", function () {
         return insight.addDataset('test2', invalidContent)
+            .then(function(result) {
+                console.log(result);
+                expect.fail();
+            }).catch(function(err) {
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.have.property('error');
+                console.log(err.body);
+                //expect(response.body).to.deep.equal({"error" : "Invalid Zip file"});
+            })
+    });
+
+    it("add valid zip with no valid content", function () {
+        return insight.addDataset('test2', novalidContent)
             .then(function(result) {
                 console.log(result);
                 expect.fail();
@@ -498,7 +704,6 @@ describe("InsightTest", function () {
 
 
     it("perform valid query", function () {
-
         return insight.performQuery(validQuery)
             .then(function(response) {
                 console.log(response.body);
@@ -509,6 +714,139 @@ describe("InsightTest", function () {
             })
     });
 
+
+    it("perform invalid query", function () {
+
+        return insight.performQuery(invalidFilterQuery)
+            .then(function(response) {
+                expect.fail();
+
+            }).catch(function(err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(400);
+            })
+    });
+
+    it("perform invalid query", function () {
+
+        return insight.performQuery(invalidFormQuery2)
+            .then(function(response) {
+                expect.fail();
+
+            }).catch(function(err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(400);
+            })
+    });
+
+    it("perform invalid query", function () {
+
+        return insight.performQuery(invalidFormQuery3)
+            .then(function(response) {
+                expect.fail();
+
+            }).catch(function(err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(424);
+            })
+    });
+
+    it("perform invalid query", function () {
+
+        return insight.performQuery(notArrayQuery)
+            .then(function(response) {
+                expect.fail();
+
+            }).catch(function(err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(400);
+            })
+    });
+
+    it("perform invalid query", function () {
+
+        return insight.performQuery(emptyArrayQuery)
+            .then(function(response) {
+                expect.fail();
+
+            }).catch(function(err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(400);
+            })
+    });
+
+    it("perform invalid query", function () {
+
+        return insight.performQuery(tooManyKeysQuery)
+            .then(function(response) {
+                expect.fail();
+
+            }).catch(function(err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(400);
+            })
+    });
+
+    it("perform invalid query", function () {
+
+        return insight.performQuery(noIDKeyQuery)
+            .then(function(response) {
+                expect.fail();
+
+            }).catch(function(err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(400);
+            })
+    });
+
+    it("perform too many filters query", function () {
+
+        return insight.performQuery(tooManyFiltersQuery)
+            .then(function(response) {
+                expect.fail();
+
+            }).catch(function(err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(400);
+            })
+    });
+
+    it("perform invalid query", function () {
+
+        return insight.performQuery(notNumQuery)
+            .then(function(response) {
+                expect.fail();
+
+            }).catch(function(err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(400);
+            })
+    });
+
+    it("perform valid query", function () {
+
+        return insight.performQuery(validLTQuery)
+            .then(function(response) {
+                console.log(response.body);
+                expect(response.code).to.deep.equal(200);
+            }).catch(function(err) {
+                console.log(err.body)
+                expect.fail();
+            })
+    });
+
+
+    it("perform valid query", function () {
+
+        return insight.performQuery(validNotQuery)
+            .then(function(response) {
+                console.log(response.body);
+                expect(response.code).to.deep.equal(200);
+            }).catch(function(err) {
+                console.log(err.body)
+                expect.fail();
+            })
+    });
 
     it("perform invalid value query", function () {
 
