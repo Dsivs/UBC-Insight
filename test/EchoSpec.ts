@@ -5,7 +5,10 @@
 import Server from "../src/rest/Server";
 import {expect} from 'chai';
 import Log from "../src/Util";
+import restify = require('restify');
 import {InsightResponse} from "../src/controller/IInsightFacade";
+import http = require('http');
+let dummyServer = new Server(9000)
 
 describe("EchoSpec", function () {
 
@@ -32,12 +35,53 @@ describe("EchoSpec", function () {
         Log.test('AfterTest: ' + (<any>this).currentTest.title);
     });
 
-    it("Should be able to echo", function () {
-        let out = Server.performEcho('echo');
-        Log.test(JSON.stringify(out));
-        sanityCheck(out);
-        expect(out.code).to.equal(200);
-        expect(out.body).to.deep.equal({message: 'echo...echo'});
+    it("start and stop server", function () {
+        dummyServer.start()
+            .then(function (result) {
+                expect(result).to.equal(true)
+            })
+
+        dummyServer.stop()
+            .then(function (result) {
+                expect(result).to.equal(true)
+            });
+    });
+
+    it("Should be able to establish server", function () {
+        let ser: Server = new Server(1098);
+        ser.start().then(function (status: any) {
+            expect(status).to.equal(true);
+        })
+            .catch(function (err: any){
+                console.log(err);
+                expect.fail();
+            });
+    });
+
+    it("Should be able to stop server", function () {
+        let ser: Server = new Server(1098);
+        ser.start().then(function (status: any) {
+            ser.stop().then( function (boo: any) {
+                expect(boo).to.equal(true);
+            }).catch(function (){
+                expect.fail();
+            });
+            expect(status).to.equal(true);
+        })
+            .catch(function (err: any){
+                //console.log(err);
+                expect.fail();
+            });
+    });
+
+    it("Should be able to force stop server", function () {
+        let ser: Server = new Server(1098);
+
+        ser.stop().then( function (status: any) {
+            expect(status).to.equal(true);
+        }).catch( function(){
+            expect.fail();
+        })
     });
 
     it("Should be able to echo silence", function () {

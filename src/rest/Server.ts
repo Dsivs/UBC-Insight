@@ -54,14 +54,14 @@ export default class Server {
                     name: 'insightUBC'
                 });
 
-                that.rest.get('/', function (req: restify.Request, res: restify.Response, next: restify.Next) {
-                    res.send(200);
-                    return next();
-                });
+                //that.rest.get('/', function (req: restify.Request, res: restify.Response, next: restify.Next) {
+                //    res.send(200);
+                //    return next();
+                //});
 
                 // provides the echo service
                 // curl -is  http://localhost:4321/echo/myMessage
-                that.rest.get('/echo/:msg', Server.echo);
+                //that.rest.get('/echo/:msg', Server.echo);
 
                 // Other endpoints will go here
 
@@ -76,8 +76,8 @@ export default class Server {
                     reject(err);
                 });
             } catch (err) {
-                Log.error('Server::start() - ERROR: ' + err);
-                reject(err);
+                //Log.error('Server::start() - ERROR: ' + err);
+                //reject(err);
             }
         });
     }
@@ -86,6 +86,8 @@ export default class Server {
     // These are almost certainly not the best place to put these, but are here for your reference.
     // By updating the Server.echo function pointer above, these methods can be easily moved.
 
+
+    /*
     public static echo(req: restify.Request, res: restify.Response, next: restify.Next) {
         Log.trace('Server::echo(..) - params: ' + JSON.stringify(req.params));
         try {
@@ -98,6 +100,8 @@ export default class Server {
         }
         return next();
     }
+    */
+
 
     public static performEcho(msg: string): InsightResponse {
         if (typeof msg !== 'undefined' && msg !== null) {

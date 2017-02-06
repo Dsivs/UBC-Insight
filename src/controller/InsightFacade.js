@@ -165,7 +165,7 @@ var InsightFacade = (function () {
     };
     InsightFacade.prototype.deleteFilesInDir = function (files, path) {
         var results = [];
-        var _loop_1 = function(file) {
+        var _loop_1 = function (file) {
             results.push(new Promise(function (fulfill, reject) {
                 fs.unlink(path + file, function (err) {
                     if (err) {
@@ -263,6 +263,8 @@ var InsightFacade = (function () {
                 var arrayOfFilterFn_1 = [];
                 if (!Array.isArray(keyValue))
                     throw ({ code: 400, body: { error: "value of " + key + " must be an array" } });
+                if (keyValue.length == 0)
+                    throw ({ code: 400, body: { error: key + " must have at least one key" } });
                 for (var _i = 0, keyValue_1 = keyValue; _i < keyValue_1.length; _i++) {
                     var filter_1 = keyValue_1[_i];
                     arrayOfFilterFn_1.push(instance.parseFilter(filter_1));

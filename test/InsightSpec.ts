@@ -393,6 +393,12 @@ describe("InsightTest", function () {
         });
     });
 
+    it("call util functions", function () {
+        Log.info("hi");
+        Log.warn("hi");
+        Log.error("hi");
+    })
+
 
 
     it("add invalid zip", function () {
