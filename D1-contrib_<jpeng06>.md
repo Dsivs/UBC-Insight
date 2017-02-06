@@ -1,11 +1,10 @@
 #A header with the final test pass rate and coverage rate:
-
+null
 
 
 
 ##description of contributions
 
-null
 
 ###implemtation of addData
 
@@ -23,7 +22,7 @@ null
 * tests for basic error checking
 
 ###implementation of test for EchoSpec
-* write some tests for coverage improvement 
+* wrote some tests for coverage improvement (revised by Micheal)
 	
 ###note: Micheal also participated in code debugging/revision for functions that I mentioned above.
 Special thanks to him because I was quite surprise that he was able to get coverage to 99% 
