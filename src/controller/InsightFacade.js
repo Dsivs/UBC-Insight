@@ -2,15 +2,14 @@
 var Util_1 = require("../Util");
 var JSZip = require("jszip");
 var fs = require("fs");
-var pattern = "^[A-Za-z0-9+\/]+$";
 var InsightFacade = (function () {
     function InsightFacade() {
         Util_1.default.trace('InsightFacadeImpl::init()');
         this.invalidIDs = [];
-        this.loadedCourses = [];
     }
     InsightFacade.prototype.addDataset = function (id, content) {
         var instance = this;
+        var code = 0;
         return new Promise(function (fulfill, reject) {
             instance.parseToZip(content)
                 .then(function (zipContents) {

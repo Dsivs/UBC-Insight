@@ -9,10 +9,6 @@ import {error} from "util";
 let JSZip = require("jszip");
 let fs = require("fs");
 
-//this is a regular expression to check if given string matches base64 encode characteristic
-//a valid base64 string should have A-Z & a-z letters and 0-9 numbers as well as optional "="
-    let pattern: string = "^[A-Za-z0-9+\/]+$";
-
 export default class InsightFacade implements IInsightFacade {
 
     private loadedCourses:  any[];
@@ -21,7 +17,6 @@ export default class InsightFacade implements IInsightFacade {
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
         this.invalidIDs = [];
-        this.loadedCourses = [];
     }
 
     /**
@@ -55,9 +50,10 @@ export default class InsightFacade implements IInsightFacade {
      */
     addDataset(id: string, content: string): Promise<InsightResponse> {
         const instance = this;
+        //code will be used for fulfill only
+        let code: number = 0;
 
         return new Promise(function (fulfill, reject) {
-
             instance.parseToZip(content)
             .then(function (zipContents) {
                 //console.log(zipContents.files)
@@ -409,6 +405,7 @@ export default class InsightFacade implements IInsightFacade {
                             }
                             return result;
                         }
+
                     case "AND":
                         return function(CourseObj: any) {
                             let result: boolean = true;
