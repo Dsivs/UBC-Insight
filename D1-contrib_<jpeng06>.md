@@ -5,6 +5,8 @@
 
 ##description of contributions
 
+null
+
 ###implemtation of addData
 
 *       data error check (ommited)
@@ -26,7 +28,7 @@
 ###note: Micheal also participated in code debugging/revision for functions that I mentioned above.
 Special thanks to him because I was quite surprise that he was able to get coverage to 99% 
 	
-##A series of clickable links to some of your key GitHub commits for this deliverable.
+##A series to some of my GitHub commits
 * https://github.com/CS310-2017Jan/cpsc310project_team78/commit/61b98fedf4cd0d3c964937b00d10b493683f9704
 * https://github.com/CS310-2017Jan/cpsc310project_team78/commit/414cb4a1d33c5425fc1c6150d47c2f4aadde8d95
 * https://github.com/CS310-2017Jan/cpsc310project_team78/commit/61b98fedf4cd0d3c964937b00d10b493683f9704
@@ -34,7 +36,7 @@ Special thanks to him because I was quite surprise that he was able to get cover
 * https://github.com/CS310-2017Jan/cpsc310project_team78/commit/6096cea21109208208e8e5fda73598d7a71b81ac
 
 ##deliverable retrospect
-Problem encounter for D1: 
+Problems encountered for D1: 
 * Lack of communication in the beginning phase of project, which leaves some serious potential bugs in 
 early design of InsightFacade. 
 * Did not fully understand how autotest work, spend too much time to debug wrong code. (eg. autotest skipping tests
@@ -47,7 +49,7 @@ Help for D1:
 log in the system and let me see what the error was. +1 for TAs
 * Public posts on Piazza is somewhat helpful, TA tends to be really careful about what they wrote.
 * Partner is definitely helpful. I was surprise to see that he almost completely rewrite addData just for debugging
-a uncaught exception. He is definitely a dedicated hardwork teammate.
-* Google is somewhat helpful in D1. Since libraies that allowed to use is limited, that makes 95% of google solution 
+a uncaught exception. He is definitely a dedicated hardworking teammate.
+* Google is somewhat helpful in D1. Since libraries that allowed to use is limited, that makes 95% of google solution 
 nonsense.
 
