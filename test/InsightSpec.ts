@@ -594,6 +594,7 @@ describe("InsightTest", function () {
 
 
 
+
     it("add invalid zip", function () {
         return insight.addDataset('test1', 'SW52YWxpZCBTdHJpbmc=')
             .then(function(response) {
@@ -1145,8 +1146,6 @@ describe("InsightTest", function () {
             })
     });
 
-
-
     it("remove a valid data set", function () {
         return insight.removeDataset('courses')
             .then(function(response) {
@@ -1173,6 +1172,17 @@ describe("InsightTest", function () {
 
     it("remove null", function () {
         return insight.removeDataset(null)
+            .then(function(response) {
+                console.log(response);
+                expect.fail();
+            }).catch(function(err) {
+                console.log(err)
+                expect(err.code).to.deep.equal(404);
+            })
+    });
+
+    it("remove undefined", function () {
+        return insight.removeDataset(undefined)
             .then(function(response) {
                 console.log(response);
                 expect.fail();
