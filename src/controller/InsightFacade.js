@@ -1,7 +1,5 @@
 "use strict";
 var Util_1 = require("../Util");
-var Course_1 = require("./Course");
-var util_1 = require("util");
 var JSZip = require("jszip");
 var fs = require("fs");
 var pattern = "^[A-Za-z0-9+\/]+$";
@@ -25,6 +23,7 @@ var InsightFacade = (function () {
                 return instance.parseIntoResult(arrayOfJSONObj);
             })
                 .then(function (jsonData) {
+                instance.loadedCourses = jsonData;
                 return instance.cacheData(JSON.stringify(jsonData, null, 4), id);
             })
                 .then(function (result) {
@@ -134,367 +133,13 @@ var InsightFacade = (function () {
     };
     InsightFacade.prototype.removeDataset = function (id) {
         var instance = this;
+        instance.loadedCourses.length = 0;
+        instance.invalidIDs.length = 0;
         var path = "./cache/" + id + "/";
         return new Promise(function (fulfill, reject) {
-            try {
-                instance.removeFolder(path)
-                    .then(function (result) {
-                    fulfill(result);
-                })
-                    .catch(function (err) {
-                    reject(err);
-                });
-            }
-            catch (err) {
-                reject(err);
-            }
-        });
-    };
-    InsightFacade.prototype.performQuery = function (query) {
-        var instance = this;
-        var path;
-        instance.invalidIDs = [];
-        return new Promise(function (fulfill, reject) {
-            instance.getId("./cache")
-                .then(function (dir) {
-                path = dir;
-                return instance.readDataFiles(path);
-            })
-                .then(function (listOfFiles) {
-                return Promise.all(instance.readFiles(listOfFiles, path));
-            })
-                .then(function (fileContents) {
-                return instance.loadCoursesIntoArray(fileContents);
-            })
-                .then(function (result) {
-                return instance.parseQuery(query);
-            })
-                .then(function (result) {
-                fulfill(result);
-            })
-                .catch(function (err) {
-                if (err === null) {
-                    reject({ code: 424, body: { "missing": instance.invalidIDs } });
-                }
-                else {
-                    reject(err);
-                }
-            });
-        });
-    };
-    InsightFacade.prototype.loadCoursesIntoArray = function (fileContents) {
-        var instance = this;
-        return new Promise(function (fulfill, reject) {
-            instance.loadedCourses.length = 0;
-            fileContents.forEach(function (fileContent) {
-                fileContent.forEach(function (courseSection) {
-                    var course = new Course_1.default(courseSection.courses_dept, courseSection.courses_id, courseSection.courses_avg, courseSection.courses_instructor, courseSection.courses_title, courseSection.courses_pass, courseSection.courses_fail, courseSection.courses_audit, courseSection.courses_uuid);
-                    instance.loadedCourses.push(course);
-                });
-            });
-            fulfill(0);
-        });
-    };
-    InsightFacade.prototype.readDataFiles = function (path) {
-        return new Promise(function (fulfill, reject) {
-            try {
-                fs.readdir(path, function (err, files) {
-                    if (err)
-                        reject({ code: 400, body: { "error": "Source not previously added" } });
-                    else
-                        fulfill(files);
-                });
-            }
-            catch (err) {
-                reject({ code: 400, body: { "error": "Source not previously added" } });
-            }
-        });
-    };
-    InsightFacade.prototype.readFiles = function (files, path) {
-        var contents = [];
-        files.forEach(function (element) {
-            contents.push(new Promise(function (fulfill, reject) {
-                var url = path + element;
-                try {
-                    fulfill(JSON.parse(fs.readFileSync(url, 'utf8')));
-                }
-                catch (err) {
-                    reject(err);
-                }
-            }));
-        });
-        return contents;
-    };
-    InsightFacade.prototype.getId = function (path) {
-        return new Promise(function (fulfill, reject) {
-            if (fs.existsSync(path)) {
-                fs.readdirSync(path).forEach(function (file) {
-                    var current = path + "/" + file + "/";
-                    if (fs.existsSync(current)) {
-                        fulfill(current);
-                    }
-                });
-            }
-            else {
-                reject(null);
-            }
-        });
-    };
-    InsightFacade.prototype.parseQuery = function (query) {
-        var instance = this;
-        var filter;
-        var options;
-        var columns;
-        var order = null;
-        var form;
-        var columnsOnly;
-        var queryResults = [];
-        var queryOutput = [];
-        return new Promise(function (fulfill, reject) {
-            if (query.hasOwnProperty('WHERE') && query.hasOwnProperty('OPTIONS')) {
-                filter = query.WHERE;
-                options = query.OPTIONS;
-            }
-            else {
-                reject({ code: 400, body: { "error": "Invalid Query" } });
-            }
-            if (options.hasOwnProperty("COLUMNS") && options.hasOwnProperty("FORM")) {
-                columns = options.COLUMNS;
-                form = options.FORM;
-            }
-            else {
-                reject({ code: 400, body: { "error": "Invalid Query" } });
-            }
-            if (options.hasOwnProperty("ORDER")) {
-                order = options.ORDER;
-                if (!columns.includes(order)) {
-                    reject({ code: 400, body: { "error": "Invalid Query" } });
-                }
-            }
-            if (form !== 'TABLE') {
-                reject({ code: 400, body: { "error": "Invalid Query" } });
-            }
-            instance.loadedCourses.forEach(function (course) {
-                queryResults.push(instance.parseFilter(filter, course));
-            });
-            Promise.all(queryResults)
-                .then(function (result) {
-                if (result.length == 0) {
-                    fulfill({ code: 200, body: result });
-                }
-                for (var i = 0; i < instance.loadedCourses.length; i++) {
-                    if (result[i] === true) {
-                        queryOutput.push(instance.loadedCourses[i]);
-                    }
-                }
-                queryOutput.forEach(function (ele) {
-                    columns.forEach(function (column) {
-                        if (!ele.hasOwnProperty(column)) {
-                            return reject({ code: 400, body: { "error": "Invalid Query" } });
-                        }
-                    });
-                });
-                columnsOnly = JSON.parse(JSON.stringify(queryOutput, columns));
-                if (order != null) {
-                    columnsOnly.sort(function (a, b) {
-                        if (a[order] > b[order]) {
-                            return 1;
-                        }
-                        else if (a[order] < b[order]) {
-                            return -1;
-                        }
-                        return 0;
-                    });
-                }
-                fulfill({ code: 200, body: { render: form, result: columnsOnly } });
-            })
-                .catch(function (err) {
-                reject(err);
-            });
-        });
-    };
-    InsightFacade.prototype.parseFilter = function (filter, course) {
-        var instance = this;
-        return new Promise(function (fulfill, reject) {
-            var keys = Object.keys(filter);
-            if (keys.length != 1) {
-                reject({ code: 400, body: { "error": "Invalid Query" } });
-            }
-            var key = keys[0];
-            switch (key) {
-                case "AND":
-                    var arrayofFilters = filter[key];
-                    if (!Array.isArray(arrayofFilters)) {
-                        reject({ code: 400, body: { "error": "Invalid Query" } });
-                    }
-                    else {
-                        var filterArrayResults = [];
-                        arrayofFilters.forEach(function (filter) {
-                            filterArrayResults.push(instance.parseFilter(filter, course));
-                        });
-                        Promise.all(filterArrayResults)
-                            .then(function (result) {
-                            result.forEach(function (ele2) {
-                                if (ele2 === false) {
-                                    fulfill(false);
-                                }
-                            });
-                            fulfill(true);
-                        })
-                            .catch(function (err) {
-                            reject(err);
-                        });
-                    }
-                    break;
-                case "OR":
-                    var arrayofFilters = filter[key];
-                    if (!Array.isArray(arrayofFilters)) {
-                        reject({ code: 400, body: { "error": "Invalid Query" } });
-                    }
-                    else {
-                        var filterArrayResults = [];
-                        arrayofFilters.forEach(function (filter) {
-                            filterArrayResults.push(instance.parseFilter(filter, course));
-                        });
-                        Promise.all(filterArrayResults)
-                            .then(function (result) {
-                            result.forEach(function (ele2) {
-                                if (ele2 === true) {
-                                    fulfill(true);
-                                }
-                            });
-                            fulfill(false);
-                        })
-                            .catch(function (err) {
-                            reject(err);
-                        });
-                    }
-                    break;
-                case "LT":
-                case "GT":
-                case "EQ":
-                case "IS":
-                    var filterParams = filter[key];
-                    var paramKeys = Object.keys(filterParams);
-                    if (paramKeys.length !== 1) {
-                        reject({ code: 400, body: { "error": "Invalid Query" } });
-                    }
-                    else {
-                        var paramKey = paramKeys[0];
-                        if (paramKey.includes("_")) {
-                            var id = paramKey.substr(0, paramKey.indexOf("_"));
-                            if (id !== "courses") {
-                                if (!instance.invalidIDs.includes(id)) {
-                                    instance.invalidIDs.push(id);
-                                }
-                                reject(({ code: 424, body: { "missing": instance.invalidIDs } }));
-                            }
-                        }
-                        if (course.hasOwnProperty(paramKey)) {
-                            var courseValue = course[paramKey];
-                            var paramValue = filterParams[paramKey];
-                        }
-                        else {
-                            reject({ code: 400, body: { "error": "Invalid Query" } });
-                        }
-                        if (key === "IS") {
-                            if (typeof paramValue != "string" || typeof courseValue != "string") {
-                                reject(({ code: 400, body: { "error": "value of " + key + " must be a string" } }));
-                            }
-                            else {
-                                instance.doOperation(paramValue, courseValue, key)
-                                    .then(function (result) {
-                                    fulfill(result);
-                                })
-                                    .catch(function (err) {
-                                    reject(err);
-                                });
-                            }
-                        }
-                        else {
-                            if (typeof paramValue != "number" || typeof courseValue != "number") {
-                                reject(({ code: 400, body: { "error": "value of " + key + " must be a number" } }));
-                            }
-                            else {
-                                instance.doOperation(paramValue, courseValue, key)
-                                    .then(function (result) {
-                                    fulfill(result);
-                                })
-                                    .catch(function (err) {
-                                    reject(err);
-                                });
-                            }
-                        }
-                    }
-                    break;
-                case "NOT":
-                    var filterParams = filter[key];
-                    instance.parseFilter(filterParams, course)
-                        .then(function (result) {
-                        fulfill(!result);
-                    })
-                        .catch(function (err) {
-                        reject(err);
-                    });
-                    break;
-                default:
-                    reject({ code: 400, body: { "error": "Invalid Query" } });
-            }
-        });
-    };
-    InsightFacade.prototype.doOperation = function (paramValue, courseValue, operation) {
-        return new Promise(function (fulfill, reject) {
-            switch (operation) {
-                case "LT":
-                    fulfill(courseValue < paramValue);
-                    break;
-                case "GT":
-                    fulfill(courseValue > paramValue);
-                    break;
-                case "EQ":
-                    fulfill(courseValue === paramValue);
-                    break;
-                case "IS":
-                    var firstWildCard = paramValue.indexOf("*");
-                    var lastWildCard = paramValue.lastIndexOf("*");
-                    if (firstWildCard == 0) {
-                        if (lastWildCard == paramValue.length - 1) {
-                            fulfill(courseValue.includes(paramValue.substring(firstWildCard + 1, lastWildCard)));
-                        }
-                        fulfill(courseValue.endsWith(paramValue.substring(1)));
-                    }
-                    else if (firstWildCard == -1) {
-                        fulfill(courseValue === paramValue);
-                    }
-                    fulfill(courseValue.startsWith(paramValue.substring(0, lastWildCard)));
-                    break;
-                default:
-                    reject({ code: 400, body: { "error": "Invalid Query" } });
-            }
-        });
-    };
-    InsightFacade.prototype.isExist = function (id) {
-        var path = "./cache/" + id + "/";
-        if (fs.existsSync(path)) {
-            return true;
-        }
-        return false;
-    };
-    InsightFacade.prototype.isJSON = function (str) {
-        try {
-            JSON.parse(str);
-        }
-        catch (err) {
-            return false;
-        }
-        return true;
-    };
-    InsightFacade.prototype.removeFolder = function (path) {
-        var instance = this;
-        return new Promise(function (fulfill, reject) {
-            instance.readDataFiles(path)
+            instance.readFilesInDir(path)
                 .then(function (files) {
-                return Promise.all(instance.removeFiles(path, files));
+                return Promise.all(instance.deleteFilesInDir(files, path));
             })
                 .then(function (result) {
                 return instance.removeDirectory(path);
@@ -503,29 +148,39 @@ var InsightFacade = (function () {
                 fulfill(result2);
             })
                 .catch(function (err) {
-                if (!util_1.isUndefined(err) && err.code === 400) {
-                    reject({ code: 404, body: { "error": "Source not previously added" } });
-                }
-                else
-                    reject(err);
+                reject(err);
             });
         });
     };
-    InsightFacade.prototype.removeFiles = function (path, listofFiles) {
-        var output = [];
-        listofFiles.forEach(function (file) {
-            output.push(new Promise(function (fulfill, reject) {
+    InsightFacade.prototype.readFilesInDir = function (path) {
+        return new Promise(function (fulfill, reject) {
+            fs.readdir(path, function (err, files) {
+                if (err) {
+                    reject({ code: 404, "body": { "error": "source not previously added" } });
+                }
+                else {
+                    fulfill(files);
+                }
+            });
+        });
+    };
+    InsightFacade.prototype.deleteFilesInDir = function (files, path) {
+        var results = [];
+        var _loop_1 = function(file) {
+            results.push(new Promise(function (fulfill, reject) {
                 fs.unlink(path + file, function (err) {
                     if (err) {
-                        reject({ code: 404, body: { "error": "Source not previously added" } });
+                        reject({ code: 404, body: { "error": "error deleting file" } });
                     }
-                    else {
-                        fulfill({ code: 204, body: {} });
-                    }
+                    fulfill({ code: 204, body: {} });
                 });
             }));
-        });
-        return output;
+        };
+        for (var _i = 0, files_1 = files; _i < files_1.length; _i++) {
+            var file = files_1[_i];
+            _loop_1(file);
+        }
+        return results;
     };
     InsightFacade.prototype.removeDirectory = function (path) {
         return new Promise(function (fulfill, reject) {
@@ -537,32 +192,167 @@ var InsightFacade = (function () {
             });
         });
     };
-    InsightFacade.prototype.parseData = function (stringObj) {
+    InsightFacade.prototype.performQuery = function (query) {
+        var instance = this;
+        var path;
+        var resultsArray = [];
         return new Promise(function (fulfill, reject) {
-            var jsonObj;
-            var output = [];
+            var where = query.WHERE;
+            var options = query.OPTIONS;
             try {
-                jsonObj = JSON.parse(stringObj);
+                instance.checkOptions(options);
+                var filterFun = instance.parseFilter(where);
+                for (var _i = 0, _a = instance.loadedCourses; _i < _a.length; _i++) {
+                    var course = _a[_i];
+                    if (filterFun(course)) {
+                        resultsArray.push(course);
+                    }
+                }
+                var columns = options.COLUMNS;
+                var outputArray = JSON.parse(JSON.stringify(resultsArray, columns, 4));
+                var order_1 = options.ORDER;
+                if (order_1 != undefined) {
+                    outputArray.sort(function (a, b) {
+                        if (a[order_1] > b[order_1]) {
+                            return 1;
+                        }
+                        else if (a[order_1] < b[order_1]) {
+                            return -1;
+                        }
+                        return 0;
+                    });
+                }
+                fulfill({ code: 200, body: { render: 'TABLE', result: outputArray } });
             }
             catch (err) {
-                reject("Not Valid JSON");
+                reject(err);
             }
-            jsonObj.result.forEach(function (element) {
-                var course = {
-                    "courses_dept": element.Subject,
-                    "courses_id": element.Course,
-                    "courses_avg": element.Avg,
-                    "courses_instructor": element.Professor,
-                    "courses_title": element.Title,
-                    "courses_pass": element.Pass,
-                    "courses_fail": element.Fail,
-                    "courses_audit": element.Audit,
-                    "courses_uuid": element.id
-                };
-                output.push(course);
-            });
-            fulfill(output);
         });
+    };
+    InsightFacade.prototype.checkOptions = function (options) {
+        var columns = options.COLUMNS;
+        var order = options.ORDER;
+        var form = options.FORM;
+        if (!Array.isArray(columns) || form != "TABLE") {
+            throw ({ code: 400, body: { error: "invalid options" } });
+        }
+        if (order != undefined && !columns.includes(order)) {
+            throw ({ code: 400, body: { error: order + " is not in " + columns } });
+        }
+        for (var _i = 0, columns_1 = columns; _i < columns_1.length; _i++) {
+            var column = columns_1[_i];
+            if (!column.includes("_"))
+                throw ({ code: 400, body: { error: column + " is not a valid key" } });
+            var id = column.substring(0, column.indexOf("_"));
+            if (id != "courses") {
+                if (!this.invalidIDs.includes(id))
+                    this.invalidIDs.push(id);
+                throw ({ code: 424, body: { missing: this.invalidIDs } });
+            }
+        }
+    };
+    InsightFacade.prototype.parseFilter = function (filter) {
+        var instance = this;
+        var numKeys = Object.keys(filter).length;
+        if (numKeys != 1)
+            throw ({ code: 400, body: { error: "filter must have only one key" } });
+        var key = Object.keys(filter)[0];
+        var keyValue = filter[key];
+        switch (key) {
+            case "OR":
+            case "AND":
+                var arrayOfFilterFn_1 = [];
+                if (!Array.isArray(keyValue))
+                    throw ({ code: 400, body: { error: "value of " + key + " must be an array" } });
+                for (var _i = 0, keyValue_1 = keyValue; _i < keyValue_1.length; _i++) {
+                    var filter_1 = keyValue_1[_i];
+                    arrayOfFilterFn_1.push(instance.parseFilter(filter_1));
+                }
+                switch (key) {
+                    case "OR":
+                        return function (CourseObj) {
+                            var result = false;
+                            for (var _i = 0, arrayOfFilterFn_2 = arrayOfFilterFn_1; _i < arrayOfFilterFn_2.length; _i++) {
+                                var filter_2 = arrayOfFilterFn_2[_i];
+                                result = result || filter_2(CourseObj);
+                            }
+                            return result;
+                        };
+                    case "AND":
+                        return function (CourseObj) {
+                            var result = true;
+                            for (var _i = 0, arrayOfFilterFn_3 = arrayOfFilterFn_1; _i < arrayOfFilterFn_3.length; _i++) {
+                                var filter_3 = arrayOfFilterFn_3[_i];
+                                result = result && filter_3(CourseObj);
+                            }
+                            return result;
+                        };
+                }
+                break;
+            case "GT":
+            case "EQ":
+            case "LT":
+            case "IS":
+                var paramFieldLength = Object.keys(keyValue).length;
+                if (paramFieldLength != 1)
+                    throw ({ code: 400, body: { error: key + " must have exactly one key" } });
+                var paramField_1 = Object.keys(keyValue)[0];
+                var paramValue_1 = keyValue[paramField_1];
+                if (!paramField_1.includes("_"))
+                    throw ({ code: 400, body: { error: paramField_1 + " is not a valid key" } });
+                var id = paramField_1.substring(0, paramField_1.indexOf("_"));
+                if (id != "courses") {
+                    if (!this.invalidIDs.includes(id))
+                        this.invalidIDs.push(id);
+                    throw ({ code: 424, body: { missing: this.invalidIDs } });
+                }
+                switch (key) {
+                    case "GT":
+                    case "EQ":
+                    case "LT":
+                        if (typeof paramValue_1 != "number")
+                            throw ({ code: 400, body: { error: "value of " + key + " must be a number" } });
+                        break;
+                    case "IS":
+                        if (typeof paramValue_1 != "string")
+                            throw ({ code: 400, body: { error: "value of " + key + " must be a string" } });
+                        break;
+                }
+                return function (courseObj) {
+                    if (courseObj[paramField_1] === undefined)
+                        throw ({ code: 400, body: { error: paramField_1 + " is not a valid key" } });
+                    switch (key) {
+                        case "GT":
+                            return courseObj[paramField_1] > paramValue_1;
+                        case "EQ":
+                            return courseObj[paramField_1] == paramValue_1;
+                        case "LT":
+                            return courseObj[paramField_1] < paramValue_1;
+                        case "IS":
+                            var firstWild = paramValue_1.startsWith("*");
+                            var secondWild = paramValue_1.endsWith("*");
+                            if (firstWild && secondWild) {
+                                return courseObj[paramField_1].includes(paramValue_1.substring(1, paramValue_1.length - 1));
+                            }
+                            else if (firstWild) {
+                                return courseObj[paramField_1].endsWith(paramValue_1.substring(1));
+                            }
+                            else if (secondWild) {
+                                return courseObj[paramField_1].startsWith(paramValue_1.substring(0, paramValue_1.length - 1));
+                            }
+                            else {
+                                return courseObj[paramField_1] === paramValue_1;
+                            }
+                    }
+                };
+            case "NOT":
+                var filterFn_1 = instance.parseFilter(keyValue);
+                return function (courseObj) {
+                    return !filterFn_1(courseObj);
+                };
+            default:
+                throw ({ code: 400, body: { error: key + " is not a valid key" } });
+        }
     };
     return InsightFacade;
 }());

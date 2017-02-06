@@ -21,8 +21,7 @@ describe("InsightTest", function () {
 
     this.timeout(500000);
     var insight: InsightFacade = new InsightFacade();
-    var insight2: InsightFacade = new InsightFacade();
-    var insight3: InsightFacade = new InsightFacade();
+
     var validQuery = {
         "WHERE":{
             "GT":{
@@ -490,50 +489,6 @@ describe("InsightTest", function () {
                 expect.fail();
             })
     });
-    it("overwrite using new obj", function () {
-        return insight2.addDataset('courses', content)
-            .then(function(response) {
-                expect(response.code).to.deep.equal(201);
-                expect(response.body).to.deep.equal({});
-            }).catch(function(err) {
-                //console.log(err);
-                expect.fail();
-            })
-    });
-
-    it("add 2 new valid data set", function () {
-        return insight.addDataset('new courses', content)
-            .then(function(response) {
-                expect(response.code).to.deep.equal(204);
-                expect(response.body).to.deep.equal({});
-            }).catch(function(err) {
-                console.log(err);
-                expect.fail();
-            })
-    });
-
-    it("add 3 new valid data set", function () {
-        return insight.addDataset('new 3', content)
-            .then(function(response) {
-                expect(response.code).to.deep.equal(204);
-                expect(response.body).to.deep.equal({});
-            }).catch(function(err) {
-                //console.log(err);
-                expect.fail();
-            })
-    });
-
-    it("add 3 new valid data set", function () {
-        return insight3.addDataset('obj3', content)
-            .then(function(response) {
-                expect(response.code).to.deep.equal(204);
-                expect(response.body).to.deep.equal({});
-            }).catch(function(err) {
-                console.log(err);
-                expect.fail();
-            })
-    });
-
 
 
     it("perform valid query", function () {
@@ -543,6 +498,7 @@ describe("InsightTest", function () {
                 console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
+                console.log(err.body)
                 expect.fail();
             })
     });
@@ -590,7 +546,7 @@ describe("InsightTest", function () {
                 expect.fail();
 
             }).catch(function(err) {
-                //console.log(err);
+                console.log(err);
                 expect(err.code).to.deep.equal(424);
             })
     });
@@ -602,7 +558,7 @@ describe("InsightTest", function () {
                 expect.fail();
 
             }).catch(function(err) {
-                //console.log(err);
+                console.log(err);
                 expect(err.code).to.deep.equal(424);
             })
     });
@@ -614,7 +570,7 @@ describe("InsightTest", function () {
                 expect.fail();
 
             }).catch(function(err) {
-                //console.log(err);
+                console.log(err);
                 expect(err.code).to.deep.equal(400);
             })
     });
@@ -623,11 +579,11 @@ describe("InsightTest", function () {
 
         return insight.performQuery(invalidColumnsQuery)
             .then(function(response) {
-                expect.fail();
-
+                console.log(response.body);
+                expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
-                //console.log(err);
-                expect(err.code).to.deep.equal(400);
+                console.log(err);
+                expect.fail();
             })
     });
 
@@ -638,7 +594,7 @@ describe("InsightTest", function () {
                 expect.fail();
 
             }).catch(function(err) {
-                //console.log(err);
+                console.log(err);
                 expect(err.code).to.deep.equal(400);
             })
     });
@@ -650,7 +606,7 @@ describe("InsightTest", function () {
                 expect.fail();
 
             }).catch(function(err) {
-                //console.log(err);
+                console.log(err);
                 expect(err.code).to.deep.equal(400);
             })
     });
@@ -661,7 +617,7 @@ describe("InsightTest", function () {
             .then(function(response) {
                 expect.fail();
             }).catch(function(err) {
-                //console.log(err);
+                console.log(err);
                 expect(err.code).to.deep.equal(400);
             })
     });
@@ -673,7 +629,7 @@ describe("InsightTest", function () {
                 console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
-                //console.log(err);
+                console.log(err);
                 expect.fail();
             })
     });
@@ -685,7 +641,7 @@ describe("InsightTest", function () {
                 console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
-                //console.log(err);
+                console.log(err);
                 expect.fail();
             })
     });
@@ -697,7 +653,7 @@ describe("InsightTest", function () {
                 console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
-                //console.log(err);
+                console.log(err);
                 expect.fail();
             })
     });
@@ -709,7 +665,7 @@ describe("InsightTest", function () {
                 console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
-                //console.log(err);
+                console.log(err);
                 expect.fail();
             })
     });
@@ -721,7 +677,7 @@ describe("InsightTest", function () {
                 console.log(response.body);
                 expect(response.code).to.deep.equal(200);
             }).catch(function(err) {
-                //console.log(err);
+                console.log(err);
                 expect.fail();
             })
     });
@@ -742,7 +698,6 @@ describe("InsightTest", function () {
 
         return insight.performQuery(ApolloQuery)
             .then(function(response) {
-                console.trace()
                 console.log(response.body)
                 expect(response.code).to.deep.equal(200)
             }).catch(function(err) {
@@ -751,31 +706,9 @@ describe("InsightTest", function () {
     });
 
 
-    it("remove a valid new data set", function () {
-        return insight2.removeDataset('courses')
-            .then(function(response) {
-                expect(response.code).to.deep.equal(204);
-                expect(response.body).to.deep.equal({});
-            }).catch(function(err) {
-                console.log(err);
-                expect.fail();
-            })
-    });
 
-    it("remove non-existing data set", function () {
-        return insight3.removeDataset('dddd')
-            .then(function(err) {
-                console.log(err);
-                expect.fail();
-            }).catch(function(err) {
-                expect(err.code).to.deep.equal(404);
-                expect(err.body).to.deep.equal({"error": "Source not previously added"});
-            })
-    });
-
-
-    it("remove a valid new data set", function () {
-        return insight.removeDataset('new courses')
+    it("remove a valid data set", function () {
+        return insight.removeDataset('courses')
             .then(function(response) {
                 expect(response.code).to.deep.equal(204);
                 expect(response.body).to.deep.equal({});
@@ -786,7 +719,7 @@ describe("InsightTest", function () {
     });
 
 
-    it("non existing remove x1", function () {
+    it("non existing remove", function () {
         return insight.removeDataset('new courses')
             .then(function(response) {
                 console.log(response);
@@ -797,62 +730,6 @@ describe("InsightTest", function () {
                 console.log(err);
             })
     });
-    it("non existing remove x2", function () {
-        return insight.removeDataset('new courses')
-            .then(function(response) {
-                console.log(response);
-                expect.fail();
-            }).catch(function(err) {
-                expect(err.code).to.deep.equal(404);
-                expect(err.body).to.have.property('error');
-            })
-    });
-    it("non existing remove x3", function () {
-        return insight.removeDataset('new courses')
-            .then(function(response) {
-                console.log(response);
-                expect.fail();
-            }).catch(function(err) {
-                expect(err.code).to.deep.equal(404);
-                expect(err.body).to.have.property('error');
-            })
-    });
-
-    it("non existing remove x4", function () {
-        return insight.removeDataset('new courses')
-            .then(function(response) {
-                console.log(response);
-                expect.fail();
-            }).catch(function(err) {
-                expect(err.code).to.deep.equal(404);
-                expect(err.body).to.have.property('error');
-            })
-    });
-
-
-
-    it("remove a valid new data set", function () {
-        return insight.removeDataset('new 3')
-            .then(function(response) {
-                expect(response.code).to.deep.equal(204);
-                expect(response.body).to.deep.equal({});
-            }).catch(function(err) {
-                console.log(err);
-                expect.fail();
-            })
-    });
-
-    it("remove using different obj", function () {
-        return insight2.removeDataset('obj3')
-            .then(function(response) {
-                expect(response.code).to.deep.equal(204);
-                expect(response.body).to.deep.equal({});
-            }).catch(function(err) {
-                console.log(err);
-                expect.fail();
-            })
-    });
-
 
     it("remove null", function () {
         return insight.removeDataset(null)
@@ -860,8 +737,8 @@ describe("InsightTest", function () {
                 console.log(response);
                 expect.fail();
             }).catch(function(err) {
+                console.log(err)
                 expect(err.code).to.deep.equal(404);
-                expect(err.body).to.have.property('error');
             })
     });
 
