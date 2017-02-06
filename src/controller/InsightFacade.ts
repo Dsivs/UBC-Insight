@@ -365,13 +365,23 @@ export default class InsightFacade implements IInsightFacade {
         //console.log(order)
         //console.log(form)
 
-        if (!Array.isArray(columns) || form != "TABLE") {
-            throw({code: 400, body: {error: "invalid options"}})
+        if (!Array.isArray(columns)) {
+            throw ({code: 400, body: {error: "columns must be an array"}})
+        }
+
+        if (columns.length == 0) {
+            throw ({code: 400, body: {error: "columns cannot be empty"}})
         }
 
         if (order != undefined && !columns.includes(order)) {
             throw ({code: 400, body: {error: order + " is not in " + columns}})
         }
+
+        if (form != "TABLE") {
+            throw ({code: 400, body: {error: form + " is not equal to TABLE"}})
+        }
+
+
 
         for (let column of columns) {
             if (!column.includes("_"))

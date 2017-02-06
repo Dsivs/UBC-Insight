@@ -251,11 +251,17 @@ var InsightFacade = (function () {
         var columns = options.COLUMNS;
         var order = options.ORDER;
         var form = options.FORM;
-        if (!Array.isArray(columns) || form != "TABLE") {
-            throw ({ code: 400, body: { error: "invalid options" } });
+        if (!Array.isArray(columns)) {
+            throw ({ code: 400, body: { error: "columns must be an array" } });
+        }
+        if (columns.length == 0) {
+            throw ({ code: 400, body: { error: "columns cannot be empty" } });
         }
         if (order != undefined && !columns.includes(order)) {
             throw ({ code: 400, body: { error: order + " is not in " + columns } });
+        }
+        if (form != "TABLE") {
+            throw ({ code: 400, body: { error: form + " is not equal to TABLE" } });
         }
         for (var _i = 0, columns_1 = columns; _i < columns_1.length; _i++) {
             var column = columns_1[_i];

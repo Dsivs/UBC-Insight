@@ -746,27 +746,22 @@ describe("InsightTest", function () {
             })
     });
 
-    /*
-    var testQuery = {
+    var emptyColumnsQuery = {
         "WHERE":{
             "GT":{
                 "courses_avg":97
             }
         },
         "OPTIONS":{
-            "COLUMNS":[
-                "courses_dept",
-                "courses_avg"
-            ],
-            "ORDER":"courses_avg",
-            "FORM":"TABLE",
-            "HELLO": 4
+            "COLUMNS": emptyArray,
+            "ORDER": "courses_avg",
+            "FORM":"TABLE"
         }
     }
 
-    it("perform test query", function () {
+    it("perform empty columns query", function () {
 
-        return insight.performQuery(testQuery)
+        return insight.performQuery(emptyColumnsQuery)
             .then(function(response) {
                 console.log(response)
                 expect.fail();
@@ -776,7 +771,33 @@ describe("InsightTest", function () {
                 expect(err.code).to.deep.equal(400);
             })
     });
-    */
+
+    var notArrayColumnsQuery = {
+        "WHERE":{
+            "GT":{
+                "courses_avg":97
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS": "shi",
+            "ORDER": "courses_avg",
+            "FORM":"TABLE"
+        }
+    }
+
+    it("perform not array columns query", function () {
+
+        return insight.performQuery(notArrayColumnsQuery)
+            .then(function(response) {
+                console.log(response)
+                expect.fail();
+
+            }).catch(function(err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(400);
+            })
+    });
+
 
     it("perform valid query", function () {
         return insight.performQuery(validQuery)
