@@ -1,11 +1,6 @@
 import {IInsightFacade, InsightResponse, QueryRequest} from "./IInsightFacade";
 
 import Log from "../Util";
-import DataList from "./DataList";
-import Course from "./Course";
-import CourseList from "./CourseList";
-import {isUndefined} from "util";
-import {error} from "util";
 let JSZip = require("jszip");
 let fs = require("fs");
 
