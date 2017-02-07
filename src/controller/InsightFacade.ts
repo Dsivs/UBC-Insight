@@ -94,7 +94,7 @@ export default class InsightFacade implements IInsightFacade {
 
     //given a JSZip returns an array of the contents of the files in the JSZip
     readContents(zipContents: any): Promise<any>[] {
-        let arrayOfFileContents: Promise<any>[] = []
+        let arrayOfFileContents: Promise<any>[] = [];
 
         for (let filename in zipContents.files) {
             let file = zipContents.file(filename);
@@ -109,7 +109,7 @@ export default class InsightFacade implements IInsightFacade {
     //given an array of file contents returns an array of file contents that are valid json
     parseFileContents(arrayOfFileContents: string[]): Promise<any> {
         return new Promise(function (fulfill, reject) {
-            let arrayOfJSONObj: any[] = []
+            let arrayOfJSONObj: any[] = [];
 
             for (let fileContent of arrayOfFileContents) {
                 try {
@@ -130,11 +130,11 @@ export default class InsightFacade implements IInsightFacade {
 
     //given an array of jsonobjects each corresponding to a file, parse any valid ones into the final content to be cached
     parseIntoResult(arrayOfJSONObj: any[]): Promise<any> {
-        let finalResult: any[] = []
+        let finalResult: any[] = [];
 
         return new Promise(function (fulfill, reject) {
             for (let jsonObj of arrayOfJSONObj) {
-                let jsonObjResultProp = jsonObj.result
+                let jsonObjResultProp = jsonObj.result;
                 if (Array.isArray(jsonObjResultProp)) {
                     for (let section of jsonObjResultProp) {
                         let course = {
@@ -147,7 +147,7 @@ export default class InsightFacade implements IInsightFacade {
                             "courses_fail": section.Fail,
                             "courses_audit": section.Audit,
                             "courses_uuid": section.id.toString()
-                        }
+                        };
                         finalResult.push(course);
                     }
                 }
@@ -291,24 +291,22 @@ export default class InsightFacade implements IInsightFacade {
      */
     performQuery(query: QueryRequest): Promise <InsightResponse> {
         let instance = this;
-        let path: string;
         let resultsArray: any[] = [];
         instance.invalidIDs = [];
-        let queryObj: any = query;
 
         return new Promise(function (fulfill, reject) {
-            let where: any = queryObj.WHERE;
-            let options: any = queryObj.OPTIONS;
+            let where: any = query.WHERE;
+            let options: any = query.OPTIONS;
             try {
                 if (where == undefined)
-                    throw({code: 400, body: {error: "WHERE is missing"}})
+                    throw({code: 400, body: {error: "WHERE is missing"}});
                 if (options == undefined)
-                    throw({code: 400, body: {error: "OPTIONS is missing"}})
+                    throw({code: 400, body: {error: "OPTIONS is missing"}});
 
                 instance.checkOptions(options);
                 let filterFun = instance.parseFilter(where);
                 //console.log(filterFun.toString())
-                for (var course of instance.loadedCourses) {
+                for (let course of instance.loadedCourses) {
                     if(filterFun(course)) {
                         resultsArray.push(course)
                     }
@@ -376,9 +374,9 @@ export default class InsightFacade implements IInsightFacade {
         let instance = this;
         let numKeys = Object.keys(filter).length;
         if (numKeys != 1)
-            throw ({code: 400, body: {error: "filter must have only one key"}})
+            throw ({code: 400, body: {error: "filter must have only one key"}});
 
-        let key = Object.keys(filter)[0]
+        let key = Object.keys(filter)[0];
         //console.log(key);
         let keyValue = filter[key];
         //console.log(keyValue);
@@ -403,7 +401,7 @@ export default class InsightFacade implements IInsightFacade {
                                 result = result || filter(CourseObj)
                             }
                             return result;
-                        }
+                        };
 
                     case "AND":
                         return function(CourseObj: any) {

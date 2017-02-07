@@ -1,6 +1,7 @@
 /**
  * Created by John on 2017-01-20.
  */
+
 export default class Course {
     //The department that offered the course.
     courses_dept: string;
@@ -20,8 +21,10 @@ export default class Course {
     courses_audit: number;
     //the unique id of a course offering.
     courses_uuid: string;
+    //the year the course was offered
+    courses_year: number;
 
-    constructor(dept: string, id: string, avg: number, instructor: string, title: string, pass: number, fail: number, audit: number, uuid: string) {
+    constructor(dept: string, id: string, avg: number, instructor: string, title: string, pass: number, fail: number, audit: number, uuid: string, year: number) {
         this.courses_dept = dept;
         this.courses_id = id;
         this.courses_avg = avg;
@@ -31,5 +34,6 @@ export default class Course {
         this.courses_fail = fail;
         this.courses_audit = audit;
         this.courses_uuid = uuid;
+        this.courses_year = year;
     }
 }

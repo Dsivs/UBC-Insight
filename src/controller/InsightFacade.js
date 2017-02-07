@@ -166,7 +166,7 @@ var InsightFacade = (function () {
     };
     InsightFacade.prototype.deleteFilesInDir = function (files, path) {
         var results = [];
-        var _loop_1 = function (file) {
+        var _loop_1 = function(file) {
             results.push(new Promise(function (fulfill, reject) {
                 fs.unlink(path + file, function (err) {
                     if (err) {
@@ -192,13 +192,11 @@ var InsightFacade = (function () {
     };
     InsightFacade.prototype.performQuery = function (query) {
         var instance = this;
-        var path;
         var resultsArray = [];
         instance.invalidIDs = [];
-        var queryObj = query;
         return new Promise(function (fulfill, reject) {
-            var where = queryObj.WHERE;
-            var options = queryObj.OPTIONS;
+            var where = query.WHERE;
+            var options = query.OPTIONS;
             try {
                 if (where == undefined)
                     throw ({ code: 400, body: { error: "WHERE is missing" } });

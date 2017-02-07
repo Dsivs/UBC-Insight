@@ -8,10 +8,7 @@
 import InsightFacade from "../src/controller/InsightFacade";
 import {expect} from 'chai';
 import Log from "../src/Util";
-import forEach = require("core-js/fn/array/for-each");
 import {isUndefined} from "util";
-import {QueryRequest} from "../src/controller/IInsightFacade";
-let JSZip = require("jszip");
 let fs = require("fs");
 let content: string = "";
 let invalidContent: string = "";
@@ -543,7 +540,7 @@ describe("InsightTest", function () {
 
     before(function (done) {
         Log.test('Before: ' + (<any>this).test.parent.title);
-        fs.readFile('./test/demo.zip', function(err: any, data: any){
+        fs.readFile('./zips/demo.zip', function(err: any, data: any){
             if (err) {
                 //invalid zip file is given
                 console.log(err);
@@ -557,7 +554,7 @@ describe("InsightTest", function () {
             }
         });
 
-        fs.readFile('./test/novalid.zip', function(err: any, data: any){
+        fs.readFile('./zips/novalid.zip', function(err: any, data: any){
             if (err) {
                 //invalid zip file is given
                 console.log(err);
@@ -571,7 +568,7 @@ describe("InsightTest", function () {
             }
         });
 
-        fs.readFile('./test/invalidContent.zip', function(err: any, data: any) {
+        fs.readFile('./zips/invalidContent.zip', function(err: any, data: any) {
             if (err) {
                 //invalid zip file is given
                 console.log(err);
