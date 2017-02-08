@@ -5,36 +5,8 @@ import {InsightResponse} from "./IInsightFacade";
 
 export default class DataController {
 
-
-    addDataset(id: string, content: string): Promise<InsightResponse> {
-        return new Promise(function (fulfill, reject) {
-            switch(id) {
-                case "courses":
-                    this.addCourses(content)
-                        .then(function (result: any) {
-                            fulfill(result);
-                        })
-                        .catch(function (err: any) {
-                            reject(err);
-                        });
-                    break;
-                case "rooms":
-                    this.addRooms(content)
-                        .then(function (result: any) {
-                            fulfill(result);
-                        })
-                        .catch(function (err: any) {
-                            reject(err);
-                        });
-                    break;
-                default:
-                    reject({code: 400, body: {error: content + " is not a valid dataset id."}})
-            }
-        })
-    }
-
     addCourses(content: string): Promise<InsightResponse> {
-        let instance = this;
+        const instance = this;
         let id = "courses";
 
         return new Promise(function (fulfill, reject) {
@@ -66,6 +38,9 @@ export default class DataController {
     }
 
     addRooms(content: string): Promise<InsightResponse> {
+        const instance = this;
+        let id = "rooms";
+
         return new Promise(function (fulfill, reject) {
             //TODO
         })

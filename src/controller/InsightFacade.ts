@@ -54,14 +54,29 @@ export default class InsightFacade implements IInsightFacade {
         const instance = this;
 
         return new Promise(function (fulfill, reject) {
-            this.dataController.addDataset(id, content)
-                .then(function (result: any) {
-                    fulfill(result);
-                })
-                .catch(function (err: any) {
-                    reject(err);
-                })
-        });
+            switch(id) {
+                case "courses":
+                    this.dataController.addCourses(content)
+                        .then(function (result: any) {
+                            fulfill(result);
+                        })
+                        .catch(function (err: any) {
+                            reject(err);
+                        });
+                    break;
+                case "rooms":
+                    this.dataController.addRooms(content)
+                        .then(function (result: any) {
+                            fulfill(result);
+                        })
+                        .catch(function (err: any) {
+                            reject(err);
+                        });
+                    break;
+                default:
+                    reject({code: 400, body: {error: content + " is not a valid dataset id."}})
+            }
+        })
     }
 
     /**
