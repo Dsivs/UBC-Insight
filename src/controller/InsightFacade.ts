@@ -3,8 +3,6 @@ import DataController from "./DataController";
 
 import Log from "../Util";
 import QueryController from "./QueryController";
-let JSZip = require("jszip");
-let fs = require("fs");
 
 export default class InsightFacade implements IInsightFacade {
 
@@ -99,68 +97,19 @@ export default class InsightFacade implements IInsightFacade {
      *
      */
     removeDataset(id: string): Promise<InsightResponse> {
-        let instance = this;
+        const instance = this;
         instance.loadedCourses.length = 0;
         instance.invalidIDs.length = 0;
         let path = "./cache/" + id + "/";
         return new Promise(function (fulfill, reject) {
-            instance.readFilesInDir(path)
-                .then(function (files) {
-                    console.log(files);
-                    return Promise.all(instance.deleteFilesInDir(files, path))
-                })
+            instance.dataController.removeDataset((id))
                 .then(function (result) {
-                    return instance.removeDirectory(path)
-                })
-                .then(function (result2) {
-                    fulfill(result2)
+                    fulfill(result)
                 })
                 .catch(function (err) {
-                    reject(err);
-                });
-        });
-    }
-
-    readFilesInDir(path: string): Promise<any> {
-        return new Promise(function (fulfill, reject) {
-            fs.readdir(path, function (err: any, files: any) {
-                if (err) {
-                    reject({code: 404, "body": {"error": "source not previously added"}})
-                } else {
-                    fulfill(files);
-                }
-            })
-        })
-    }
-
-    deleteFilesInDir(files: any[], path: string): Promise<any>[] {
-        let results: Promise<any>[] = [];
-
-        for (let file of files) {
-            results.push(new Promise(function (fulfill, reject) {
-                fs.unlink(path+file, function (err: any) {
-                    if (err) {
-                        //reject({code: 404, body: {"error": "error deleting file"}})
-                    }
-                    //console.log("removed " + file)
-                    fulfill({code: 204, body: {}})
+                    reject(err)
                 })
-            }))
-        }
-
-        return results;
-    }
-
-    removeDirectory(path: string): Promise<any> {
-        return new Promise(function (fulfill, reject) {
-            fs.rmdir(path, function (err: any) {
-                if (err) {
-                    //console.log(path)
-                    //reject({code: 404, body: {"error:": "not empty"}});
-                }
-                fulfill({code: 204, body: {}})
-            })
-        })
+        });
     }
 
     /**

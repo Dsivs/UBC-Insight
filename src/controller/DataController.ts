@@ -3,6 +3,8 @@ import {InsightResponse} from "./IInsightFacade";
  * Created by Axiaz on 2017-02-06.
  */
 
+const fs = require("fs");
+
 export default class DataController {
 
     addCourses(content: string): Promise<InsightResponse> {
@@ -47,7 +49,7 @@ export default class DataController {
     }
 
     //given a JSZip returns an array of the contents of the files in the JSZip
-    readContents(zipContents: any): Promise<any>[] {
+    private readContents(zipContents: any): Promise<any>[] {
         let arrayOfFileContents: Promise<any>[] = [];
 
         for (let filename in zipContents.files) {
@@ -61,7 +63,7 @@ export default class DataController {
     }
 
     //takes in a string and tries to parse it into a JSZip
-    parseToZip(content: string): Promise<any> {
+    private parseToZip(content: string): Promise<any> {
         return new Promise(function(fulfill, reject) {
             let zip = new JSZip();
             zip.loadAsync(content, {base64:true})
@@ -75,7 +77,7 @@ export default class DataController {
     }
 
     //given an array of file contents returns an array of file contents that are valid json
-    parseFileContents(arrayOfFileContents: string[]): Promise<any> {
+    private parseFileContents(arrayOfFileContents: string[]): Promise<any> {
         return new Promise(function (fulfill, reject) {
             let arrayOfJSONObj: any[] = [];
 
@@ -97,7 +99,7 @@ export default class DataController {
     }
 
     //given an array of jsonobjects each corresponding to a file, parse any valid ones into the final content to be cached
-    parseIntoResult(arrayOfJSONObj: any[]): Promise<any> {
+    private parseIntoResult(arrayOfJSONObj: any[]): Promise<any> {
         let finalResult: any[] = [];
 
         return new Promise(function (fulfill, reject) {
@@ -129,7 +131,7 @@ export default class DataController {
     }
 
     //given the array of course sections, cache it to disk
-    cacheData(jsonData: string, id: string): Promise<any> {
+    private cacheData(jsonData: string, id: string): Promise<any> {
         let fs = require("fs");
         let path = "./cache/";
         let code: number = 201;
@@ -154,6 +156,70 @@ export default class DataController {
             })
         })
     }
+
+    removeDataset(id: string): Promise<InsightResponse> {
+        let instance = this;
+        let path = "./cache/" + id + "/";
+        return new Promise(function (fulfill, reject) {
+            instance.readFilesInDir(path)
+                .then(function (files) {
+                    console.log(files);
+                    return Promise.all(instance.deleteFilesInDir(files, path))
+                })
+                .then(function (result) {
+                    return instance.removeDirectory(path)
+                })
+                .then(function (result2) {
+                    fulfill(result2)
+                })
+                .catch(function (err) {
+                    reject(err);
+                });
+        });
+    }
+
+    private readFilesInDir(path: string): Promise<any> {
+        return new Promise(function (fulfill, reject) {
+            fs.readdir(path, function (err: any, files: any) {
+                if (err) {
+                    reject({code: 404, "body": {"error": "source not previously added"}})
+                } else {
+                    fulfill(files);
+                }
+            })
+        })
+    }
+
+    private deleteFilesInDir(files: any[], path: string): Promise<any>[] {
+        let results: Promise<any>[] = [];
+
+        for (let file of files) {
+            results.push(new Promise(function (fulfill, reject) {
+                fs.unlink(path+file, function (err: any) {
+                    if (err) {
+                        //reject({code: 404, body: {"error": "error deleting file"}})
+                    }
+                    //console.log("removed " + file)
+                    fulfill({code: 204, body: {}})
+                })
+            }))
+        }
+
+        return results;
+    }
+
+    private removeDirectory(path: string): Promise<any> {
+        return new Promise(function (fulfill, reject) {
+            fs.rmdir(path, function (err: any) {
+                if (err) {
+                    //console.log(path)
+                    //reject({code: 404, body: {"error:": "not empty"}});
+                }
+                fulfill({code: 204, body: {}})
+            })
+        })
+    }
+
 
 }
 
