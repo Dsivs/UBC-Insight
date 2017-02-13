@@ -4,9 +4,17 @@ import {InsightResponse} from "./IInsightFacade";
  */
 
 const fs = require("fs");
+const JSZip = require("jszip");
+
+
 
 export default class DataController {
 
+    /**
+     * addDataset
+     * @param content
+     * @returns {Promise<T>}
+     */
     addCourses(content: string): Promise<InsightResponse> {
         const instance = this;
         let id = "courses";
@@ -48,20 +56,6 @@ export default class DataController {
         })
     }
 
-    //given a JSZip returns an array of the contents of the files in the JSZip
-    private readContents(zipContents: any): Promise<any>[] {
-        let arrayOfFileContents: Promise<any>[] = [];
-
-        for (let filename in zipContents.files) {
-            let file = zipContents.file(filename);
-            if (file != null) {
-                arrayOfFileContents.push(file.async("string"))
-            }
-        }
-
-        return arrayOfFileContents;
-    }
-
     //takes in a string and tries to parse it into a JSZip
     private parseToZip(content: string): Promise<any> {
         return new Promise(function(fulfill, reject) {
@@ -74,6 +68,20 @@ export default class DataController {
                     reject({"code": 400, body: {"error": "Content is not a valid base64 zip"}});
                 })
         })
+    }
+
+    //given a JSZip returns an array of the contents of the files in the JSZip
+    private readContents(zipContents: any): Promise<any>[] {
+        let arrayOfFileContents: Promise<any>[] = [];
+
+        for (let filename in zipContents.files) {
+            let file = zipContents.file(filename);
+            if (file != null) {
+                arrayOfFileContents.push(file.async("string"))
+            }
+        }
+
+        return arrayOfFileContents;
     }
 
     //given an array of file contents returns an array of file contents that are valid json
@@ -157,13 +165,18 @@ export default class DataController {
         })
     }
 
+
+    /**
+     * removeDataset
+     * @param id
+     * @returns {Promise<T>}
+     */
     removeDataset(id: string): Promise<InsightResponse> {
         let instance = this;
         let path = "./cache/" + id + "/";
         return new Promise(function (fulfill, reject) {
             instance.readFilesInDir(path)
                 .then(function (files) {
-                    console.log(files);
                     return Promise.all(instance.deleteFilesInDir(files, path))
                 })
                 .then(function (result) {
@@ -220,6 +233,13 @@ export default class DataController {
         })
     }
 
+    /**
+     * checkMem
+     */
+    loadCache(id: string): any {
+        let filename = "./cache/" + id + "/" + id + ".JSON";
 
+        return JSON.parse(fs.readFileSync(filename, "utf8"));
+    }
 }
 
