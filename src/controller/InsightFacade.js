@@ -75,7 +75,6 @@ var InsightFacade = (function () {
         });
     };
     InsightFacade.prototype.checkMem = function (id) {
-        console.log(id);
         var instance = this;
         var arrayToBeCached = [];
         switch (id) {

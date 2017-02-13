@@ -1,4 +1,5 @@
 import {InsightResponse} from "./IInsightFacade";
+import Course from "./Course";
 /**
  * Created by Axiaz on 2017-02-06.
  */
@@ -31,7 +32,7 @@ export default class DataController {
                 })
                 .then(function (arrayOfJSONObj) {
                     //console.log(arrayOfJSONObj)
-                    return instance.parseIntoResult(arrayOfJSONObj)
+                    return instance.parseIntoCourses(arrayOfJSONObj)
                 })
                 .then(function (jsonData) {
                     //console.log(result)
@@ -106,8 +107,8 @@ export default class DataController {
         })
     }
 
-    //given an array of jsonobjects each corresponding to a file, parse any valid ones into the final content to be cached
-    private parseIntoResult(arrayOfJSONObj: any[]): Promise<any> {
+    //given an array of jsonobjects each corresponding to a file, parse any valid ones into the final course objects to be cached
+    private parseIntoCourses(arrayOfJSONObj: any[]): Promise<any> {
         let finalResult: any[] = [];
 
         return new Promise(function (fulfill, reject) {
@@ -115,18 +116,20 @@ export default class DataController {
                 let jsonObjResultProp = jsonObj.result;
                 if (Array.isArray(jsonObjResultProp)) {
                     for (let section of jsonObjResultProp) {
-                        let course = {
-                            "courses_dept": section.Subject,
-                            "courses_id": section.Course,
-                            "courses_avg": section.Avg,
-                            "courses_instructor": section.Professor,
-                            "courses_title": section.Title,
-                            "courses_pass": section.Pass,
-                            "courses_fail": section.Fail,
-                            "courses_audit": section.Audit,
-                            "courses_uuid": section.id.toString()
-                        };
-                        finalResult.push(course);
+                        let year = section.Year;
+                        if (section.Section === "overall")
+                            year = 1900;
+
+                        finalResult.push(new Course(section.Subject,
+                                                    section.Course,
+                                                    section.Avg,
+                                                    section.Professor,
+                                                    section.Title,
+                                                    section.Pass,
+                                                    section.Fail,
+                                                    section.Audit,
+                                                    section.id.toString(),
+                                                    year));
                     }
                 }
             }

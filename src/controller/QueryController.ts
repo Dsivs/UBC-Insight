@@ -37,7 +37,7 @@ export default class QueryController {
                     }
                 }
                 let columns: any[] = options.COLUMNS;
-                let outputArray = JSON.parse(JSON.stringify(resultsArray, columns, 4));
+                let outputArray = JSON.parse(JSON.stringify(resultsArray, columns));
 
                 let order = options.ORDER;
                 if (order != undefined) {
@@ -94,9 +94,7 @@ export default class QueryController {
             throw ({code: 400, body: {error: "filter must have only one key"}});
 
         let key = Object.keys(filter)[0];
-        //console.log(key);
         let keyValue = filter[key];
-        //console.log(keyValue);
 
         switch (key) {
             case "OR":
@@ -143,8 +141,7 @@ export default class QueryController {
                 let id = paramField.substring(0, paramField.indexOf("_"));
                 if (!this.IDs.includes(id))
                     this.IDs.push(id);
-                //console.log(paramField)
-                //console.log(paramValue);
+
                 switch (key) {
                     case "GT":
                     case "EQ":
@@ -185,8 +182,6 @@ export default class QueryController {
                     }
                 };
             case "NOT":
-                //console.log("HI")
-                //console.log(instance.parseFilter(keyValue).toString())
                 let filterFn = instance.parseFilter(keyValue);
                 return function (courseObj: any) {
                     return !filterFn(courseObj)

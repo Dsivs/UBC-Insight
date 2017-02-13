@@ -952,7 +952,7 @@ describe("QueryTest", function() {
         "OPTIONS":{
             "COLUMNS":[
                 "courses_dept",
-                "courses_avg"
+                "courses_avg",
             ],
             "ORDER":"courses_avg",
             "FORM":"TABLE"

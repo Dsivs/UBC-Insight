@@ -160,7 +160,6 @@ export default class InsightFacade implements IInsightFacade {
      * check if the dataset requested is in memory already, if not try to read it from cache
      */
     checkMem(id: string): any[] {
-        console.log(id);
         const instance = this;
         let arrayToBeCached: any[] = [];
         switch (id) {
