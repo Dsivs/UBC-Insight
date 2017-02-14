@@ -1,7 +1,7 @@
 import {InsightResponse} from "./IInsightFacade";
 import Course from "./Course";
-import Room from "../../../Onedrive/School/UBC/2017/Spring/CPSC 310/Deliverable/project/D2/Webstorm/cpsc310project_team78/src/controller/Room";
 import {isUndefined} from "util";
+import Room from "./Room";
 /**
  * Created by Axiaz on 2017-02-06.
  */
@@ -9,7 +9,6 @@ import {isUndefined} from "util";
 const fs = require("fs");
 const JSZip = require("jszip");
 var roomArray: any = [];
-let indexArray: any = [];
 export default class DataController {
 
     /**
@@ -216,6 +215,7 @@ export default class DataController {
 
          console.log(client.statusCode);
          */
+        return {lat: 0, lon: 0};
     }
     //turns a html string into a json obj (with room filter)
     private room_htmlParser(content: any): Promise<any>
@@ -305,6 +305,7 @@ export default class DataController {
 
     private room_initialize(attributes: string, key:string, room: Room): Room
     {
+        const instance = this;
         if (room == null || isUndefined(room))
             return null;
         //debug
@@ -353,6 +354,11 @@ export default class DataController {
                 break;
             case 'address':
                 room.rooms_address = key;
+                let geo = instance.fetchGeo(key);
+                if (!isUndefined(geo.lat))
+                    room.rooms_lat = geo.lat;
+                if (!isUndefined(geo.lon))
+                   room.rooms_lon = geo.lon;
                 return room;
             case 'code':
                 room.rooms_shortname = key;
@@ -424,6 +430,8 @@ export default class DataController {
                     if (array[i].rooms_shortname == temp[j].rooms_shortname) {
                         array[i].rooms_address = temp[j].rooms_address;
                         array[i].rooms_fullname = temp[j].rooms_fullname;
+                        array[i].rooms_lat = temp[j].rooms_lat;
+                        array[i].rooms_lon = temp[j].rooms_lon;
                     }
                 }
                 if(!isFound)
