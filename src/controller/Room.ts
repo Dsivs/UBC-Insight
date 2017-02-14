@@ -26,17 +26,9 @@ export default class Room {
     //The link to full details online
     rooms_href: string;
 
-    constructor(fullname: string, shortname: string, number: string, name: string, address: string, lat: number, lon: number, seats: number, type: string, furniture: string, href: string) {
-        this.rooms_fullname = fullname;
-        this.rooms_shortname = shortname;
-        this.rooms_number = number;
-        this.rooms_name = name;
-        this.rooms_address = address;
-        this.rooms_lat = lat;
-        this.rooms_lon = lon;
-        this.rooms_seats = seats;
-        this.rooms_type = type;
-        this.rooms_furniture = furniture;
-        this.rooms_href = href;
+    constructor() {
+        this.rooms_fullname = "DEFAULT";
     }
+
+
 }
