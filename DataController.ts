@@ -1,0 +1,623 @@
+import {InsightResponse} from "./IInsightFacade";
+import Course from "./Course";
+import {isUndefined} from "util";
+import Room from "./Room";
+/**
+ * Created by Axiaz on 2017-02-06.
+ */
+
+const fs = require("fs");
+const JSZip = require("jszip");
+var roomArray: any = [];
+export default class DataController {
+
+    /**
+     * addDataset
+     * @param content
+     * @returns {Promise<T>}
+     */
+    addCourses(content: string): Promise<InsightResponse> {
+        const instance = this;
+        let id = "courses";
+
+        return new Promise(function (fulfill, reject) {
+            instance.parseToZip(content)
+                .then(function (zipContents) {
+                    //console.log(zipContents.files)
+                    return Promise.all(instance.readContents(zipContents))
+                })
+                .then(function (arrayOfFileContents) {
+                    //console.log(arrayOfFileContents);
+                    return instance.parseFileContents(arrayOfFileContents)
+                })
+                .then(function (arrayOfJSONObj) {
+                    //console.log(arrayOfJSONObj)
+                    return instance.parseIntoCourses(arrayOfJSONObj)
+                })
+                .then(function (jsonData) {
+                    //console.log(result)
+                    return instance.cacheData(JSON.stringify(jsonData, null, 4), id)
+                })
+                .then(function (result) {
+                    fulfill(result)
+                })
+                .catch(function (err) {
+                    //console.log(err);
+                    reject(err);
+                });
+        });
+    }
+
+    addRooms(content: string): Promise<InsightResponse> {
+        const instance = this;
+        let id = "rooms";
+
+        return new Promise(function (fulfill, reject) {
+            instance.parseToZip(content)
+                .then(function (zipContents) {
+                    //console.log(zipContents.files)
+                    return Promise.all(instance.room_readValidContents(zipContents))
+                })
+                .then(function (contentArray) {
+                    //console.log(arrayOfFileContents);
+                    return instance.room_parseContent(contentArray)
+                }).then(function (array) {
+                return instance.room_validator(array);
+            })
+                .then(function (jsonData) {
+                    console.log(jsonData);
+                    jsonData = JSON.parse(JSON.stringify(jsonData));
+                    return instance.cacheData(JSON.stringify(jsonData, null, 4), id)
+                })
+                .then(function (result) {
+                    fulfill(result)
+                })
+                .catch(function (err) {
+                    //console.log(err);
+                    reject(err);
+                });
+        });
+    }
+    private room_readValidContents(zipContents: any): Promise<any>[] {
+        let contents: Promise<any>[] = [];
+        const instance = this;
+        for (let filename in zipContents.files) {
+            //if .DS_STORE
+            let file = zipContents.file(filename);
+
+            while (filename.indexOf("/") >= 0) {
+                filename = filename.substr(filename.indexOf('/') + 1, filename.length - 1)
+            }
+
+            if (file != null && filename !== "" && filename !== ".DS_Store") {
+                contents.push(file.async("string"));
+            }
+        }
+        return contents;
+    }
+    private room_parseContent(arrayOfFileContents: string[]): Promise<any> {
+        const instance = this;
+        return new Promise(function (fulfill, reject) {
+            let arrayOfJSONObj: any[] = [];
+
+            for (let fileContent of arrayOfFileContents) {
+                var pms = instance.room_htmlParser(fileContent).then(function (array: any){
+                    arrayOfJSONObj.push(array);
+                }).catch( function (err: any)
+                {
+                    console.log(err);
+                });
+            }
+
+            Promise.all([pms]).then( function() {
+                if (arrayOfJSONObj.length == 0) {
+                    reject({"code": 400, "body": {"error": "Zip contained no valid data"}})
+                } else {
+                    fulfill(roomArray);
+                }
+            }).catch( function(){
+                reject({"code": 400, "body": {"error": "unknow error"}})
+            });
+        })
+    }
+    fetchGeo(address: string): any
+    {
+        /*
+         const http = require('http');
+         var options={
+         hostname: 'skaha.cs.ubc.ca:11316',
+         path: '/api/v1/team78/6245%20Agronomy%20Road%20V6T%201Z4',
+         method: 'GET',
+         agent: false,
+         headers:{
+         'Content-Type': 'application/json',
+         'Accept': 'application/json',
+         }
+         };
+
+
+         var client = http.get(options, function (err, res) {
+         if (err) {
+         console.error(err);
+         return;
+         }
+         console.log(res.code, res.headers, res.buffer.toString());
+         }).on('socket', (socket) => {
+         socket.setEncoding('utf8');
+         //socket.pipe(cl
+         //socket.emit('agentRemove');
+
+         console.log("byte = " + socket.bytesRead);
+
+         socket.on('close', (chunk) => {
+         console.log("close:" + chunk);
+         });
+         socket.on('data', (chunk) => {
+         chunk.pipe(client);
+         console.log(chunk.toString());
+         });
+         client.on('data', (data) =>{
+         console.log(data);
+         });
+         socket.on('request', (res) => {
+         res.on('data', (data) =>{
+         console.log(data);
+         });
+         console.log(res);
+         //socket.emit('agentRemove');
+         }).on('response', (pons) => {
+         console.log(pons);
+         //socket.emit('agentRemove');
+         });
+
+         //console.log(socket);
+         }).on('data', (data) => {
+         console.log(data);
+         //socket.emit('agentRemove');
+         }).on('readable', (able) => {
+         able.on('data', (data) =>{
+         console.log(data);
+         });
+         console.log(able.read());
+         //socket.emit('agentRemove');
+         }).on('request', (res) => {
+         res.on('data', (data) =>{
+         console.log(data);
+         });
+         console.log(res);
+         //socket.emit('agentRemove');
+         }).on('response', (pons) => {
+         pons.on('data', (data) =>{
+         console.log(data);
+         });
+         console.log(pons);
+         //socket.emit('agentRemove');
+         }).on('end', (end) => {
+         console.log(end);
+         //socket.emit('agentRemove');
+         });
+
+
+         client.on('connect', (res, socket, head) => {
+         console.log('got connected!');
+
+         // make a request over an HTTP tunnel
+         socket.write('GET / HTTP/1.1\r\n' +
+         'Host: www.google.com:80\r\n' +
+         'Connection: close\r\n' +
+         '\r\n');
+         socket.on('data', (chunk) => {
+         console.log(chunk.toString());
+         });
+         socket.on('end', () => {
+         });
+         });
+
+         console.log(client.statusCode);
+         */
+        return {lat: 0, lon: 0};
+    }
+    //turns a html string into a json obj (with room filter)
+    private room_htmlParser(content: any): Promise<any>
+    {
+        const instance = this;
+        const parse5 = require('parse5');
+        //let res = parse5.parse(content);
+        const parser = new parse5.SAXParser({ locationInfo: true });
+        let isTbody:boolean = false;
+        let isTd:boolean = false;
+        let current: string;
+
+        return new Promise( function (fulfill, reject){
+            //var fragment = parse5.parseFragment('<tbody></tbody>');
+            //fragment = parse5.parseFragment('<tbody></tbody>', {locationInfo: true});
+            var Readable = require('stream').Readable;
+
+            //create a readable obj s
+            var s = new Readable();
+            s.push(content);
+            s.push(null);
+            s.setEncoding('utf8');
+            s.pipe(parser);
+            let room: Room;
+
+            parser.on("startTag", (start:any, attribute: any) =>{
+                if (start != 'script')
+                {
+                    if (start === 'tbody')
+                        isTbody = true;
+                    if (start === 'td' && isTbody)
+                        isTd = true;
+                    if (isTd == true && isTbody == true)
+                    {
+                        //console.log("add: " + res);
+                        current =  attribute[0].value;
+                        console.log("attri = " + attribute[0].value);
+                    }
+                    //console.log("->startTag: " + start);
+                }
+            });
+            parser.on("endTag", (res:any) =>{
+                if (res === 'td' && isTbody)
+                    isTd = false;
+                if (res === 'tbody') {
+                    isTd = false;
+                    isTbody = false;
+                    fulfill(roomArray);
+                    //console.log(context);
+                }
+                //console.log("<-endTag: " + res);
+            });
+            parser.on("comment", (res:any) =>{
+                //console.log("//comment: " + res);
+            });
+            parser.on("doctype", (res:any) =>{
+                //console.log("<>doctype: " + res);
+            });
+
+            parser.on('text', (res: any) => {
+                res = res.trim();
+                if (isTd == true && isTbody == true)
+                {
+                    //console.log("add: " + res);
+                    if (res !== "")
+                    {
+                        //attribute[0].value returns class/href
+                        //attribute[0].name returns link of current room
+                        console.log('res = ' + res);
+                        //current attribute is url
+                        if (current.indexOf('/') >= 0)
+                        {
+                            if (!isUndefined(room) && room != null
+                                && roomArray.indexOf(room) == -1) {
+                                console.log("roomArray ++");
+                                roomArray.push(room);
+                            }
+                            room = instance.room_find(room);
+                        }
+                        room = instance.room_initialize(current,res,room);
+                    }
+                }
+            });
+            //console.log(s);
+        });
+    }
+
+    private room_initialize(attributes: string, key:string, room: Room): Room
+    {
+        const instance = this;
+        if (room == null || isUndefined(room))
+            return null;
+        //debug
+        if (key === 'More info')
+            return null;
+
+        if (attributes.indexOf('/')>=0 && attributes.charAt(0) === '.' && key !== '') {
+            while (attributes.indexOf('/') >= 0) {
+                attributes = attributes.substr(attributes.indexOf('/') + 1, attributes.length)
+            }
+            room.rooms_shortname = attributes;
+            room.rooms_fullname = key;
+            return room;
+        }
+
+        if (attributes.indexOf('/') >= 0)
+        {
+            //case attribute is a url, may need regExp to double check
+            room.rooms_href = attributes;
+            while (attributes.indexOf('/')>=0)
+            {
+                attributes = attributes.substr(attributes.indexOf('/')+1, attributes.length)
+            }
+            room.rooms_shortname = attributes.substr(0,attributes.indexOf('-'));
+            room.rooms_number = attributes.substr(attributes.indexOf('-')+1, attributes.length);
+            room.rooms_name = room.rooms_shortname + "_"+ room.rooms_number;
+            return room;
+        }
+        while (attributes.indexOf('-') >= 0)
+        {
+            attributes = attributes.substr(attributes.indexOf('-')+1, attributes.length);
+        }
+
+        switch (attributes)
+        {
+            case 'capacity':
+                room.rooms_seats = parseInt(key);
+                break;
+            case 'furniture':
+                //sample: Classroom-Fixed Tables/Fixed Chairs
+                room.rooms_furniture = key;
+                break;
+            case 'type':
+                //sample: Tiered Large Group
+                room.rooms_type = key;
+                break;
+            case 'address':
+                room.rooms_address = key;
+                let geo = instance.fetchGeo(key);
+                if (!isUndefined(geo.lat))
+                    room.rooms_lat = geo.lat;
+                if (!isUndefined(geo.lon))
+                   room.rooms_lon = geo.lon;
+                return room;
+            case 'code':
+                room.rooms_shortname = key;
+                return room;
+            case 'nothing':
+            case 'image':
+            case 'title':
+                return room;
+            default:
+                console.log("FETAL ERROR!! Non-Existing room attribute = " + attributes)
+        }
+        return room;
+    }
+
+
+    private room_find(room:any)
+    {
+        if (room == null)
+            return new Room();
+        for (var i = 0; i< roomArray.length; i++)
+        {
+            if (isUndefined(room) || room == null)
+            {
+                console.log("dsd");
+            }
+            if (roomArray[i].rooms_shortname === room.rooms_shortname)
+            {
+                return roomArray[i];
+            }
+        }
+        return new Room();
+    }
+
+
+    //takes in a string and tries to parse it into a JSZip
+    private parseToZip(content: string): Promise<any> {
+        return new Promise(function(fulfill, reject) {
+            let zip = new JSZip();
+            zip.loadAsync(content, {base64:true})
+                .then(function (result: any) {
+                    fulfill(result);
+                })
+                .catch(function (err: any) {
+                    reject({"code": 400, body: {"error": "Content is not a valid base64 zip"}});
+                })
+        })
+    }
+    private room_validator(array: Room[]): Promise<any>
+    {
+        return new Promise( function(fulfill, reject){
+            let temp: Room[] = [];
+            for(let i = 0; i<array.length; i++)
+            {
+                if (array[i].rooms_fullname !== 'DEFAULT')
+                {
+                    temp.push(array[i]);
+                    array.splice(i, 1);
+                    i = 0;
+                }
+            }
+
+            let isFound: boolean = false;
+
+            for(let i = 0; i<array.length; i++)
+            {
+                isFound = false;
+                for (let j = 0; j<temp.length;j++) {
+                    isFound = true;
+                    if (array[i].rooms_shortname == temp[j].rooms_shortname) {
+                        array[i].rooms_address = temp[j].rooms_address;
+                        array[i].rooms_fullname = temp[j].rooms_fullname;
+                        array[i].rooms_lat = temp[j].rooms_lat;
+                        array[i].rooms_lon = temp[j].rooms_lon;
+                    }
+                }
+                if(!isFound)
+                {
+                    //if index.html does not require this room
+                    //room info should not be saved
+                    array.splice(i, 1);
+                    i = 0;
+                }
+            }
+            fulfill(array);
+        });
+    }
+
+    //given a JSZip returns an array of the contents of the files in the JSZip
+    private readContents(zipContents: any): Promise<any>[] {
+        let arrayOfFileContents: Promise<any>[] = [];
+
+        for (let filename in zipContents.files) {
+            let file = zipContents.file(filename);
+            if (file != null) {
+                arrayOfFileContents.push(file.async("string"))
+            }
+        }
+
+        return arrayOfFileContents;
+    }
+
+    //given an array of file contents returns an array of file contents that are valid json
+    private parseFileContents(arrayOfFileContents: string[]): Promise<any> {
+        return new Promise(function (fulfill, reject) {
+            let arrayOfJSONObj: any[] = [];
+
+            for (let fileContent of arrayOfFileContents) {
+                try {
+                    arrayOfJSONObj.push(JSON.parse(fileContent));
+                } catch (err) {
+                    //console.log("This is not valid JSON:")
+                    //console.log(fileContent)
+                }
+            }
+
+            if (arrayOfJSONObj.length == 0) {
+                reject({"code": 400, "body": {"error": "Zip contained no valid data"}})
+            } else {
+                fulfill(arrayOfJSONObj)
+            }
+        })
+    }
+
+    //given an array of jsonobjects each corresponding to a file, parse any valid ones into the final course objects to be cached
+    private parseIntoCourses(arrayOfJSONObj: any[]): Promise<any> {
+        let finalResult: any[] = [];
+
+        return new Promise(function (fulfill, reject) {
+            for (let jsonObj of arrayOfJSONObj) {
+                let jsonObjResultProp = jsonObj.result;
+                if (Array.isArray(jsonObjResultProp)) {
+                    for (let section of jsonObjResultProp) {
+                        let year = section.Year;
+                        if (section.Section === "overall")
+                            year = 1900;
+
+                        finalResult.push(new Course(section.Subject,
+                                                    section.Course,
+                                                    section.Avg,
+                                                    section.Professor,
+                                                    section.Title,
+                                                    section.Pass,
+                                                    section.Fail,
+                                                    section.Audit,
+                                                    section.id.toString(),
+                                                    year));
+                    }
+                }
+            }
+            if (finalResult.length == 0) {
+                reject({"code": 400, "body": {"error": "Zip contained no valid data"}})
+            } else {
+                fulfill(finalResult)
+            }
+        })
+    }
+
+    //given the array of course sections, cache it to disk
+    private cacheData(jsonData: string, id: string): Promise<any> {
+        let fs = require("fs");
+        let path = "./cache/";
+        let code: number = 201;
+        return new Promise(function (fulfill, reject) {
+            if (!fs.existsSync(path)) {
+                fs.mkdirSync(path);
+            }
+            path = path + id + "/";
+            if (!fs.existsSync(path)) {
+                code = 204;
+                fs.mkdirSync(path);
+            }
+
+            path = path + id + ".JSON";
+
+            fs.writeFile(path, jsonData, function (err: any) {
+                if (err) {
+
+                } else {
+                    fulfill({"code": code, "body": {}})
+                }
+            })
+        })
+    }
+
+
+    /**
+     * removeDataset
+     * @param id
+     * @returns {Promise<T>}
+     */
+    removeDataset(id: string): Promise<InsightResponse> {
+        let instance = this;
+        let path = "./cache/" + id + "/";
+        return new Promise(function (fulfill, reject) {
+            instance.readFilesInDir(path)
+                .then(function (files) {
+                    return Promise.all(instance.deleteFilesInDir(files, path))
+                })
+                .then(function (result) {
+                    return instance.removeDirectory(path)
+                })
+                .then(function (result2) {
+                    fulfill(result2)
+                })
+                .catch(function (err) {
+                    reject(err);
+                });
+        });
+    }
+
+    private readFilesInDir(path: string): Promise<any> {
+        return new Promise(function (fulfill, reject) {
+            fs.readdir(path, function (err: any, files: any) {
+                if (err) {
+                    reject({code: 404, "body": {"error": "source not previously added"}})
+                } else {
+                    fulfill(files);
+                }
+            })
+        })
+    }
+
+    private deleteFilesInDir(files: any[], path: string): Promise<any>[] {
+        let results: Promise<any>[] = [];
+
+        for (let file of files) {
+            results.push(new Promise(function (fulfill, reject) {
+                fs.unlink(path+file, function (err: any) {
+                    if (err) {
+                        //reject({code: 404, body: {"error": "error deleting file"}})
+                    }
+                    //console.log("removed " + file)
+                    fulfill({code: 204, body: {}})
+                })
+            }))
+        }
+
+        return results;
+    }
+
+    private removeDirectory(path: string): Promise<any> {
+        return new Promise(function (fulfill, reject) {
+            fs.rmdir(path, function (err: any) {
+                if (err) {
+                    //console.log(path)
+                    //reject({code: 404, body: {"error:": "not empty"}});
+                }
+                fulfill({code: 204, body: {}})
+            })
+        })
+    }
+
+    /**
+     * checkMem
+     */
+    loadCache(id: string): any {
+        let filename = "./cache/" + id + "/" + id + ".JSON";
+
+        return JSON.parse(fs.readFileSync(filename, "utf8"));
+    }
+}
+
