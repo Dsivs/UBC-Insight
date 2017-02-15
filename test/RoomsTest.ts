@@ -9,6 +9,7 @@ import InsightFacade from "../src/controller/InsightFacade";
 const fs = require("fs");
 let content: string = "";
 import {expect} from 'chai';
+import {GeoResponse} from "../src/controller/IInsightFacade";
 
 describe("Room Controller Test", function () {
 
@@ -18,7 +19,7 @@ describe("Room Controller Test", function () {
     before(function (done) {
 
         Log.test('Before: ' + (<any>this).test.parent.title);
-        fs.readFile('./zips/roomDemo.zip', function (err: any, data: any) {
+        fs.readFile('./zips/rooms.zip', function (err: any, data: any) {
             if (err) {
                 //invalid zip file is given
                 console.log(err);
@@ -44,11 +45,28 @@ describe("Room Controller Test", function () {
             })
     });
 
-    /*it("fetch geo", function (done) {
-        let res =  room.fetchGeo("SAMPLE ADDRESS, Vancouver, BC")
-        done();
-        console.log(res);
-    });*/
+    it("fetch geo", function (done) {
+        room.room_fetchGeo('6245 Agronomy Road V6T 1Z4')
+            .then(function(res: GeoResponse)
+        {
+            expect(res.lat).to.deep.equal(49.26125);
+            expect(res.lon).to.deep.equal(-123.24807);
+           done();
+        }).catch( function(err: any){
+            //console.log(err);
+        })
+    });
+
+    it("fetch invalid geo", function (done) {
+        room.room_fetchGeo(null).then(function(res: any)
+        {
+            expect(res.error).to.deep.equal('address is not defined!-125');
+            done();
+        }).catch( function(err: any){
+            console.log(err);
+            done();
+        })
+    });
 
 });
 
