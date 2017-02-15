@@ -15,6 +15,12 @@ export interface QueryRequest {
     OPTIONS?: {}
 }
 
+export interface GeoResponse {
+    lat?: number;
+    lon?: number;
+    error?: string;
+}
+
 export interface IInsightFacade {
 
     /**
