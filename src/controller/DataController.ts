@@ -120,102 +120,51 @@ export default class DataController {
             });
         })
     }
-    fetchGeo(address: string): any
+    room_fetchGeo(address: string): any
     {
-        /*
-         const http = require('http');
-         var options={
-         hostname: 'skaha.cs.ubc.ca:11316',
-         path: '/api/v1/team78/6245%20Agronomy%20Road%20V6T%201Z4',
-         method: 'GET',
-         agent: false,
-         headers:{
-         'Content-Type': 'application/json',
-         'Accept': 'application/json',
-         }
-         };
+        return new Promise( function(fulfill, reject){
+            if (address === null || isUndefined(address))
+                return reject({'error' : 'address is not defined!-125'});
+            while (address.indexOf("/") >= 0) {
+                address = address.substr(address.indexOf('/') + 1, address.length - 1)
+            }
 
+            while(address.indexOf(" ") >= 0)
+            {
+                address = address.replace(" ", "%20");
+            }
+            const http = require('http');
+            var options={
+                hostname: 'skaha.cs.ubc.ca',
+                port: 11316,
+                path: '/api/v1/team78/' + address,
+                method: 'GET',
+                agent: false,
+                headers:{
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                }
+            };
+            try {
 
-         var client = http.get(options, function (err, res) {
-         if (err) {
-         console.error(err);
-         return;
-         }
-         console.log(res.code, res.headers, res.buffer.toString());
-         }).on('socket', (socket) => {
-         socket.setEncoding('utf8');
-         //socket.pipe(cl
-         //socket.emit('agentRemove');
+                http.get(options, function (res: any) {
+                    console.log('http get');
+                    var data = '';
 
-         console.log("byte = " + socket.bytesRead);
+                    res.on('data', function (segment: any) {
+                        //console.log(chunk);
+                        data += segment.toString();
+                    });
+                    res.on('end', function () {
+                        fulfill(JSON.parse(data));
+                    });
 
-         socket.on('close', (chunk) => {
-         console.log("close:" + chunk);
-         });
-         socket.on('data', (chunk) => {
-         chunk.pipe(client);
-         console.log(chunk.toString());
-         });
-         client.on('data', (data) =>{
-         console.log(data);
-         });
-         socket.on('request', (res) => {
-         res.on('data', (data) =>{
-         console.log(data);
-         });
-         console.log(res);
-         //socket.emit('agentRemove');
-         }).on('response', (pons) => {
-         console.log(pons);
-         //socket.emit('agentRemove');
-         });
-
-         //console.log(socket);
-         }).on('data', (data) => {
-         console.log(data);
-         //socket.emit('agentRemove');
-         }).on('readable', (able) => {
-         able.on('data', (data) =>{
-         console.log(data);
-         });
-         console.log(able.read());
-         //socket.emit('agentRemove');
-         }).on('request', (res) => {
-         res.on('data', (data) =>{
-         console.log(data);
-         });
-         console.log(res);
-         //socket.emit('agentRemove');
-         }).on('response', (pons) => {
-         pons.on('data', (data) =>{
-         console.log(data);
-         });
-         console.log(pons);
-         //socket.emit('agentRemove');
-         }).on('end', (end) => {
-         console.log(end);
-         //socket.emit('agentRemove');
-         });
-
-
-         client.on('connect', (res, socket, head) => {
-         console.log('got connected!');
-
-         // make a request over an HTTP tunnel
-         socket.write('GET / HTTP/1.1\r\n' +
-         'Host: www.google.com:80\r\n' +
-         'Connection: close\r\n' +
-         '\r\n');
-         socket.on('data', (chunk) => {
-         console.log(chunk.toString());
-         });
-         socket.on('end', () => {
-         });
-         });
-
-         console.log(client.statusCode);
-         */
-        return {lat: 0, lon: 0};
+                }).end();
+            }catch (err)
+            {
+                reject({'error' : 'network error, check internet connection!-165'});
+            }
+        });
     }
     //turns a html string into a json obj (with room filter)
     private room_htmlParser(content: any): Promise<any>
@@ -354,11 +303,12 @@ export default class DataController {
                 break;
             case 'address':
                 room.rooms_address = key;
-                let geo = instance.fetchGeo(key);
-                if (!isUndefined(geo.lat))
-                    room.rooms_lat = geo.lat;
-                if (!isUndefined(geo.lon))
-                   room.rooms_lon = geo.lon;
+                let geo = instance.room_fetchGeo(key).then(function(geo: any){
+                    if (isUndefined(geo.error)){
+                        room.rooms_lat = geo.lat;
+                        room.rooms_lon = geo.lon;
+                    }
+                });
                 return room;
             case 'code':
                 room.rooms_shortname = key;
