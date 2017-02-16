@@ -55,7 +55,7 @@ export default class DataController {
         return new Promise(function (fulfill, reject) {
             instance.parseToZip(content)
                 .then(function (zipContents) {
-                    //console.log(zipContents.files)
+                    console.log(zipContents.files)
                     return Promise.all(instance.room_readValidContents(zipContents))
                 })
                 .then(function (contentArray) {
