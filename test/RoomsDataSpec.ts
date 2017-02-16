@@ -45,27 +45,15 @@ describe("Room Controller Test", function () {
             })
     });
 
-    it("fetch geo", function (done) {
-        room.room_fetchGeo('6245 Agronomy Road V6T 1Z4')
-            .then(function(res: GeoResponse)
-        {
-            expect(res.lat).to.deep.equal(49.26125);
-            expect(res.lon).to.deep.equal(-123.24807);
-           done();
-        }).catch( function(err: any){
-            //console.log(err);
-        })
-    });
-
-    it("fetch invalid geo", function (done) {
-        room.room_fetchGeo(null).then(function(res: any)
-        {
-            expect(res.error).to.deep.equal('address is not defined!-125');
-            done();
-        }).catch( function(err: any){
-            console.log(err);
-            done();
-        })
+    it("remove rooms", function () {
+        return controller.removeDataset('rooms')
+            .then(function(response) {
+                expect(response.code).to.deep.equal(204);
+                expect(response.body).to.deep.equal({});
+            }).catch(function(err) {
+                console.log(err);
+                expect.fail();
+            })
     });
 
 });

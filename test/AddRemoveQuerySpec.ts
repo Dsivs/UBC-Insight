@@ -38,12 +38,50 @@ describe("Querying Before/After Adding/Remove Tests", function () {
         });
     });
 
+    const basicGTQuery = {
+        "WHERE":{
+            "GT":{
+                "courses_avg":97
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    }
+
+    it("query before dataset is added", function() {
+        return insight.performQuery(basicGTQuery)
+            .then(function (result) {
+                expect.fail();
+                console.log(result.body);
+            }).catch(function (err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(424);
+            })
+    });
+
     it("Load valid new data set", function() {
         return insight.addDataset('courses', content)
             .then(function(response) {
                 console.log(response);
                 expect(response.code).to.deep.equal(204);
             }).catch(function(err) {
+                console.log(err);
+                expect.fail();
+            })
+    });
+
+    it("query after dataset added", function() {
+        return insight.performQuery(basicGTQuery)
+            .then(function (result) {
+                console.log(result.body);
+                expect(result.code).to.deep.equal(200);
+            }).catch(function (err) {
                 console.log(err);
                 expect.fail();
             })
@@ -66,22 +104,8 @@ describe("Querying Before/After Adding/Remove Tests", function () {
     /**
      * basic GT Query
      */
-    const basicGTQuery = {
-        "WHERE":{
-            "GT":{
-                "courses_avg":97
-            }
-        },
-        "OPTIONS":{
-            "COLUMNS":[
-                "courses_dept",
-                "courses_avg"
-            ],
-            "ORDER":"courses_avg",
-            "FORM":"TABLE"
-        }
-    }
-    it("basic GT Query", function() {
+
+    it("query after dataset is removed", function() {
         return insight.performQuery(basicGTQuery)
             .then(function (result) {
                 expect.fail();

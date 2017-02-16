@@ -36,7 +36,7 @@ export default class DataController {
                     return instance.parseIntoCourses(arrayOfJSONObj)
                 })
                 .then(function (jsonData) {
-                    console.log(jsonData);
+                    //console.log(jsonData);
                     return instance.cacheData(JSON.stringify(jsonData, null, 4), id)
                 })
                 .then(function (result) {
@@ -56,7 +56,7 @@ export default class DataController {
         return new Promise(function (fulfill, reject) {
             instance.parseToZip(content)
                 .then(function (zipContents) {
-                    console.log(zipContents.files)
+                    //console.log(zipContents.files)
                     return Promise.all(instance.room_readValidContents(zipContents))
                 })
                 .then(function (contentArray) {
