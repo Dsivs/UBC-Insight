@@ -567,7 +567,11 @@ export default class DataController {
     loadCache(id: string): any {
         let filename = "./cache/" + id + "/" + id + ".JSON";
 
-        return JSON.parse(fs.readFileSync(filename, "utf8"));
+        try {
+            return JSON.parse(fs.readFileSync(filename, "utf8"));
+        } catch (err) {
+            throw ({code: 424, body: {error: "missing: " + [id]}});
+        }
     }
 }
 
