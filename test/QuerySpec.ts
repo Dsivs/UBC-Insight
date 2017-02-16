@@ -592,8 +592,8 @@ describe("QueryTest", function() {
         "OPTIONS":{
             "COLUMNS":[
                 "courses_dept",
-                "courses_id",
-                "courses_avg"
+                "courses_avg",
+                "courses_id"
             ],
             "ORDER":"courses_avg",
             "FORM":"TABLE"
