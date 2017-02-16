@@ -62,7 +62,7 @@ describe("Room Query Test", function () {
         }
     };
     it("flex Query", function() {
-        return insight.performQuery(flexQuery)
+        return insight.performQuery(sd)
             .then(function (result) {
                 expect(result.code).to.deep.equal(200);
                 console.log(result.body);
@@ -71,7 +71,6 @@ describe("Room Query Test", function () {
                 expect.fail();
             })
     });
-
 
     it("remove rooms", function () {
         return insight.removeDataset('rooms')
@@ -84,5 +83,30 @@ describe("Room Query Test", function () {
             })
     });
 
+    var sd = {
+                "WHERE": {
+                    "AND":[
+                        {
+                            "IS": {
+                                "rooms_type": "*Group*"
+                            }
+                        },
+                        {
+                            "NOT": {
+                                "IS": {
+                                    "rooms_type": "*Tablets*"
+                                }
+                            }
+                        }
+                ]
+                },
+                "OPTIONS": {
+                "COLUMNS": [
+                    "rooms_address", "rooms_name", "rooms_type"
+                ],
+                    "ORDER": "rooms_name",
+                    "FORM": "TABLE"
+                }
+            }
 });
 

@@ -28,6 +28,8 @@ export default class Room {
 
     constructor() {
         this.rooms_fullname = "DEFAULT";
+        this.rooms_type = "";
+        this.rooms_furniture  = "";
     }
 
 
