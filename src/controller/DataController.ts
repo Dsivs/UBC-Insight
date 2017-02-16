@@ -10,6 +10,7 @@ const fs = require("fs");
 const JSZip = require("jszip");
 const http = require('http');
 var roomArray: any = [];
+var count = 0;
 export default class DataController {
 
     /**
@@ -63,14 +64,17 @@ export default class DataController {
                     //console.log(arrayOfFileContents);
                     return instance.room_parseContent(contentArray)
                 }).then(function (array) {
+                    console.log("parseContent is alright");
                     return instance.room_validator(array);
                 }).then(function (array) {
+                    console.log("validator is alright");
                     return instance.room_addGeo(array);
                 })
-                .then(function (jsonData) {
-                    //console.log(jsonData);
-                    jsonData = JSON.parse(JSON.stringify(jsonData));
-                    return instance.cacheData(JSON.stringify(jsonData, null, 4), id)
+                .then(function (geoMapping) {
+
+                    instance.room_mapAddrToGeo(geoMapping);
+
+                    return instance.cacheData(JSON.stringify(roomArray, null, 4), id)
                 })
                 .then(function (result) {
                     fulfill(result)
@@ -99,32 +103,87 @@ export default class DataController {
         return contents;
     }
 
-    private room_addGeo(array: Room[]): Promise<Room[]>
+    private room_addGeo(array: Room[]): Promise<any>
     {
         const instance = this;
-        return new Promise<Room[]> (function(fulfill, reject){
-            let pros: Promise<any> = new Promise( function (fulfill, reject){
-                let i: number = 0;
-                for (let room of array)
-                {
-                    instance.room_fetchGeo(room.rooms_address).then( function (geo: GeoResponse) {
-                        room.rooms_lat = geo.lat;
-                        room.rooms_lon = geo.lon;
-                        i++;
-                        if (i === array.length)
-                            fulfill(array);
-                    }).catch( function(err){
-                        console.log("error addGeo()" + err);
-                    });
+        let uniqueAddress: any[] = [];
+        let tempArray: Promise<any>[] = [];
+        let temp: any = {};
+
+        return new Promise(function (fulfill, reject) {
+
+            for (let room of array) {
+                if (!uniqueAddress.includes(room.rooms_address))
+                    uniqueAddress.push(room.rooms_address)
+            }
+
+            for (let addr of uniqueAddress) {
+                tempArray.push(
+                    instance.room_fetchGeo(addr)
+                        .then(function (result: any) {
+                            temp[addr] = result;
+                        })
+                        .catch(function (err: any) {
+                            console.log(err);
+                        })
+                )
+            }
+
+            Promise.all(tempArray)
+                .then(function (result) {
+                    fulfill(temp);
+                })
+                .catch(function (err) {
+                    reject(err);
+                })
+        })
+    }
+
+    room_fetchGeo(address: string): Promise<any>
+    {
+        return new Promise(function(fulfill, reject) {
+            address = encodeURI(address);
+
+            let url = "http://skaha.cs.ubc.ca:11316/api/v1/team78/" + address;
+
+            let options = {
+                hostname: 'skaha.cs.ubc.ca',
+                port: 11316,
+                path: '/api/v1/team78/' + address,
+                method: 'GET',
+                agent: false,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
                 }
-            });
-            Promise.all([pros]).then(function () {
-                fulfill(array);
-            }).catch( function(){
-                reject(array);
-            })
+            };
+            http.get(url, function (res: any) {
+                //console.log('http get');
+                var data = '';
+
+                res.on('data', function (segment: any) {
+                    data += segment.toString();
+                });
+                res.on('end', function () {
+                    fulfill(JSON.parse(data));
+                });
+
+                res.on('error', function (err: any) {
+                    console.log("HI");
+                    console.log(err);
+                    reject(err);
+                })
+            }).end();
         });
     }
+
+    room_mapAddrToGeo(geoMapping: any) {
+        for (let room of roomArray) {
+            room.rooms_lat = geoMapping[room.rooms_address].lat;
+            room.rooms_lon = geoMapping[room.rooms_address].lon;
+        }
+    }
+
     private room_parseContent(arrayOfFileContents: string[]): Promise<any> {
         const instance = this;
         return new Promise(function (fulfill, reject) {
@@ -150,52 +209,7 @@ export default class DataController {
             });
         })
     }
-    room_fetchGeo(address: string): Promise<any>
-    {
-        return new Promise( function(fulfill, reject) {
-            if (address === null || isUndefined(address))
-                return reject({'error': 'address is not defined!-125'});
-            while (address.indexOf("/") >= 0) {
-                address = address.substr(address.indexOf('/') + 1, address.length - 1)
-            }
 
-            while (address.indexOf(" ") >= 0) {
-                address = address.replace(" ", "%20");
-            }
-            try {
-                let options = {
-                    hostname: 'skaha.cs.ubc.ca',
-                    port: 11316,
-                    path: '/api/v1/team78/' + address,
-                    method: 'GET',
-                    agent: false,
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                    }
-                };
-                http.get(options, function (res: any) {
-                    //console.log('http get');
-                    var data = '';
-
-                    res.on('data', function (segment: any) {
-                        //console.log(chunk);
-                        data += segment.toString();
-                    });
-                    res.on('end', function () {
-                        fulfill(JSON.parse(data));
-                    });
-
-                    res.on('error', function (err: any) {
-                        reject(err);
-                    })
-                }).end();
-            }catch (err)
-            {
-                return {'error': 'internet down  or invalid address! e= ' + err }
-            }
-        });
-    }
     //turns a html string into a json obj (with room filter)
     private room_htmlParser(content: any): Promise<any>
     {

@@ -11,7 +11,7 @@ let content: string = "";
 import {expect} from 'chai';
 import {GeoResponse} from "../src/controller/IInsightFacade";
 
-describe("Room Controller Test", function () {
+describe("Room Query Test", function () {
 
     this.timeout(500000);
     var insight = new InsightFacade();
@@ -34,32 +34,6 @@ describe("Room Controller Test", function () {
         });
     });
 
-    const basicGTQuery = {
-        "WHERE":{
-            "GT":{
-                "rooms_seats":20
-            }
-        },
-        "OPTIONS":{
-            "COLUMNS":[
-                "rooms_seats",
-                "rooms_name"
-            ],
-            "ORDER":"rooms_name",
-            "FORM":"TABLE"
-        }
-    }
-    it("query before dataset is added", function() {
-        return insight.performQuery(basicGTQuery)
-            .then(function (result) {
-                expect.fail();
-                console.log(result.body);
-            }).catch(function (err) {
-                console.log(err);
-                expect(err.code).to.deep.equal(424);
-            })
-    });
-
     it("add rooms", function () {
         return insight.addDataset('rooms', content)
             .then(function(response) {
@@ -70,6 +44,34 @@ describe("Room Controller Test", function () {
                 expect.fail();
             })
     });
+
+    /**
+     * Flex Query
+     */
+    const flexQuery = {
+        "WHERE": {
+            "IS": {
+                "rooms_address": "*Agrono*"
+            }
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "rooms_address", "rooms_name"
+            ],
+            "FORM": "TABLE"
+        }
+    };
+    it("flex Query", function() {
+        return insight.performQuery(flexQuery)
+            .then(function (result) {
+                expect(result.code).to.deep.equal(200);
+                console.log(result.body);
+            }).catch(function (err) {
+                console.log(err.body);
+                expect.fail();
+            })
+    });
+
 
     it("remove rooms", function () {
         return insight.removeDataset('rooms')
