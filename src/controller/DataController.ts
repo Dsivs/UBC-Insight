@@ -1,4 +1,4 @@
-import {InsightResponse} from "./IInsightFacade";
+import {InsightResponse, GeoResponse} from "./IInsightFacade";
 import Course from "./Course";
 import {isUndefined} from "util";
 import Room from "./Room";
@@ -8,6 +8,7 @@ import Room from "./Room";
 
 const fs = require("fs");
 const JSZip = require("jszip");
+const http = require('http');
 var roomArray: any = [];
 export default class DataController {
 
@@ -35,7 +36,7 @@ export default class DataController {
                     return instance.parseIntoCourses(arrayOfJSONObj)
                 })
                 .then(function (jsonData) {
-                    //console.log(result)
+                    console.log(jsonData);
                     return instance.cacheData(JSON.stringify(jsonData, null, 4), id)
                 })
                 .then(function (result) {
@@ -59,15 +60,15 @@ export default class DataController {
                     return Promise.all(instance.room_readValidContents(zipContents))
                 })
                 .then(function (contentArray) {
-                    //console.log(contentArray);
+                    //console.log(arrayOfFileContents);
                     return instance.room_parseContent(contentArray)
-                })
-                .then(function (array) {
+                }).then(function (array) {
                     return instance.room_validator(array);
+                }).then(function (array) {
+                    return instance.room_addGeo(array);
                 })
                 .then(function (jsonData) {
                     //console.log(jsonData);
-                    console.log(roomArray);
                     jsonData = JSON.parse(JSON.stringify(jsonData));
                     return instance.cacheData(JSON.stringify(jsonData, null, 4), id)
                 })
@@ -97,6 +98,33 @@ export default class DataController {
         }
         return contents;
     }
+
+    private room_addGeo(array: Room[]): Promise<Room[]>
+    {
+        const instance = this;
+        return new Promise<Room[]> (function(fulfill, reject){
+            let pros: Promise<any> = new Promise( function (fulfill, reject){
+                let i: number = 0;
+                for (let room of array)
+                {
+                    instance.room_fetchGeo(room.rooms_address).then( function (geo: GeoResponse) {
+                        room.rooms_lat = geo.lat;
+                        room.rooms_lon = geo.lon;
+                        i++;
+                        if (i === array.length)
+                            fulfill(array);
+                    }).catch( function(err){
+                        console.log("error addGeo()" + err);
+                    });
+                }
+            });
+            Promise.all([pros]).then(function () {
+                fulfill(array);
+            }).catch( function(){
+                reject(array);
+            })
+        });
+    }
     private room_parseContent(arrayOfFileContents: string[]): Promise<any> {
         const instance = this;
         return new Promise(function (fulfill, reject) {
@@ -107,7 +135,6 @@ export default class DataController {
                     arrayOfJSONObj.push(array);
                 }).catch( function (err: any)
                 {
-                    console.log("HI");
                     console.log(err);
                 });
             }
@@ -123,32 +150,32 @@ export default class DataController {
             });
         })
     }
-
-
-    room_fetchGeo(address: string): any
+    room_fetchGeo(address: string): Promise<any>
     {
-        return new Promise( function(fulfill, reject){
+        return new Promise( function(fulfill, reject) {
             if (address === null || isUndefined(address))
-                reject({'error' : 'address is not defined!-125'});
+                return reject({'error': 'address is not defined!-125'});
+            while (address.indexOf("/") >= 0) {
+                address = address.substr(address.indexOf('/') + 1, address.length - 1)
+            }
 
-            address = encodeURI(address);
-
-            const http = require('http');
-            var options={
-                hostname: 'skaha.cs.ubc.ca',
-                port: 11316,
-                path: '/api/v1/team78/' + address,
-                method: 'GET',
-                agent: false,
-                headers:{
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                }
-            };
+            while (address.indexOf(" ") >= 0) {
+                address = address.replace(" ", "%20");
+            }
             try {
-
+                let options = {
+                    hostname: 'skaha.cs.ubc.ca',
+                    port: 11316,
+                    path: '/api/v1/team78/' + address,
+                    method: 'GET',
+                    agent: false,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                    }
+                };
                 http.get(options, function (res: any) {
-                    console.log('http get');
+                    //console.log('http get');
                     var data = '';
 
                     res.on('data', function (segment: any) {
@@ -159,10 +186,13 @@ export default class DataController {
                         fulfill(JSON.parse(data));
                     });
 
+                    res.on('error', function (err: any) {
+                        reject(err);
+                    })
                 }).end();
             }catch (err)
             {
-                reject({'error' : 'network error, check internet connection!-165'});
+                return {'error': 'internet down  or invalid address! e= ' + err }
             }
         });
     }
@@ -254,75 +284,68 @@ export default class DataController {
 
     private room_initialize(attributes: string, key:string, room: Room): Room
     {
-        const instance = this;
-        if (room == null || isUndefined(room))
-            return null;
-        //debug
-        if (key === 'More info')
-            return null;
-
-        if (attributes.indexOf('/')>=0 && attributes.charAt(0) === '.' && key !== '') {
-            while (attributes.indexOf('/') >= 0) {
-                attributes = attributes.substr(attributes.indexOf('/') + 1, attributes.length)
-            }
-            room.rooms_shortname = attributes;
-            room.rooms_fullname = key;
-            return room;
-        }
-
-        if (attributes.indexOf('/') >= 0)
-        {
-            //case attribute is a url, may need regExp to double check
-            room.rooms_href = attributes;
-            while (attributes.indexOf('/')>=0)
+            if (room == null || isUndefined(room))
             {
-                attributes = attributes.substr(attributes.indexOf('/')+1, attributes.length)
+                return null;
             }
-            room.rooms_shortname = attributes.substr(0,attributes.indexOf('-'));
-            room.rooms_number = attributes.substr(attributes.indexOf('-')+1, attributes.length);
-            room.rooms_name = room.rooms_shortname + "_"+ room.rooms_number;
-            return room;
-        }
-        while (attributes.indexOf('-') >= 0)
-        {
-            attributes = attributes.substr(attributes.indexOf('-')+1, attributes.length);
-        }
+            //debug
+            if (key === 'More info')
+            {
+                return null;
+            }
+            if (attributes.indexOf('/')>=0 && attributes.charAt(0) === '.' && key !== '') {
+                while (attributes.indexOf('/') >= 0) {
+                    attributes = attributes.substr(attributes.indexOf('/') + 1, attributes.length)
+                }
+                room.rooms_shortname = attributes;
+                room.rooms_fullname = key;
+                return room;
+            }
 
-        switch (attributes)
-        {
-            case 'capacity':
-                room.rooms_seats = parseInt(key);
-                break;
-            case 'furniture':
-                //sample: Classroom-Fixed Tables/Fixed Chairs
-                room.rooms_furniture = key;
-                break;
-            case 'type':
-                //sample: Tiered Large Group
-                room.rooms_type = key;
-                break;
-            case 'address':
-                room.rooms_address = key;
-                //console.log("HI");
-                let geo = instance.room_fetchGeo(key).then(function(geo: any){
-                    console.log("HI");
-                    if (isUndefined(geo.error)){
-                        room.rooms_lat = geo.lat;
-                        room.rooms_lon = geo.lon;
-                    }
-                });
+            if (attributes.indexOf('/') >= 0)
+            {
+                //case attribute is a url, may need regExp to double check
+                room.rooms_href = attributes;
+                while (attributes.indexOf('/')>=0)
+                {
+                    attributes = attributes.substr(attributes.indexOf('/')+1, attributes.length)
+                }
+                room.rooms_shortname = attributes.substr(0,attributes.indexOf('-'));
+                room.rooms_number = attributes.substr(attributes.indexOf('-')+1, attributes.length);
+                room.rooms_name = room.rooms_shortname + "_"+ room.rooms_number;
                 return room;
-            case 'code':
-                room.rooms_shortname = key;
-                return room;
-            case 'nothing':
-            case 'image':
-            case 'title':
-                return room;
-            default:
-                console.log("FATAL ERROR!! Non-Existing room attribute = " + attributes)
-        }
-        return room;
+            }
+            while (attributes.indexOf('-') >= 0)
+            {
+                attributes = attributes.substr(attributes.indexOf('-')+1, attributes.length);
+            }
+
+            switch (attributes)
+            {
+                case 'capacity':
+                    room.rooms_seats = parseInt(key);
+                    return room;
+                case 'furniture':
+                    //sample: Classroom-Fixed Tables/Fixed Chairs
+                    room.rooms_furniture = key;
+                    return room;
+                case 'type':
+                    //sample: Tiered Large Group
+                    room.rooms_type = key;
+                    return room;
+                case 'address':
+                    room.rooms_address = key;
+                    return room;
+                case 'code':
+                    room.rooms_shortname = key;
+                    return room;
+                case 'nothing':
+                case 'image':
+                case 'title':
+                    return room;
+                default:
+                    console.log("FETAL ERROR!! Non-Existing room attribute = " + attributes)
+            }
     }
 
 
@@ -344,6 +367,20 @@ export default class DataController {
         return new Room();
     }
 
+
+    //takes in a string and tries to parse it into a JSZip
+    private parseToZip(content: string): Promise<any> {
+        return new Promise(function(fulfill, reject) {
+            let zip = new JSZip();
+            zip.loadAsync(content, {base64:true})
+                .then(function (result: any) {
+                    fulfill(result);
+                })
+                .catch(function (err: any) {
+                    reject({"code": 400, body: {"error": "Content is not a valid base64 zip"}});
+                })
+        })
+    }
     private room_validator(array: Room[]): Promise<any>
     {
         return new Promise( function(fulfill, reject){
@@ -365,11 +402,13 @@ export default class DataController {
                 isFound = false;
                 for (let j = 0; j<temp.length;j++) {
                     isFound = true;
-                    if (array[i].rooms_shortname == temp[j].rooms_shortname) {
+                    if (array[i].rooms_shortname === temp[j].rooms_shortname) {
+
                         array[i].rooms_address = temp[j].rooms_address;
                         array[i].rooms_fullname = temp[j].rooms_fullname;
                         array[i].rooms_lat = temp[j].rooms_lat;
                         array[i].rooms_lon = temp[j].rooms_lon;
+                        //j = 0;
                     }
                 }
                 if(!isFound)
@@ -379,24 +418,14 @@ export default class DataController {
                     array.splice(i, 1);
                     i = 0;
                 }
+                else if(array[i].rooms_fullname === 'DEFAULT') {
+                    array.splice(i, 1);
+                    i = 0;
+                }
             }
             fulfill(array);
+
         });
-    }
-
-
-    //takes in a string and tries to parse it into a JSZip
-    private parseToZip(content: string): Promise<any> {
-        return new Promise(function(fulfill, reject) {
-            let zip = new JSZip();
-            zip.loadAsync(content, {base64:true})
-                .then(function (result: any) {
-                    fulfill(result);
-                })
-                .catch(function (err: any) {
-                    reject({"code": 400, body: {"error": "Content is not a valid base64 zip"}});
-                })
-        })
     }
 
     //given a JSZip returns an array of the contents of the files in the JSZip
