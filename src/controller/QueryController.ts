@@ -31,6 +31,7 @@ export default class QueryController {
                     throw ({code: 400, body: {error: "cannot query multiple datasets"}})
 
                 let loadedMem = parentInsightFacade.checkMem(instance.IDs[0])
+
                 for (let obj of loadedMem) {
                     if(filterFun(obj)) {
                         resultsArray.push(obj)

@@ -50,20 +50,9 @@ describe("Room Query Test", function () {
      */
     const flexQuery = {
         "WHERE": {
-            "AND":[
-                {
-                    "IS": {
-                        "rooms_type": "*Group*"
-                    }
-                },
-                {
-                    "NOT": {
-                        "IS": {
-                            "rooms_type": "*Tablets*"
-                        }
-                    }
-                }
-            ]
+            "IS": {
+                "rooms_shortname": "ALRD"
+            }
         },
         "OPTIONS": {
             "COLUMNS": [

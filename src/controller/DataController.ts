@@ -51,6 +51,7 @@ export default class DataController {
     }
 
     addRooms(content: string): Promise<InsightResponse> {
+        roomArray.length = 0;
         const instance = this;
         let id = "rooms";
 
@@ -73,6 +74,8 @@ export default class DataController {
                 .then(function (geoMapping) {
 
                     instance.room_mapAddrToGeo(geoMapping);
+                    //console.log(roomArray);
+                    //console.log(roomArray.length);
 
                     return instance.cacheData(JSON.stringify(roomArray, null, 4), id)
                 })
