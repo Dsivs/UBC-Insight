@@ -945,27 +945,42 @@ describe("QueryTest", function() {
      */
     const flexQuery = {
         "WHERE":{
-            "GT":{
-                "courses_dept":97
-            }
+            "AND":[
+                {
+                    "EQ":{
+                        "courses_year":2007
+                    }
+                },
+                {
+                    "IS":{
+                        "courses_dept":"cpsc"
+                    }
+                },
+                {
+                    "IS":{
+                        "courses_id":"121"
+                    }
+                }
+            ]
         },
         "OPTIONS":{
             "COLUMNS":[
-                "courses_dept",
-                "courses_avg",
+                "courses_uuid"
             ],
-            "ORDER":"courses_avg",
+            "ORDER":"courses_uuid",
             "FORM":"TABLE"
         }
     }
     it("flex Query", function() {
         return insight.performQuery(flexQuery)
             .then(function (result) {
-                console.log(result);
-                expect.fail();
+                console.log(result.body);
+                expect(result.code).to.deep.equal(200);
+                //expect.fail();
             }).catch(function (err) {
-                expect(err.code).to.deep.equal(400);
+                //expect(err.code).to.deep.equal(400);
                 console.log(err.body);
+                expect.fail();
             })
     });
 

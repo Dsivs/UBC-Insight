@@ -487,7 +487,7 @@ export default class DataController {
                 let jsonObjResultProp = jsonObj.result;
                 if (Array.isArray(jsonObjResultProp)) {
                     for (let section of jsonObjResultProp) {
-                        let year = section.Year;
+                        let year = parseInt(section.Year);
                         if (section.Section === "overall")
                             year = 1900;
 
