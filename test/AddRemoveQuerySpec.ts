@@ -38,7 +38,7 @@ describe("Querying Before/After Adding/Remove Tests", function () {
         });
     });
 
-    const basicGTQuery = {
+    const basicCourseQuery = {
         "WHERE":{
             "GT":{
                 "courses_avg":97
@@ -47,15 +47,41 @@ describe("Querying Before/After Adding/Remove Tests", function () {
         "OPTIONS":{
             "COLUMNS":[
                 "courses_dept",
-                "courses_advg"
+                "courses_avg"
             ],
-            "ORDER":"courses_advg",
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    }
+    const basicRoomQuery = {
+        "WHERE":{
+            "GT":{
+                "rooms_seats":100
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "rooms_name",
+                "rooms_seats"
+            ],
+            "ORDER":"rooms_name",
             "FORM":"TABLE"
         }
     }
 
-    it("query before dataset is added", function() {
-        return insight.performQuery(basicGTQuery)
+    it("course query before dataset is added", function() {
+        return insight.performQuery(basicCourseQuery)
+            .then(function (result) {
+                expect.fail();
+                console.log(result.body);
+            }).catch(function (err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(424);
+            })
+    });
+
+    it("room query before dataset is added", function() {
+        return insight.performQuery(basicRoomQuery)
             .then(function (result) {
                 expect.fail();
                 console.log(result.body);
@@ -76,14 +102,25 @@ describe("Querying Before/After Adding/Remove Tests", function () {
             })
     });
 
-    it("query after dataset added", function() {
-        return insight.performQuery(basicGTQuery)
+    it("course query after dataset added", function() {
+        return insight.performQuery(basicCourseQuery)
             .then(function (result) {
                 console.log(result.body);
                 expect(result.code).to.deep.equal(200);
             }).catch(function (err) {
                 console.log(err);
                 expect.fail();
+            })
+    });
+
+    it("room query before dataset is added", function() {
+        return insight.performQuery(basicRoomQuery)
+            .then(function (result) {
+                console.log(result.body);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(424);
             })
     });
 
@@ -98,15 +135,20 @@ describe("Querying Before/After Adding/Remove Tests", function () {
             })
     });
 
-    /**
-     * Querying before dataset is added
-     */
-    /**
-     * basic GT Query
-     */
 
     it("query after dataset is removed", function() {
-        return insight.performQuery(basicGTQuery)
+        return insight.performQuery(basicCourseQuery)
+            .then(function (result) {
+                expect.fail();
+                console.log(result.body);
+            }).catch(function (err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(424);
+            })
+    });
+
+    it("room query before dataset is added", function() {
+        return insight.performQuery(basicRoomQuery)
             .then(function (result) {
                 expect.fail();
                 console.log(result.body);

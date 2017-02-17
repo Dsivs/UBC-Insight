@@ -145,14 +145,13 @@ var InsightFacade = (function () {
      */
     InsightFacade.prototype.checkMem = function (id) {
         var instance = this;
-        var arrayToBeCached = [];
         switch (id) {
             case "courses":
                 if (instance.loadedCourses.length == 0)
                     instance.loadedCourses = instance.dataController.loadCache(id);
                 return instance.loadedCourses;
             case "rooms":
-                if (instance.loadedCourses.length == 0)
+                if (instance.loadedRooms.length == 0)
                     instance.loadedRooms = instance.dataController.loadCache(id);
                 return instance.loadedRooms;
             default:

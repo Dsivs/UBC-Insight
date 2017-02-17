@@ -161,14 +161,13 @@ export default class InsightFacade implements IInsightFacade {
      */
     checkMem(id: string): any[] {
         const instance = this;
-        let arrayToBeCached: any[] = [];
         switch (id) {
             case "courses":
                 if (instance.loadedCourses.length == 0)
                     instance.loadedCourses = instance.dataController.loadCache(id)
                 return instance.loadedCourses;
             case "rooms":
-                if (instance.loadedCourses.length == 0)
+                if (instance.loadedRooms.length == 0)
                     instance.loadedRooms = instance.dataController.loadCache(id)
                 return instance.loadedRooms;
             default:
