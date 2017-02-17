@@ -95,8 +95,11 @@ export default class DataController {
             //if .DS_STORE
             let file = zipContents.file(filename);
 
-            while (filename.indexOf("/") >= 0) {
-                filename = filename.substr(filename.indexOf('/') + 1, filename.length - 1)
+            if ((!isUndefined(filename)) && filename !== null) {
+
+                while (filename.indexOf("/") >= 0) {
+                    filename = filename.substr(filename.indexOf('/') + 1, filename.length - 1)
+                }
             }
 
             if (file != null && filename !== "" && filename !== ".DS_Store") {
@@ -276,22 +279,23 @@ export default class DataController {
                 if (isTd == true && isTbody == true)
                 {
                     //console.log("add: " + res);
-                    if (res !== "")
+                    if (res !== "" && current !== null)
                     {
-                        //attribute[0].value returns class/href
-                        //attribute[0].name returns link of current room
-                        //console.log('res = ' + res);
-                        //current attribute is url
-                        if (current.indexOf('/') >= 0)
-                        {
-                            if (!isUndefined(room) && room != null
-                                && roomArray.indexOf(room) == -1) {
-                                //console.log("roomArray ++");
-                                roomArray.push(room);
+                        if (!isUndefined(current)) {
+                            //attribute[0].value returns class/href
+                            //attribute[0].name returns link of current room
+                            //console.log('res = ' + res);
+                            //current attribute is url
+                            if (current.indexOf('/') >= 0) {
+                                if (!isUndefined(room) && room != null
+                                    && roomArray.indexOf(room) == -1) {
+                                    //console.log("roomArray ++");
+                                    roomArray.push(room);
+                                }
+                                room = instance.room_find(room);
                             }
-                            room = instance.room_find(room);
+                            room = instance.room_initialize(current, res, room);
                         }
-                        room = instance.room_initialize(current,res,room);
                     }
                 }
             });
@@ -301,7 +305,8 @@ export default class DataController {
 
     private room_initialize(attributes: string, key:string, room: Room): Room
     {
-            if (room == null || isUndefined(room))
+            if (room == null || isUndefined(room) || attributes == null || isUndefined(attributes)
+            || key == null || isUndefined(key))
             {
                 return null;
             }
