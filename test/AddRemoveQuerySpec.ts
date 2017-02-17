@@ -47,9 +47,9 @@ describe("Querying Before/After Adding/Remove Tests", function () {
         "OPTIONS":{
             "COLUMNS":[
                 "courses_dept",
-                "courses_avg"
+                "courses_advg"
             ],
-            "ORDER":"courses_avg",
+            "ORDER":"courses_advg",
             "FORM":"TABLE"
         }
     }

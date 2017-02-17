@@ -71,6 +71,19 @@ describe("Room Controller Test", function () {
             })
     });
 
+    it("query after dataset is added", function() {
+        return insight.performQuery(basicGTQuery)
+            .then(function (result) {
+                //expect.fail();
+                console.log(result.body);
+                expect(result.code).to.deep.equal(200);
+            }).catch(function (err) {
+                console.log(err);
+                //expect(err.code).to.deep.equal(424);
+                expect.fail();
+            })
+    });
+
     it("remove rooms", function () {
         return insight.removeDataset('rooms')
             .then(function(response) {
@@ -79,6 +92,17 @@ describe("Room Controller Test", function () {
             }).catch(function(err) {
                 console.log(err);
                 expect.fail();
+            })
+    });
+
+    it("query after dataset is added", function() {
+        return insight.performQuery(basicGTQuery)
+            .then(function (result) {
+                expect.fail();
+                console.log(result.body);
+            }).catch(function (err) {
+                console.log(err);
+                expect(err.code).to.deep.equal(424);
             })
     });
 

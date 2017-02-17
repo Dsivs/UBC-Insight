@@ -73,6 +73,8 @@ describe("Room Query Test", function () {
             })
     });
 
+
+
     it("remove rooms", function () {
         return insight.removeDataset('rooms')
             .then(function(response) {
@@ -83,5 +85,6 @@ describe("Room Query Test", function () {
                 expect.fail();
             })
     });
+
 });
 
