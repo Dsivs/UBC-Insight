@@ -941,6 +941,35 @@ describe("QueryTest", function() {
     });
 
     /**
+     * KeyValueMismatchQuery
+     */
+    const keyValueMismatchQuery = {
+        "WHERE":{
+            "GT": {
+                "courses_dept": 97
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    };
+    it("key value mismatch query", function() {
+        return insight.performQuery(keyValueMismatchQuery)
+            .then(function (result) {
+                console.log(result.body);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+            })
+    });
+
+    /**
      * flexquery
      */
     const flexQuery = {

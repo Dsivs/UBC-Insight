@@ -10,7 +10,7 @@ import {expect} from 'chai';
 import Log from "../src/Util";
 import {isUndefined} from "util";
 let fs = require("fs");
-let content: string = "";
+let courseContent: string = "";
 let invalidContent: string = "";
 let novalidContent: string = "";
 let longContent: string = "";
@@ -31,7 +31,7 @@ describe("DataTest", function () {
             {
                 //debug, if given content is invalid
                 //since given data is a array buffer, we can convert right away
-                content = data.toString('base64');
+                courseContent = data.toString('base64');
                 console.log("Before: content is done!");
             }
         });
@@ -131,7 +131,7 @@ describe("DataTest", function () {
     });
 
     it("add null content", function() {
-        return insight.addDataset("courses", null)
+        return insight.addDataset("rooms", null)
             .then(function(result) {
                 console.log(result);
                 expect.fail();
@@ -142,7 +142,7 @@ describe("DataTest", function () {
     });
 
     it("Load valid new data set", function() {
-        return insight.addDataset('courses', content)
+        return insight.addDataset('courses', courseContent)
             .then(function(response) {
                 console.log(response);
                 expect(response.code).to.deep.equal(204);
@@ -153,7 +153,7 @@ describe("DataTest", function () {
     });
 
     it("overwrite valid existing data set", function() {
-        return insight.addDataset('courses', content)
+        return insight.addDataset('courses', courseContent)
             .then(function(response) {
                 console.log(response);
                 expect(response.code).to.deep.equal(201);
