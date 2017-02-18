@@ -1,4 +1,5 @@
 import {QueryRequest, InsightResponse} from "./IInsightFacade";
+import {isUndefined} from "util";
 /**
  * Created by Axiaz on 2017-02-06.
  */
@@ -31,7 +32,7 @@ export default class QueryController {
                     throw ({code: 400, body: {error: "cannot query multiple datasets"}})
 
                 console.log(instance.IDs);
-                let loadedMem = parentInsightFacade.checkMem(instance.IDs[0])
+                let loadedMem = parentInsightFacade.checkMem(instance.IDs[0]);
                 console.log(loadedMem);
 
                 for (let obj of loadedMem) {
@@ -138,6 +139,8 @@ export default class QueryController {
                 if (paramFieldLength != 1)
                     throw ({code: 400, body: {error: key + " must have exactly one key"}});
                 let paramField = Object.keys(keyValue)[0];
+                if (isUndefined(paramField) || paramField === null)
+                    throw ({code: 400, body: {error: "invalid paramField"}});
                 let paramValue = keyValue[paramField];
                 if (!paramField.includes("_"))
                     throw ({code: 400, body: {error: paramField + " is not a valid key"}});
