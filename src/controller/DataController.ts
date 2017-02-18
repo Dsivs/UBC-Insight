@@ -9,14 +9,9 @@ import Room from "./Room";
 const fs = require("fs");
 const JSZip = require("jszip");
 const http = require('http');
-
+var roomArray: any = [];
+var count = 0;
 export default class DataController {
-
-    private roomArray: any[];
-
-    constructor() {
-        this.roomArray = [];
-    }
 
     /**
      * addDataset
@@ -56,9 +51,9 @@ export default class DataController {
     }
 
     addRooms(content: string): Promise<InsightResponse> {
+        roomArray.length = 0;
         const instance = this;
         let id = "rooms";
-        instance.roomArray.length = 0;
 
         return new Promise(function (fulfill, reject) {
             instance.parseToZip(content)
@@ -70,19 +65,19 @@ export default class DataController {
                     //console.log(arrayOfFileContents);
                     return instance.room_parseContent(contentArray)
                 }).then(function (array) {
-                    console.log("parseContent is alright");
-                    return instance.room_validator(array);
-                }).then(function (array) {
-                    console.log("validator is alright");
-                    return instance.room_addGeo(array);
-                })
+                console.log("parseContent is alright");
+                return instance.room_validator(array);
+            }).then(function (array) {
+                console.log("validator is alright");
+                return instance.room_addGeo(array);
+            })
                 .then(function (geoMapping) {
 
                     instance.room_mapAddrToGeo(geoMapping);
                     //console.log(roomArray);
                     //console.log(roomArray.length);
 
-                    return instance.cacheData(JSON.stringify(instance.roomArray, null, 4), id)
+                    return instance.cacheData(JSON.stringify(roomArray, null, 4), id)
                 })
                 .then(function (result) {
                     fulfill(result)
@@ -100,8 +95,11 @@ export default class DataController {
             //if .DS_STORE
             let file = zipContents.file(filename);
 
-            while (filename.indexOf("/") >= 0) {
-                filename = filename.substr(filename.indexOf('/') + 1, filename.length - 1)
+            if ((!isUndefined(filename)) && filename !== null) {
+
+                while (filename.indexOf("/") >= 0) {
+                    filename = filename.substr(filename.indexOf('/') + 1, filename.length - 1)
+                }
             }
 
             if (file != null && filename !== "" && filename !== ".DS_Store") {
@@ -186,8 +184,7 @@ export default class DataController {
     }
 
     room_mapAddrToGeo(geoMapping: any) {
-        let instance = this;
-        for (let room of instance.roomArray) {
+        for (let room of roomArray) {
             room.rooms_lat = geoMapping[room.rooms_address].lat;
             room.rooms_lon = geoMapping[room.rooms_address].lon;
         }
@@ -211,7 +208,7 @@ export default class DataController {
                 if (arrayOfJSONObj.length == 0) {
                     reject({"code": 400, "body": {"error": "Zip contained no valid data"}})
                 } else {
-                    fulfill(instance.roomArray);
+                    fulfill(roomArray);
                 }
             }).catch( function(){
                 reject({"code": 400, "body": {"error": "unknow error"}})
@@ -265,7 +262,7 @@ export default class DataController {
                 if (res === 'tbody') {
                     isTd = false;
                     isTbody = false;
-                    fulfill(instance.roomArray);
+                    fulfill(roomArray);
                     //console.log(context);
                 }
                 //console.log("<-endTag: " + res);
@@ -282,22 +279,23 @@ export default class DataController {
                 if (isTd == true && isTbody == true)
                 {
                     //console.log("add: " + res);
-                    if (res !== "")
+                    if (res !== "" && current !== null)
                     {
-                        //attribute[0].value returns class/href
-                        //attribute[0].name returns link of current room
-                        //console.log('res = ' + res);
-                        //current attribute is url
-                        if (current.indexOf('/') >= 0)
-                        {
-                            if (!isUndefined(room) && room != null
-                                && instance.roomArray.indexOf(room) == -1) {
-                                //console.log("roomArray ++");
-                                instance.roomArray.push(room);
+                        if (!isUndefined(current)) {
+                            //attribute[0].value returns class/href
+                            //attribute[0].name returns link of current room
+                            //console.log('res = ' + res);
+                            //current attribute is url
+                            if (current.indexOf('/') >= 0) {
+                                if (!isUndefined(room) && room != null
+                                    && roomArray.indexOf(room) == -1) {
+                                    //console.log("roomArray ++");
+                                    roomArray.push(room);
+                                }
+                                room = instance.room_find(room);
                             }
-                            room = instance.room_find(room);
+                            room = instance.room_initialize(current, res, room);
                         }
-                        room = instance.room_initialize(current,res,room);
                     }
                 }
             });
@@ -307,85 +305,85 @@ export default class DataController {
 
     private room_initialize(attributes: string, key:string, room: Room): Room
     {
-            if (room == null || isUndefined(room))
-            {
-                return null;
+        if (room == null || isUndefined(room) || attributes == null || isUndefined(attributes)
+            || key == null || isUndefined(key))
+        {
+            return null;
+        }
+        //debug
+        if (key === 'More info')
+        {
+            return null;
+        }
+        if (attributes.indexOf('/')>=0 && attributes.charAt(0) === '.' && key !== '') {
+            while (attributes.indexOf('/') >= 0) {
+                attributes = attributes.substr(attributes.indexOf('/') + 1, attributes.length)
             }
-            //debug
-            if (key === 'More info')
-            {
-                return null;
-            }
-            if (attributes.indexOf('/')>=0 && attributes.charAt(0) === '.' && key !== '') {
-                while (attributes.indexOf('/') >= 0) {
-                    attributes = attributes.substr(attributes.indexOf('/') + 1, attributes.length)
-                }
-                room.rooms_shortname = attributes;
-                room.rooms_fullname = key;
-                return room;
-            }
+            room.rooms_shortname = attributes;
+            room.rooms_fullname = key;
+            return room;
+        }
 
-            if (attributes.indexOf('/') >= 0)
+        if (attributes.indexOf('/') >= 0)
+        {
+            //case attribute is a url, may need regExp to double check
+            room.rooms_href = attributes;
+            while (attributes.indexOf('/')>=0)
             {
-                //case attribute is a url, may need regExp to double check
-                room.rooms_href = attributes;
-                while (attributes.indexOf('/')>=0)
-                {
-                    attributes = attributes.substr(attributes.indexOf('/')+1, attributes.length)
-                }
-                room.rooms_shortname = attributes.substr(0,attributes.indexOf('-'));
-                room.rooms_number = attributes.substr(attributes.indexOf('-')+1, attributes.length);
-                room.rooms_name = room.rooms_shortname + "_"+ room.rooms_number;
-                return room;
+                attributes = attributes.substr(attributes.indexOf('/')+1, attributes.length)
             }
-            while (attributes.indexOf('-') >= 0)
-            {
-                attributes = attributes.substr(attributes.indexOf('-')+1, attributes.length);
-            }
+            room.rooms_shortname = attributes.substr(0,attributes.indexOf('-'));
+            room.rooms_number = attributes.substr(attributes.indexOf('-')+1, attributes.length);
+            room.rooms_name = room.rooms_shortname + "_"+ room.rooms_number;
+            return room;
+        }
+        while (attributes.indexOf('-') >= 0)
+        {
+            attributes = attributes.substr(attributes.indexOf('-')+1, attributes.length);
+        }
 
-            switch (attributes)
-            {
-                case 'capacity':
-                    room.rooms_seats = parseInt(key);
-                    return room;
-                case 'furniture':
-                    //sample: Classroom-Fixed Tables/Fixed Chairs
-                    room.rooms_furniture = key;
-                    return room;
-                case 'type':
-                    //sample: Tiered Large Group
-                    room.rooms_type = key;
-                    return room;
-                case 'address':
-                    room.rooms_address = key;
-                    return room;
-                case 'code':
-                    room.rooms_shortname = key;
-                    return room;
-                case 'nothing':
-                case 'image':
-                case 'title':
-                    return room;
-                default:
-                    console.log("FETAL ERROR!! Non-Existing room attribute = " + attributes)
-            }
+        switch (attributes)
+        {
+            case 'capacity':
+                room.rooms_seats = parseInt(key);
+                return room;
+            case 'furniture':
+                //sample: Classroom-Fixed Tables/Fixed Chairs
+                room.rooms_furniture = key;
+                return room;
+            case 'type':
+                //sample: Tiered Large Group
+                room.rooms_type = key;
+                return room;
+            case 'address':
+                room.rooms_address = key;
+                return room;
+            case 'code':
+                room.rooms_shortname = key;
+                return room;
+            case 'nothing':
+            case 'image':
+            case 'title':
+                return room;
+            default:
+                console.log("FETAL ERROR!! Non-Existing room attribute = " + attributes)
+        }
     }
 
 
     private room_find(room:any)
     {
-        let instance = this;
         if (room == null)
             return new Room();
-        for (var i = 0; i< instance.roomArray.length; i++)
+        for (var i = 0; i< roomArray.length; i++)
         {
             if (isUndefined(room) || room == null)
             {
                 console.log("dsd");
             }
-            if (instance.roomArray[i].rooms_shortname === room.rooms_shortname)
+            if (roomArray[i].rooms_shortname === room.rooms_shortname)
             {
-                return instance.roomArray[i];
+                return roomArray[i];
             }
         }
         return new Room();
@@ -502,15 +500,15 @@ export default class DataController {
                             year = 1900;
 
                         finalResult.push(new Course(section.Subject,
-                                                    section.Course,
-                                                    section.Avg,
-                                                    section.Professor,
-                                                    section.Title,
-                                                    section.Pass,
-                                                    section.Fail,
-                                                    section.Audit,
-                                                    section.id.toString(),
-                                                    year));
+                            section.Course,
+                            section.Avg,
+                            section.Professor,
+                            section.Title,
+                            section.Pass,
+                            section.Fail,
+                            section.Audit,
+                            section.id.toString(),
+                            year));
                     }
                 }
             }
@@ -626,8 +624,7 @@ export default class DataController {
         try {
             return JSON.parse(fs.readFileSync(filename, "utf8"));
         } catch (err) {
-            throw ({code: 424, body: {error: "missing: " + [id]}});
+            throw ({code: 424, body: {missing: [id]}});
         }
     }
 }
-

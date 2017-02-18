@@ -86,7 +86,7 @@ var InsightFacade = (function () {
                     instance.loadedRooms = instance.dataController.loadCache(id);
                 return instance.loadedRooms;
             default:
-                throw ({ code: 424, body: { error: "missing: " + [id] } });
+                throw ({ code: 424, body: { missing: [id] } });
         }
     };
     return InsightFacade;
