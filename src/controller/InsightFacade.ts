@@ -164,14 +164,14 @@ export default class InsightFacade implements IInsightFacade {
         switch (id) {
             case "courses":
                 if (instance.loadedCourses.length == 0)
-                    instance.loadedCourses = instance.dataController.loadCache(id)
+                    instance.loadedCourses = instance.dataController.loadCache(id);
                 return instance.loadedCourses;
             case "rooms":
                 if (instance.loadedRooms.length == 0)
-                    instance.loadedRooms = instance.dataController.loadCache(id)
+                    instance.loadedRooms = instance.dataController.loadCache(id);
                 return instance.loadedRooms;
             default:
-                throw ({code: 424, body: {error: "missing: " + [id]}})
+                throw ({code: 424, body: {'missing' : [id]}});
         }
     }
 }
