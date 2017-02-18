@@ -15,7 +15,6 @@ describe("Room Query Test", function () {
 
     this.timeout(500000);
     var insight = new InsightFacade();
-    const room = new DataController();
     before(function (done) {
 
         Log.test('Before: ' + (<any>this).test.parent.title);

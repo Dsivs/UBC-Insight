@@ -9,9 +9,14 @@ import Room from "./Room";
 const fs = require("fs");
 const JSZip = require("jszip");
 const http = require('http');
-var roomArray: any = [];
-var count = 0;
+
 export default class DataController {
+
+    private roomArray: any[];
+
+    constructor() {
+        this.roomArray = [];
+    }
 
     /**
      * addDataset
@@ -51,9 +56,9 @@ export default class DataController {
     }
 
     addRooms(content: string): Promise<InsightResponse> {
-        roomArray.length = 0;
         const instance = this;
         let id = "rooms";
+        instance.roomArray.length = 0;
 
         return new Promise(function (fulfill, reject) {
             instance.parseToZip(content)
@@ -77,7 +82,7 @@ export default class DataController {
                     //console.log(roomArray);
                     //console.log(roomArray.length);
 
-                    return instance.cacheData(JSON.stringify(roomArray, null, 4), id)
+                    return instance.cacheData(JSON.stringify(instance.roomArray, null, 4), id)
                 })
                 .then(function (result) {
                     fulfill(result)
@@ -181,7 +186,8 @@ export default class DataController {
     }
 
     room_mapAddrToGeo(geoMapping: any) {
-        for (let room of roomArray) {
+        let instance = this;
+        for (let room of instance.roomArray) {
             room.rooms_lat = geoMapping[room.rooms_address].lat;
             room.rooms_lon = geoMapping[room.rooms_address].lon;
         }
@@ -205,7 +211,7 @@ export default class DataController {
                 if (arrayOfJSONObj.length == 0) {
                     reject({"code": 400, "body": {"error": "Zip contained no valid data"}})
                 } else {
-                    fulfill(roomArray);
+                    fulfill(instance.roomArray);
                 }
             }).catch( function(){
                 reject({"code": 400, "body": {"error": "unknow error"}})
@@ -259,7 +265,7 @@ export default class DataController {
                 if (res === 'tbody') {
                     isTd = false;
                     isTbody = false;
-                    fulfill(roomArray);
+                    fulfill(instance.roomArray);
                     //console.log(context);
                 }
                 //console.log("<-endTag: " + res);
@@ -285,9 +291,9 @@ export default class DataController {
                         if (current.indexOf('/') >= 0)
                         {
                             if (!isUndefined(room) && room != null
-                                && roomArray.indexOf(room) == -1) {
+                                && instance.roomArray.indexOf(room) == -1) {
                                 //console.log("roomArray ++");
-                                roomArray.push(room);
+                                instance.roomArray.push(room);
                             }
                             room = instance.room_find(room);
                         }
@@ -368,17 +374,18 @@ export default class DataController {
 
     private room_find(room:any)
     {
+        let instance = this;
         if (room == null)
             return new Room();
-        for (var i = 0; i< roomArray.length; i++)
+        for (var i = 0; i< instance.roomArray.length; i++)
         {
             if (isUndefined(room) || room == null)
             {
                 console.log("dsd");
             }
-            if (roomArray[i].rooms_shortname === room.rooms_shortname)
+            if (instance.roomArray[i].rooms_shortname === room.rooms_shortname)
             {
-                return roomArray[i];
+                return instance.roomArray[i];
             }
         }
         return new Room();
