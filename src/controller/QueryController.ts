@@ -139,8 +139,8 @@ export default class QueryController {
                 if (paramFieldLength != 1)
                     throw ({code: 400, body: {error: key + " must have exactly one key"}});
                 let paramField = Object.keys(keyValue)[0];
-                if (isUndefined(paramField) || paramField === null)
-                    throw ({code: 400, body: {error: "invalid paramField"}});
+                //if (isUndefined(paramField) || paramField === null)
+                    //throw ({code: 400, body: {error: "invalid paramField"}});
                 let paramValue = keyValue[paramField];
                 if (!paramField.includes("_"))
                     throw ({code: 400, body: {error: paramField + " is not a valid key"}});
