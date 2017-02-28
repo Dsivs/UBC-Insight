@@ -935,7 +935,7 @@ describe("QueryTest", function() {
                 console.log(result);
                 expect.fail();
             }).catch(function (err) {
-                expect(err.code).to.deep.equal(400);
+                expect(err.code).to.deep.equal(424);
                 console.log(err.body);
             })
     });

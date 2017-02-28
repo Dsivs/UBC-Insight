@@ -29,12 +29,21 @@ export default class QueryController {
                     throw({code: 400, body: {error: "OPTIONS is missing"}});
 
                 instance.checkOptions(options);
+                let missingIDs: any[] = [];
 
                 if (Object.keys(where).length != 0) {
                     let filterFun = instance.parseFilter(where);
 
-                    if (instance.IDs.length != 1)
-                        throw ({code: 400, body: {error: "cannot query multiple datasets"}})
+                    if (instance.IDs.length != 1) {
+                        for (let id of instance.IDs) {
+                            if (id != "courses" && id != "rooms")
+                                missingIDs.push(id);
+                        }
+                        if (missingIDs.length > 0)
+                            throw ({code: 424, body: {missing: missingIDs}})
+                        else
+                            throw ({code: 400, body: {error: "cannot query multiple datasets"}})
+                    }
 
                     let loadedMem = parentInsightFacade.checkMem(instance.IDs[0])
 
@@ -44,8 +53,16 @@ export default class QueryController {
                         }
                     }
                 } else {
-                    if (instance.IDs.length != 1)
-                        throw ({code: 400, body: {error: "cannot query multiple datasets"}})
+                    if (instance.IDs.length != 1) {
+                        for (let id of instance.IDs) {
+                            if (id != "courses" && id != "rooms")
+                                missingIDs.push(id);
+                        }
+                        if (missingIDs.length > 0)
+                            throw ({code: 424, body: {missing: missingIDs}})
+                        else
+                            throw ({code: 400, body: {error: "cannot query multiple datasets"}})
+                    }
 
                     let loadedMem = parentInsightFacade.checkMem(instance.IDs[0]);
 
