@@ -72,6 +72,95 @@ describe("Room Query Test", function () {
             })
     });
 
+    const emptyQuery = {
+        "WHERE": {
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "rooms_address", "rooms_name", "rooms_type"
+            ],
+            "ORDER": "rooms_name",
+            "FORM": "TABLE"
+        }
+    };
+    it("empty filter with multiple IDs Query", function() {
+        return insight.performQuery(emptyQuery)
+            .then(function (result) {
+                console.log(result.body);
+                expect(result.code).to.deep.equal(200);
+            }).catch(function (err) {
+                console.log(err.body);
+                expect.fail();
+            })
+    });
+
+
+    const multiIDColumnQuery = {
+        "WHERE": {
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "courses_dept", "rooms_name", "rooms_type"
+            ],
+            "ORDER": "rooms_name",
+            "FORM": "TABLE"
+        }
+    };
+    it("columns has multiple ids Query", function() {
+        return insight.performQuery(multiIDColumnQuery)
+            .then(function (result) {
+                console.log(result.body);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+            })
+    });
+
+    const invalidIDColumnQuery = {
+        "WHERE": {
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "dept", "rooms_name", "rooms_type"
+            ],
+            "ORDER": "rooms_name",
+            "FORM": "TABLE"
+        }
+    };
+    it("columns has invalid ID Query", function() {
+        return insight.performQuery(invalidIDColumnQuery)
+            .then(function (result) {
+                console.log(result.body);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+            })
+    });
+
+    const invalidKeyColumnQuery = {
+        "WHERE": {
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "rooms_dept", "rooms_name", "rooms_type"
+            ],
+            "ORDER": "rooms_name",
+            "FORM": "TABLE"
+        }
+    };
+    it("columns has invalid key Query", function() {
+        return insight.performQuery(invalidKeyColumnQuery)
+            .then(function (result) {
+                console.log(result.body);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+            })
+    });
+
 
 
     it("remove rooms", function () {

@@ -24,6 +24,8 @@ export default class Course {
     //the year the course was offered
     courses_year: number;
 
+    static courseKeys = ["courses_dept", "courses_id", "courses_avg", "courses_instructor", "courses_title", "courses_pass", "courses_fail", "courses_audit", "courses_uuid", "courses_year"];
+
     constructor(dept: string, id: string, avg: number, instructor: string, title: string, pass: number, fail: number, audit: number, uuid: string, year: number) {
         this.courses_dept = dept;
         this.courses_id = id;

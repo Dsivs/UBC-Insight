@@ -797,10 +797,10 @@ describe("QueryTest", function() {
         },
         "OPTIONS":{
             "COLUMNS":[
-                "courses_dept",
-                "courses_avg"
+                "derp_dept",
+                "derp_avg"
             ],
-            "ORDER":"courses_avg",
+            "ORDER":"derp_avg",
             "FORM":"TABLE"
         }
     }
@@ -810,8 +810,8 @@ describe("QueryTest", function() {
                 console.log(result);
                 expect.fail();
             }).catch(function (err) {
-                expect(err.code).to.deep.equal(424);
                 console.log(err.body);
+                expect(err.code).to.deep.equal(424);
             })
     });
 

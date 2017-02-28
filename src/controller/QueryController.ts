@@ -1,5 +1,7 @@
 import {QueryRequest, InsightResponse} from "./IInsightFacade";
-import {isUndefined} from "util";
+import Course from "./Course";
+import Room from "./Room";
+
 /**
  * Created by Axiaz on 2017-02-06.
  */
@@ -27,20 +29,45 @@ export default class QueryController {
                     throw({code: 400, body: {error: "OPTIONS is missing"}});
 
                 instance.checkOptions(options);
-                let filterFun = instance.parseFilter(where);
-                if (instance.IDs.length != 1)
-                    throw ({code: 400, body: {error: "cannot query multiple datasets"}})
 
-                //console.log(instance.IDs);
-                let loadedMem = parentInsightFacade.checkMem(instance.IDs[0])
-                //console.log(loadedMem);
+                if (Object.keys(where).length != 0) {
+                    let filterFun = instance.parseFilter(where);
 
-                for (let obj of loadedMem) {
-                    if(filterFun(obj)) {
-                        resultsArray.push(obj)
+                    if (instance.IDs.length != 1)
+                        throw ({code: 400, body: {error: "cannot query multiple datasets"}})
+
+                    let loadedMem = parentInsightFacade.checkMem(instance.IDs[0])
+
+                    for (let obj of loadedMem) {
+                        if(filterFun(obj)) {
+                            resultsArray.push(obj)
+                        }
                     }
+                } else {
+                    if (instance.IDs.length != 1)
+                        throw ({code: 400, body: {error: "cannot query multiple datasets"}})
+
+                    let loadedMem = parentInsightFacade.checkMem(instance.IDs[0]);
+
+                    resultsArray = loadedMem;
                 }
+
                 let columns: any[] = options.COLUMNS;
+                let validKeys: any;
+
+                switch (instance.IDs[0]) {
+                    case "courses":
+                        validKeys = Course.courseKeys;
+                        break;
+                    case "rooms":
+                        validKeys = Room.roomKeys;
+                }
+
+                for (let column of columns) {
+                    if (!validKeys.includes(column))
+                        throw ({code: 400, body: {error: column + " is not a valid key"}})
+                }
+
                 let outputArray = JSON.parse(JSON.stringify(resultsArray, columns));
 
                 let order = options.ORDER;
@@ -77,10 +104,23 @@ export default class QueryController {
             throw ({code: 400, body: {error: "columns cannot be empty"}});
 
         /**
+         * Get the ids present in COLUMNS
+         */
+
+        /**
          * if ORDER is specified, it must be included in COLUMNS
          */
         if (order != undefined && !columns.includes(order)) {
             throw ({code: 400, body: {error: order + " is not in " + columns}})
+        }
+
+        for (let column of columns) {
+            if (!column.includes("_"))
+                throw ({code: 400, body: {error: column + " is not a valid key"}})
+
+            let id = column.substring(0, column.indexOf("_"));
+            if (!this.IDs.includes(id))
+                this.IDs.push(id);
         }
 
         /**

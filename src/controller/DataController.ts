@@ -13,10 +13,16 @@ var roomArray: any = [];
 var count = 0;
 export default class DataController {
 
+    private loadedCourses: any[];
+    private loadedRooms: any[];
+
+    constructor() {
+        this.loadedCourses = [];
+        this.loadedRooms = [];
+    }
+
     /**
-     * addDataset
-     * @param content
-     * @returns {Promise<T>}
+     * add Courses Dataset
      */
     addCourses(content: string): Promise<InsightResponse> {
         const instance = this;
@@ -50,6 +56,93 @@ export default class DataController {
         });
     }
 
+    //takes in a string and tries to parse it into a JSZip
+    private parseToZip(content: string): Promise<any> {
+        return new Promise(function(fulfill, reject) {
+            let zip = new JSZip();
+            zip.loadAsync(content, {base64:true})
+                .then(function (result: any) {
+                    fulfill(result);
+                })
+                .catch(function (err: any) {
+                    reject({"code": 400, body: {"error": "Content is not a valid base64 zip"}});
+                })
+        })
+    }
+
+    //given a JSZip returns an array of the contents of the files in the JSZip
+    private readContents(zipContents: any): Promise<any>[] {
+        let arrayOfFileContents: Promise<any>[] = [];
+
+        for (let filename in zipContents.files) {
+            let file = zipContents.file(filename);
+            if (file != null) {
+                arrayOfFileContents.push(file.async("string"))
+            }
+        }
+
+        return arrayOfFileContents;
+    }
+
+    //given an array of file contents returns an array of file contents that are valid json
+    private parseFileContents(arrayOfFileContents: string[]): Promise<any> {
+        return new Promise(function (fulfill, reject) {
+            let arrayOfJSONObj: any[] = [];
+
+            for (let fileContent of arrayOfFileContents) {
+                try {
+                    arrayOfJSONObj.push(JSON.parse(fileContent));
+                } catch (err) {
+                    //console.log("This is not valid JSON:")
+                    //console.log(fileContent)
+                }
+            }
+
+            if (arrayOfJSONObj.length == 0) {
+                reject({"code": 400, "body": {"error": "Zip contained no valid data"}})
+            } else {
+                fulfill(arrayOfJSONObj)
+            }
+        })
+    }
+
+    //given an array of jsonobjects each corresponding to a file, parse any valid ones into the final course objects to be cached
+    private parseIntoCourses(arrayOfJSONObj: any[]): Promise<any> {
+        let finalResult: any[] = [];
+
+        return new Promise(function (fulfill, reject) {
+            for (let jsonObj of arrayOfJSONObj) {
+                let jsonObjResultProp = jsonObj.result;
+                if (Array.isArray(jsonObjResultProp)) {
+                    for (let section of jsonObjResultProp) {
+                        let year = parseInt(section.Year);
+                        if (section.Section === "overall")
+                            year = 1900;
+
+                        finalResult.push(new Course(section.Subject,
+                            section.Course,
+                            section.Avg,
+                            section.Professor,
+                            section.Title,
+                            section.Pass,
+                            section.Fail,
+                            section.Audit,
+                            section.id.toString(),
+                            year));
+                    }
+                }
+            }
+            if (finalResult.length == 0) {
+                reject({"code": 400, "body": {"error": "Zip contained no valid data"}})
+            } else {
+                fulfill(finalResult)
+            }
+        })
+    }
+
+    /**
+     * Add Rooms Dataset
+     */
     addRooms(content: string): Promise<InsightResponse> {
         roomArray.length = 0;
         const instance = this;
@@ -65,18 +158,16 @@ export default class DataController {
                     //console.log(arrayOfFileContents);
                     return instance.room_parseContent(contentArray)
                 }).then(function (array) {
-                console.log("parseContent is alright");
-                return instance.room_validator(array);
-            }).then(function (array) {
-                console.log("validator is alright");
-                return instance.room_addGeo(array);
-            })
+                    console.log("parseContent is alright");
+                    return instance.room_validator(array);
+                }).then(function (array) {
+                    console.log("validator is alright");
+                    return instance.room_addGeo(array);
+                })
                 .then(function (geoMapping) {
-
                     instance.room_mapAddrToGeo(geoMapping);
                     //console.log(roomArray);
                     //console.log(roomArray.length);
-
                     return instance.cacheData(JSON.stringify(roomArray, null, 4), id)
                 })
                 .then(function (result) {
@@ -88,6 +179,7 @@ export default class DataController {
                 });
         });
     }
+
     private room_readValidContents(zipContents: any): Promise<any>[] {
         let contents: Promise<any>[] = [];
         const instance = this;
@@ -216,7 +308,6 @@ export default class DataController {
         })
     }
 
-    //turns a html string into a json obj (with room filter)
     private room_htmlParser(content: any): Promise<any>
     {
         const instance = this;
@@ -370,7 +461,6 @@ export default class DataController {
         }
     }
 
-
     private room_find(room:any)
     {
         if (room == null)
@@ -389,20 +479,6 @@ export default class DataController {
         return new Room();
     }
 
-
-    //takes in a string and tries to parse it into a JSZip
-    private parseToZip(content: string): Promise<any> {
-        return new Promise(function(fulfill, reject) {
-            let zip = new JSZip();
-            zip.loadAsync(content, {base64:true})
-                .then(function (result: any) {
-                    fulfill(result);
-                })
-                .catch(function (err: any) {
-                    reject({"code": 400, body: {"error": "Content is not a valid base64 zip"}});
-                })
-        })
-    }
     private room_validator(array: Room[]): Promise<any>
     {
         return new Promise( function(fulfill, reject){
@@ -450,76 +526,6 @@ export default class DataController {
         });
     }
 
-    //given a JSZip returns an array of the contents of the files in the JSZip
-    private readContents(zipContents: any): Promise<any>[] {
-        let arrayOfFileContents: Promise<any>[] = [];
-
-        for (let filename in zipContents.files) {
-            let file = zipContents.file(filename);
-            if (file != null) {
-                arrayOfFileContents.push(file.async("string"))
-            }
-        }
-
-        return arrayOfFileContents;
-    }
-
-    //given an array of file contents returns an array of file contents that are valid json
-    private parseFileContents(arrayOfFileContents: string[]): Promise<any> {
-        return new Promise(function (fulfill, reject) {
-            let arrayOfJSONObj: any[] = [];
-
-            for (let fileContent of arrayOfFileContents) {
-                try {
-                    arrayOfJSONObj.push(JSON.parse(fileContent));
-                } catch (err) {
-                    //console.log("This is not valid JSON:")
-                    //console.log(fileContent)
-                }
-            }
-
-            if (arrayOfJSONObj.length == 0) {
-                reject({"code": 400, "body": {"error": "Zip contained no valid data"}})
-            } else {
-                fulfill(arrayOfJSONObj)
-            }
-        })
-    }
-
-    //given an array of jsonobjects each corresponding to a file, parse any valid ones into the final course objects to be cached
-    private parseIntoCourses(arrayOfJSONObj: any[]): Promise<any> {
-        let finalResult: any[] = [];
-
-        return new Promise(function (fulfill, reject) {
-            for (let jsonObj of arrayOfJSONObj) {
-                let jsonObjResultProp = jsonObj.result;
-                if (Array.isArray(jsonObjResultProp)) {
-                    for (let section of jsonObjResultProp) {
-                        let year = parseInt(section.Year);
-                        if (section.Section === "overall")
-                            year = 1900;
-
-                        finalResult.push(new Course(section.Subject,
-                            section.Course,
-                            section.Avg,
-                            section.Professor,
-                            section.Title,
-                            section.Pass,
-                            section.Fail,
-                            section.Audit,
-                            section.id.toString(),
-                            year));
-                    }
-                }
-            }
-            if (finalResult.length == 0) {
-                reject({"code": 400, "body": {"error": "Zip contained no valid data"}})
-            } else {
-                fulfill(finalResult)
-            }
-        })
-    }
-
     //given the array of course sections, cache it to disk
     private cacheData(jsonData: string, id: string): Promise<any> {
         let fs = require("fs");
@@ -557,6 +563,17 @@ export default class DataController {
         let instance = this;
         let path = "./cache/" + id + "/";
         return new Promise(function (fulfill, reject) {
+            switch (id) {
+                case "courses":
+                    instance.loadedCourses.length = 0;
+                    break;
+                case "rooms":
+                    instance.loadedRooms.length = 0;
+                     break;
+                default:
+                    reject({code: 404, "body": {"error": "source not previously added"}})
+            }
+
             instance.readFilesInDir(path)
                 .then(function (files) {
                     return Promise.all(instance.deleteFilesInDir(files, path))
@@ -619,10 +636,22 @@ export default class DataController {
      * checkMem
      */
     loadCache(id: string): any {
+        let instance = this;
         let filename = "./cache/" + id + "/" + id + ".JSON";
 
         try {
-            return JSON.parse(fs.readFileSync(filename, "utf8"));
+            switch (id) {
+                case "courses":
+                    if (instance.loadedCourses.length == 0)
+                        instance.loadedCourses = JSON.parse(fs.readFileSync(filename, "utf8"));
+                    return instance.loadedCourses;
+                case "rooms":
+                    if (instance.loadedRooms.length == 0)
+                        instance.loadedRooms = JSON.parse(fs.readFileSync(filename, "utf8"));
+                    return instance.loadedRooms;
+                default:
+                    throw ({code: 424, body: {missing: [id]}});
+            }
         } catch (err) {
             throw ({code: 424, body: {missing: [id]}});
         }

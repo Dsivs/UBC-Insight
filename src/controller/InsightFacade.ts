@@ -6,16 +6,11 @@ import QueryController from "./QueryController";
 
 export default class InsightFacade implements IInsightFacade {
 
-    private loadedCourses:  any[];
-    private loadedRooms: any[];
-
     private dataController: DataController;
     private queryController: QueryController;
 
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
-        this.loadedCourses = [];
-        this.loadedRooms = [];
         this.dataController = new DataController();
         this.queryController = new QueryController();
     }
@@ -99,19 +94,8 @@ export default class InsightFacade implements IInsightFacade {
      */
     removeDataset(id: string): Promise<InsightResponse> {
         const instance = this;
-        instance.loadedCourses.length = 0;
-        let path = "./cache/" + id + "/";
+
         return new Promise(function (fulfill, reject) {
-            switch(id) {
-                case "courses":
-                    instance.loadedCourses.length = 0;
-                    break;
-                case "rooms":
-                    instance.loadedRooms.length = 0;
-                    break;
-                default:
-                    console.log("why am i here");
-            }
             instance.dataController.removeDataset((id))
                 .then(function (result) {
                     fulfill(result)
@@ -142,7 +126,6 @@ export default class InsightFacade implements IInsightFacade {
      */
     performQuery(query: QueryRequest): Promise <InsightResponse> {
         const instance = this;
-        let resultsArray: any[] = [];
         return new Promise(function (fulfill, reject) {
             instance.queryController.performQuery(query, instance)
                 .then(function (result) {
@@ -161,18 +144,6 @@ export default class InsightFacade implements IInsightFacade {
      */
     checkMem(id: string): any[] {
         const instance = this;
-        switch (id) {
-            case "courses":
-                if (instance.loadedCourses.length == 0)
-                    instance.loadedCourses = instance.dataController.loadCache(id);
-                return instance.loadedCourses;
-            case "rooms":
-                if (instance.loadedRooms.length == 0)
-                    instance.loadedRooms = instance.dataController.loadCache(id);
-                return instance.loadedRooms;
-            default:
-                throw ({code: 424, body: {missing: [id]}})
-
-        }
+        return instance.dataController.loadCache(id);
     }
 }

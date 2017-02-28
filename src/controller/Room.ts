@@ -26,6 +26,8 @@ export default class Room {
     //The link to full details online
     rooms_href: string;
 
+    static roomKeys = ["rooms_fullname", "rooms_shortname", "rooms_number", "rooms_name", "rooms_address", "rooms_lat", "rooms_lon", "rooms_seats", "rooms_type", "rooms_furniture", "rooms_href"];
+
     constructor() {
         this.rooms_fullname = "DEFAULT";
         this.rooms_type = "";
