@@ -28,7 +28,7 @@ export default class QueryController {
                 if (options == undefined)
                     throw({code: 400, body: {error: "OPTIONS is missing"}});
 
-                instance.checkOptions(options);
+                options = instance.checkOptions(options);
                 let missingIDs: any[] = [];
 
                 if (Object.keys(where).length != 0) {
@@ -69,8 +69,9 @@ export default class QueryController {
                     resultsArray = loadedMem;
                 }
 
-                let columns: any[] = options.COLUMNS;
+                //let columns: any[] = options.COLUMNS;
                 let validKeys: any;
+                let columns = options.columns;
 
                 switch (instance.IDs[0]) {
                     case "courses":
@@ -87,14 +88,20 @@ export default class QueryController {
 
                 let outputArray = JSON.parse(JSON.stringify(resultsArray, columns));
 
-                let order = options.ORDER;
-                if (order != undefined) {
+                if (options.order != undefined) {
+                    let dir = options.order.dir;
+                    let keys = options.order.keys;
+
                     outputArray.sort(function (a: any, b: any) {
-                        if (a[order] > b[order]) {
-                            return 1;
-                        } else if (a[order] < b[order]) {
-                            return -1;
-                        }
+                        let i = 0;
+                        do {
+                            if (a[keys[i]] > b[keys[i]]) {
+                                return dir;
+                            } else if (a[keys[i]] < b[keys[i]]) {
+                                return -dir;
+                            }
+                            i++;
+                        } while (i < keys.length)
                         return 0;
                     })
                 }
@@ -108,10 +115,70 @@ export default class QueryController {
 
     checkOptions(options: any) {
         let instance = this;
-        let columns = options.COLUMNS;
+        /**
+         * Handle SORT/ORDER
+         */
         let order = options.ORDER;
-        let form = options.FORM;
+        let orderObj = instance.checkOrder(order);
 
+        /**
+         * Handle COLUMNS
+         */
+        let columns = options.COLUMNS;
+        instance.checkColumns(columns);
+
+        /**
+         * Check ORDER is included in COLUMNS
+         */
+        instance.checkColumnsOrders(order, columns);
+
+        /**
+         * FORM must be === 'TABLE'
+         */
+        let form = options.FORM;
+        instance.checkForm(form);
+
+        return {
+            order: orderObj,
+            columns: columns,
+            form: form
+        }
+    }
+
+    checkOrder(order: any): any {
+        let direction = 1;
+        if (order == undefined)
+            return undefined;
+
+        if (typeof order == "string") {
+            return {
+                dir: direction,
+                keys: [order]
+            };
+        }
+
+        let dir = order.dir;
+        let keys = order.keys;
+        switch(dir) {
+            case "UP":
+                break;
+            case "DOWN":
+                direction = -1;
+                break;
+            default:
+                throw ({code: 400, body: {error: "dir must be UP or DOWN"}})
+        }
+
+        if (!Array.isArray(keys))
+            throw ({code: 400, body: {error: "keys must be an array of keys"}})
+
+        return {
+            dir: direction,
+            keys: keys
+        };
+    }
+
+    checkColumns(columns: any) {
         /**
          * COLUMNS must be a non-empty array
          */
@@ -119,17 +186,6 @@ export default class QueryController {
             throw ({code: 400, body: {error: "columns must be an array"}});
         if (columns.length == 0)
             throw ({code: 400, body: {error: "columns cannot be empty"}});
-
-        /**
-         * Get the ids present in COLUMNS
-         */
-
-        /**
-         * if ORDER is specified, it must be included in COLUMNS
-         */
-        if (order != undefined && !columns.includes(order)) {
-            throw ({code: 400, body: {error: order + " is not in " + columns}})
-        }
 
         for (let column of columns) {
             if (!column.includes("_"))
@@ -139,14 +195,24 @@ export default class QueryController {
             if (!this.IDs.includes(id))
                 this.IDs.push(id);
         }
+    }
 
-        /**
-         * FORM must be === 'TABLE'
-         */
+    checkColumnsOrders(order: any, columns: any) {
+        if (order != undefined) {
+            for (let key of order.keys) {
+                if (!columns.includes(key))
+                    throw ({code: 400, body: {error: key + " is not in " + columns}})
+            }
+        }
+    }
+
+    checkForm(form: any) {
         if (form != "TABLE") {
             throw ({code: 400, body: {error: form + " is not equal to TABLE"}})
         }
     }
+
+
 
     parseFilter(filter: any): any {
         let instance = this;
