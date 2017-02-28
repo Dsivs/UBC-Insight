@@ -72,25 +72,50 @@ describe("Room Query Test", function () {
             })
     });
 
-    const emptyQuery = {
+    const multiIDQuery = {
         "WHERE": {
+            "IS": {
+                "rooms_shortname": "ALRD"
+            }
         },
         "OPTIONS": {
             "COLUMNS": [
-                "rooms_address", "rooms_name", "rooms_type"
+                "rooms_address", "rooms_name", "rooms_type", "courses_dept"
             ],
             "ORDER": "rooms_name",
             "FORM": "TABLE"
         }
     };
-    it("empty filter with multiple IDs Query", function() {
-        return insight.performQuery(emptyQuery)
+    it("multiple id Query", function() {
+        return insight.performQuery(multiIDQuery)
             .then(function (result) {
                 console.log(result.body);
-                expect(result.code).to.deep.equal(200);
+                expect.fail();
             }).catch(function (err) {
                 console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+            })
+    });
+
+    const missingIDsQuery = {
+        "WHERE": {
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "rooms_address", "rooms_name", "rooms_type", "courds_sfs"
+            ],
+            "ORDER": "rooms_name",
+            "FORM": "TABLE"
+        }
+    };
+    it("empty filter with missing IDs Query", function() {
+        return insight.performQuery(missingIDsQuery)
+            .then(function (result) {
+                console.log(result.body);
                 expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(424);
             })
     });
 
