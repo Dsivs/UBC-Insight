@@ -44,6 +44,7 @@ export default class DataController {
                 })
                 .then(function (jsonData) {
                     //console.log(jsonData);
+                    instance.loadedCourses = jsonData;
                     return instance.cacheData(JSON.stringify(jsonData, null, 4), id)
                 })
                 .then(function (result) {
@@ -168,6 +169,7 @@ export default class DataController {
                     instance.room_mapAddrToGeo(geoMapping);
                     //console.log(roomArray);
                     //console.log(roomArray.length);
+                    instance.loadedRooms = roomArray;
                     return instance.cacheData(JSON.stringify(roomArray, null, 4), id)
                 })
                 .then(function (result) {

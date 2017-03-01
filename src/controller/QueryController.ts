@@ -8,6 +8,7 @@ import Room from "./Room";
 
 export default class QueryController {
 
+    private readonly validIDs: any[] = ["courses", "rooms"];
     private IDs: any[];
 
     constructor() {
@@ -20,97 +21,73 @@ export default class QueryController {
         instance.IDs.length = 0;
 
         return new Promise(function (fulfill, reject) {
-            let where: any = query.WHERE;
-            let options: any = query.OPTIONS;
             try {
-                if (where == undefined)
-                    throw({code: 400, body: {error: "WHERE is missing"}});
-                if (options == undefined)
-                    throw({code: 400, body: {error: "OPTIONS is missing"}});
-
+                let where: any = query.WHERE;
+                let options: any = query.OPTIONS;
+                instance.checkWHEREandOPTIONS(where, options);
                 options = instance.checkOptions(options);
-                let missingIDs: any[] = [];
 
-                if (Object.keys(where).length != 0) {
-                    let filterFun = instance.parseFilter(where);
+                /**
+                 * Handle Empty WHERE
+                 */
+                let filterFun = undefined;
+                if (Object.keys(where).length != 0)
+                    filterFun = instance.parseFilter(where);
 
-                    if (instance.IDs.length != 1) {
-                        for (let id of instance.IDs) {
-                            if (id != "courses" && id != "rooms")
-                                missingIDs.push(id);
-                        }
-                        if (missingIDs.length > 0)
-                            throw ({code: 424, body: {missing: missingIDs}})
-                        else
-                            throw ({code: 400, body: {error: "cannot query multiple datasets"}})
-                    }
+                /**
+                 * Go over the list of encountered IDs and handle invalid cases
+                 */
+                let id = instance.checkInvalidIDs();
 
-                    let loadedMem = parentInsightFacade.checkMem(instance.IDs[0])
+                /**
+                 * load up the proper dataset
+                 */
+                let loadedData = parentInsightFacade.checkMem(id);
 
-                    for (let obj of loadedMem) {
+                /**
+                 * Filter the data if WHERE was not empty, else return all the data
+                 */
+                if (filterFun != undefined) {
+                    for (let obj of loadedData) {
                         if(filterFun(obj)) {
                             resultsArray.push(obj)
                         }
                     }
                 } else {
-                    if (instance.IDs.length != 1) {
-                        for (let id of instance.IDs) {
-                            if (id != "courses" && id != "rooms")
-                                missingIDs.push(id);
-                        }
-                        if (missingIDs.length > 0)
-                            throw ({code: 424, body: {missing: missingIDs}})
-                        else
-                            throw ({code: 400, body: {error: "cannot query multiple datasets"}})
-                    }
-
-                    let loadedMem = parentInsightFacade.checkMem(instance.IDs[0]);
-
-                    resultsArray = loadedMem;
+                    resultsArray = loadedData;
                 }
 
-                //let columns: any[] = options.COLUMNS;
-                let validKeys: any;
                 let columns = options.columns;
+                /**
+                 * Check that the keys in COLUMNS are all valid
+                 */
+                instance.verifyValidKeysInColumns(columns, id);
 
-                switch (instance.IDs[0]) {
-                    case "courses":
-                        validKeys = Course.courseKeys;
-                        break;
-                    case "rooms":
-                        validKeys = Room.roomKeys;
-                }
+                /**
+                 * Truncate data to list only COLUMNS
+                 */
+                resultsArray = JSON.parse(JSON.stringify(resultsArray, columns));
 
-                for (let column of columns) {
-                    if (!validKeys.includes(column))
-                        throw ({code: 400, body: {error: column + " is not a valid key"}})
-                }
+                /**
+                 * Sort data if ORDER was present
+                 */
+                resultsArray = instance.sortData(options.order, resultsArray);
 
-                let outputArray = JSON.parse(JSON.stringify(resultsArray, columns));
-
-                if (options.order != undefined) {
-                    let dir = options.order.dir;
-                    let keys = options.order.keys;
-
-                    outputArray.sort(function (a: any, b: any) {
-                        let i = 0;
-                        do {
-                            if (a[keys[i]] > b[keys[i]]) {
-                                return dir;
-                            } else if (a[keys[i]] < b[keys[i]]) {
-                                return -dir;
-                            }
-                            i++;
-                        } while (i < keys.length)
-                        return 0;
-                    })
-                }
-                fulfill({code: 200, body: {render: 'TABLE', result: outputArray}})
-
+                fulfill({code: 200, body: {render: 'TABLE', result: resultsArray}})
             } catch (err) {
                 reject(err)
             }
         });
+    }
+
+    /**
+     * Checks WHERE and OPTIONS are present
+     */
+    checkWHEREandOPTIONS(where: any, options: any) {
+        if (where == undefined)
+            throw({code: 400, body: {error: "WHERE is missing"}});
+        if (options == undefined)
+            throw({code: 400, body: {error: "OPTIONS is missing"}});
     }
 
     checkOptions(options: any) {
@@ -130,7 +107,7 @@ export default class QueryController {
         /**
          * Check ORDER is included in COLUMNS
          */
-        instance.checkColumnsOrders(order, columns);
+        instance.checkColumnsIncludesOrder(orderObj, columns);
 
         /**
          * FORM must be === 'TABLE'
@@ -170,7 +147,7 @@ export default class QueryController {
         }
 
         if (!Array.isArray(keys))
-            throw ({code: 400, body: {error: "keys must be an array of keys"}})
+            throw ({code: 400, body: {error: "keys must be an array of keys"}});
 
         return {
             dir: direction,
@@ -183,13 +160,13 @@ export default class QueryController {
          * COLUMNS must be a non-empty array
          */
         if (!Array.isArray(columns))
-            throw ({code: 400, body: {error: "columns must be an array"}});
+            throw ({code: 400, body: {error: "COLUMNS must be an array"}});
         if (columns.length == 0)
-            throw ({code: 400, body: {error: "columns cannot be empty"}});
+            throw ({code: 400, body: {error: "COLUMNS cannot be empty"}});
 
         for (let column of columns) {
             if (!column.includes("_"))
-                throw ({code: 400, body: {error: column + " is not a valid key"}})
+                throw ({code: 400, body: {error: column + " is not a valid key"}});
 
             let id = column.substring(0, column.indexOf("_"));
             if (!this.IDs.includes(id))
@@ -197,11 +174,11 @@ export default class QueryController {
         }
     }
 
-    checkColumnsOrders(order: any, columns: any) {
+    checkColumnsIncludesOrder(order: any, columns: any) {
         if (order != undefined) {
             for (let key of order.keys) {
                 if (!columns.includes(key))
-                    throw ({code: 400, body: {error: key + " is not in " + columns}})
+                    throw ({code: 400, body: {error: key + " is not in COLUMNS"}})
             }
         }
     }
@@ -211,8 +188,6 @@ export default class QueryController {
             throw ({code: 400, body: {error: form + " is not equal to TABLE"}})
         }
     }
-
-
 
     parseFilter(filter: any): any {
         let instance = this;
@@ -262,8 +237,6 @@ export default class QueryController {
                 if (paramFieldLength != 1)
                     throw ({code: 400, body: {error: key + " must have exactly one key"}});
                 let paramField = Object.keys(keyValue)[0];
-                //if (isUndefined(paramField) || paramField === null)
-                    //throw ({code: 400, body: {error: "invalid paramField"}});
                 let paramValue = keyValue[paramField];
                 if (!paramField.includes("_"))
                     throw ({code: 400, body: {error: paramField + " is not a valid key"}});
@@ -318,5 +291,62 @@ export default class QueryController {
             default:
                 throw ({code: 400, body: {error: key + " is not a valid key"}})
         }
+    }
+
+    checkInvalidIDs() {
+        let instance = this;
+
+        if (instance.IDs.length == 1)
+            return instance.IDs[0];
+
+        let missingIDs: any[] = [];
+        for (let id of instance.IDs) {
+            if (!instance.validIDs.includes(id))
+                missingIDs.push(id);
+        }
+        if (missingIDs.length > 0)
+            throw ({code: 424, body: {missing: missingIDs}});
+        else
+            throw ({code: 400, body: {error: "cannot query multiple datasets"}})
+    }
+
+    verifyValidKeysInColumns(columns: any, id: string) {
+        let validKeys: any;
+
+        switch (id) {
+            case "courses":
+                validKeys = Course.courseKeys;
+                break;
+            case "rooms":
+                validKeys = Room.roomKeys;
+                break;
+        }
+        for (let column of columns) {
+            if (!validKeys.includes(column))
+                throw ({code: 400, body: {error: column + " is not a valid key"}})
+        }
+    }
+
+    sortData(order: any, data: any[]): any[] {
+        if (order == undefined)
+            return data;
+
+        let dir = order.dir;
+        let keys = order.keys;
+
+        data.sort(function (a: any, b: any) {
+            let i = 0;
+            do {
+                if (a[keys[i]] > b[keys[i]]) {
+                    return dir;
+                } else if (a[keys[i]] < b[keys[i]]) {
+                    return -dir;
+                }
+                i++;
+            } while (i < keys.length);
+            return 0;
+        });
+
+        return data;
     }
 }

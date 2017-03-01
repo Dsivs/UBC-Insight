@@ -2,7 +2,6 @@
  * Created by John on 2017-02-08.
  */
 
-import DataController from "../src/controller/DataController";
 import {isUndefined} from "util";
 import Log from "../src/Util";
 import InsightFacade from "../src/controller/InsightFacade";
@@ -10,12 +9,11 @@ const fs = require("fs");
 let roomContent: string = "";
 let courseContent: string = "";
 import {expect} from 'chai';
-import {GeoResponse} from "../src/controller/IInsightFacade";
 
-describe("Options Test", function () {
+describe("Sort Test", function () {
 
     this.timeout(50000);
-    var insight = new InsightFacade();
+    let insight = new InsightFacade();
     before(function (done) {
 
         Log.test('Before: ' + (<any>this).test.parent.title);
@@ -69,9 +67,9 @@ describe("Options Test", function () {
     });
 
     /**
-     * invalid sort dir Query
+     * no sort Query
      */
-    const invalidSortDirQuery = {
+    const noSortQuery = {
         "WHERE":{
             "GT":{
                 "courses_avg":97
@@ -82,28 +80,24 @@ describe("Options Test", function () {
                 "courses_dept",
                 "courses_avg"
             ],
-            "ORDER": {
-                dir: "lol",
-                keys: ["courses_avg"]
-            },
             "FORM":"TABLE"
         }
     };
-    it("invalid sort dir Query", function() {
-        return insight.performQuery(invalidSortDirQuery)
+    it("no sort Query", function() {
+        return insight.performQuery(noSortQuery)
             .then(function (result) {
+                expect(result.code).to.deep.equal(200);
                 console.log(result.body);
-                expect.fail();
             }).catch(function (err) {
                 console.log(err.body);
-                expect(err.code).to.deep.equal(400);
+                expect.fail();
             })
     });
 
     /**
-     * invalid sort keys Query
+     * basic sort Query
      */
-    const invalidSortKeysQuery = {
+    const basicSortQuery = {
         "WHERE":{
             "GT":{
                 "courses_avg":97
@@ -114,21 +108,18 @@ describe("Options Test", function () {
                 "courses_dept",
                 "courses_avg"
             ],
-            "ORDER": {
-                dir: "UP",
-                keys: "courses_avg"
-            },
+            "ORDER": "courses_avg",
             "FORM":"TABLE"
         }
     };
-    it("invalid sort keys Query", function() {
-        return insight.performQuery(invalidSortKeysQuery)
+    it("basic sort Query", function() {
+        return insight.performQuery(basicSortQuery)
             .then(function (result) {
+                expect(result.code).to.deep.equal(200);
                 console.log(result.body);
-                expect.fail();
             }).catch(function (err) {
                 console.log(err.body);
-                expect(err.code).to.deep.equal(400);
+                expect.fail();
             })
     });
 
@@ -195,6 +186,102 @@ describe("Options Test", function () {
     });
 
     /**
+     * invalid sort dir Query
+     */
+    const invalidSortDirQuery = {
+        "WHERE":{
+            "GT":{
+                "courses_avg":97
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER": {
+                dir: "lol",
+                keys: ["courses_avg"]
+            },
+            "FORM":"TABLE"
+        }
+    };
+    it("invalid sort dir Query", function() {
+        return insight.performQuery(invalidSortDirQuery)
+            .then(function (result) {
+                console.log(result.body);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({error: "dir must be UP or DOWN"});
+            })
+    });
+
+    /**
+     * invalid sort keys Query
+     */
+    const invalidSortKeysQuery = {
+        "WHERE":{
+            "GT":{
+                "courses_avg":97
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER": {
+                dir: "UP",
+                keys: "courses_avg"
+            },
+            "FORM":"TABLE"
+        }
+    };
+    it("invalid sort keys Query", function() {
+        return insight.performQuery(invalidSortKeysQuery)
+            .then(function (result) {
+                console.log(result.body);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({error: "keys must be an array of keys"});
+            })
+    });
+
+    /**
+     * order not in columns Query
+     */
+    const orderNotInColumnsQuery = {
+        "WHERE":{
+            "GT":{
+                "courses_avg":97
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER": "courses_asd",
+            "FORM":"TABLE"
+        }
+    };
+    it("order not in columns Query", function() {
+        return insight.performQuery(orderNotInColumnsQuery)
+            .then(function (result) {
+                console.log(result.body);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({error: "courses_asd is not in COLUMNS"})
+            })
+    });
+
+    /**
      * multiple keys sort Query
      */
     const multiKeySortQuery = {
@@ -214,7 +301,7 @@ describe("Options Test", function () {
             },
             "FORM":"TABLE"
         }
-    }
+    };
     it("multiple keys sort Query", function() {
         return insight.performQuery(multiKeySortQuery)
             .then(function (result) {
@@ -225,64 +312,6 @@ describe("Options Test", function () {
                 expect.fail();
             })
     });
-
-    /**
-     * basic sort Query
-     */
-    const basicSortQuery = {
-        "WHERE":{
-            "GT":{
-                "courses_avg":97
-            }
-        },
-        "OPTIONS":{
-            "COLUMNS":[
-                "courses_dept",
-                "courses_avg"
-            ],
-            "ORDER": "courses_avg",
-            "FORM":"TABLE"
-        }
-    }
-    it("basic sort Query", function() {
-        return insight.performQuery(basicSortQuery)
-            .then(function (result) {
-                expect(result.code).to.deep.equal(200);
-                console.log(result.body);
-            }).catch(function (err) {
-                console.log(err.body);
-                expect.fail();
-            })
-    });
-
-    /**
-     * no sort Query
-     */
-    const noSortQuery = {
-        "WHERE":{
-            "GT":{
-                "courses_avg":97
-            }
-        },
-        "OPTIONS":{
-            "COLUMNS":[
-                "courses_dept",
-                "courses_avg"
-            ],
-            "FORM":"TABLE"
-        }
-    }
-    it("no sort Query", function() {
-        return insight.performQuery(noSortQuery)
-            .then(function (result) {
-                expect(result.code).to.deep.equal(200);
-                console.log(result.body);
-            }).catch(function (err) {
-                console.log(err.body);
-                expect.fail();
-            })
-    });
-
 
     it("remove rooms", function () {
         return insight.removeDataset('rooms')
