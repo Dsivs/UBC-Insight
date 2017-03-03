@@ -47,36 +47,27 @@ export default class Request
         })
     }
 
-    public static performEcho(msg: string): InsightResponse {
-        if (typeof msg !== 'undefined' && msg !== null) {
-            return {code: 200, body: {message: msg + '...' + msg}};
-        } else {
-            return {code: 400, body: {error: 'Message not provided'}};
-        }
-    }
-
     public static handleReq(req: restify.Request): Promise<any>
     {
         let method = req.method;
         let id:string;
         let body = JSON.parse(JSON.stringify(req.params));
 
-        for (let value in body)
-        {
-            if (value == 'id' && body.hasOwnProperty(value)) {
-                id = body[value];
-                //debug
-                while (id !== null && id.indexOf(':') >= 0)
-                {
-                    id = id.substr(id.indexOf(':')+1, id.length);
+        if (method !== 'POST') {
+            for (let value in body) {
+                if (value == 'id' && body.hasOwnProperty(value)) {
+                    id = body[value];
+                    //debug
+                    while (id !== null && id.indexOf(':') >= 0) {
+                        id = id.substr(id.indexOf(':') + 1, id.length);
+                    }
                 }
-            }
-            //if auto test failed for add Dataset via client, this is the bug:
-            //client type mismatch, current assumed client type is JsonClient
-            else if (body.hasOwnProperty(value))
-            {
-                body = body[value];
-                break;
+                //if auto test failed for add Dataset via client, this is the bug:
+                //client type mismatch, current assumed client type is JsonClient
+                else if (body.hasOwnProperty(value)) {
+                    body = body[value];
+                    break;
+                }
             }
         }
         return new Promise( function(fulfill, reject) {
@@ -97,7 +88,7 @@ export default class Request
                     break;
                 case 'POST':
                     //post
-                    insight.performQuery(JSON.parse(body)).then(function (res: any) {
+                    insight.performQuery(body).then(function (res: any) {
                         fulfill(res);
                     }).catch(function (err: any) {
                         reject(err);
