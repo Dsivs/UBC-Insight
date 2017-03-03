@@ -39,6 +39,15 @@ export default class QueryController {
                  */
                 let id = instance.checkInvalidIDs();
 
+
+                let columns = options.columns;
+
+                /**
+                 * check validity of TRANSFORMATIONS if present
+                 */
+                let transformations: any = query.TRANSFORMATIONS;
+                instance.checkTFsAndColumnsMatch(transformations, columns, id);
+
                 /**
                  * load up the proper dataset
                  */
@@ -57,11 +66,10 @@ export default class QueryController {
                     resultsArray = loadedData;
                 }
 
-                let columns = options.columns;
                 /**
-                 * Check that the keys in COLUMNS are all valid
+                 * Transform Data
                  */
-                instance.verifyValidKeysInColumns(columns, id);
+                resultsArray = instance.transformData(transformations, resultsArray);
 
                 /**
                  * Truncate data to list only COLUMNS
@@ -165,12 +173,11 @@ export default class QueryController {
             throw ({code: 400, body: {error: "COLUMNS cannot be empty"}});
 
         for (let column of columns) {
-            if (!column.includes("_"))
-                throw ({code: 400, body: {error: column + " is not a valid key"}});
-
-            let id = column.substring(0, column.indexOf("_"));
-            if (!this.IDs.includes(id))
-                this.IDs.push(id);
+            if (column.includes("_")) {
+                let id = column.substring(0, column.indexOf("_"));
+                if (!this.IDs.includes(id))
+                    this.IDs.push(id);
+            }
         }
     }
 
@@ -293,11 +300,13 @@ export default class QueryController {
         }
     }
 
-    checkInvalidIDs() {
+    checkInvalidIDs(): any {
         let instance = this;
 
-        if (instance.IDs.length == 1)
-            return instance.IDs[0];
+        if (instance.IDs.length == 1) {
+            if (instance.validIDs.includes(instance.IDs[0]))
+                return instance.IDs[0];
+        }
 
         let missingIDs: any[] = [];
         for (let id of instance.IDs) {
@@ -310,7 +319,75 @@ export default class QueryController {
             throw ({code: 400, body: {error: "cannot query multiple datasets"}})
     }
 
-    verifyValidKeysInColumns(columns: any, id: string) {
+    checkTFsAndColumnsMatch(tfs: any, columns: any, id: any) {
+        let instance = this;
+
+        if (tfs == undefined) {
+            /**
+             * Check that the keys in COLUMNS are all valid
+             */
+            instance.verifyValidKeys(columns, id);
+            return;
+        }
+
+        let group = tfs.GROUP;
+        let groupKeys: any[] = [];
+        let applyKeys: any[] = [];
+        let apply = tfs.APPLY;
+        if (!Array.isArray(group))
+            throw ({code: 400, body: {error: "invalid GROUP"}});
+        if (!Array.isArray(apply))
+            throw ({code: 400, body: {error: "invalid APPLY"}});
+
+        for (let column of columns) {
+            if (column.includes("_"))
+                groupKeys.push(column);
+            else
+                applyKeys.push(column);
+        }
+
+        if (groupKeys.length != group.length)
+            throw ({code: 400, body: {error: "COLUMNS keys must match GROUP keys"}});
+        for (let term of group) {
+            if (!groupKeys.includes(term))
+                throw ({code: 400, body: {error: "COLUMNS keys must match GROUP keys"}});
+        }
+        instance.verifyValidKeys(groupKeys, id);
+
+        if (applyKeys.length != apply.length)
+            throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
+
+        for (let applyKey of apply) {
+            if (Object.keys(applyKey).length != 1)
+                throw ({code: 400, body: {error: "APPLYKEY must have exactly one string"}});
+
+            let string = Object.keys(applyKey)[0];
+            if (!applyKeys.includes(string))
+                throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
+
+            let applyObj = applyKey[string];
+            if (Object.keys(applyObj).length != 1)
+                throw ({code: 400, body: {error: "APPLYKEY must have exactly one APPLYTOKEN"}});
+            let applyToken = Object.keys(applyObj)[0];
+
+            switch(applyToken) {
+                case "MAX":
+                case "MIN":
+                case "AVG":
+                case "COUNT":
+                case "SUM":
+                    break;
+                default:
+                    throw ({code: 400, body: {error: string + " is not a valid APPLYKEY property"}});
+            }
+
+            let key = applyObj[applyToken];
+            if (typeof key != "string")
+                throw ({code: 400, body: {error: key + " is not a valid APPLYTOKEN property"}});
+        }
+    }
+
+    verifyValidKeys(keys: any, id: string) {
         let validKeys: any;
 
         switch (id) {
@@ -321,9 +398,128 @@ export default class QueryController {
                 validKeys = Room.roomKeys;
                 break;
         }
-        for (let column of columns) {
-            if (!validKeys.includes(column))
-                throw ({code: 400, body: {error: column + " is not a valid key"}})
+        for (let key of keys) {
+            if (!key.includes("_"))
+                throw ({code: 400, body: {error: key + " is not a valid key"}})
+
+            if (!validKeys.includes(key))
+                throw ({code: 400, body: {error: key + " is not a valid key"}})
+        }
+    }
+
+    transformData(tfs: any, data: any): any {
+        if (tfs == undefined)
+            return data;
+
+        let instance = this;
+        let transformedData: any[] = [];
+        let groupedData: any = {};
+        let group = tfs.GROUP;
+        let apply = tfs.APPLY;
+
+        for (let obj of data) {
+            let hash = "";
+            for (let term of group) {
+                hash += obj[term];
+            }
+            if (groupedData[hash] == undefined) {
+                let newObj: any = {};
+                for (let term of group) {
+                    newObj[term] = obj[term];
+                }
+                newObj.num = 0;
+                newObj.uniqueVals = [];
+                groupedData[hash] = newObj;
+            }
+            instance.applyTFs(groupedData[hash], obj, apply);
+        }
+
+        for (let key in groupedData) {
+            transformedData.push(groupedData[key])
+        }
+
+        return transformedData;
+    }
+
+    applyTFs(group: any, dataObj: any, apply: any): any {
+        let instance = this;
+
+        for (let applyKey of apply) {
+            let string = Object.keys(applyKey)[0];
+            let applyToken = Object.keys(applyKey[string])[0];
+            let applyProp = applyKey[string][applyToken];
+            let dataValue = dataObj[applyProp];
+
+            switch(applyToken) {
+                case "MAX":
+                case "MIN":
+                case "AVG":
+                case "SUM":
+                    if (dataValue == undefined)
+                        throw ({code: 400, body: {error: applyProp + " is not a valid key"}})
+                    if (typeof dataValue != "number")
+                        throw ({code: 400, body: {error: applyToken + " must be applied to number data"}})
+                instance.doOperations(applyToken, group, string, dataValue);
+                    break;
+                case "COUNT":
+                    if (dataValue == undefined)
+                        throw ({code: 400, body: {error: applyProp + " is not a valid key"}})
+                    break;
+            }
+        }
+    }
+
+    doOperations(op: any, group: any, field: any, newVal: any) {
+        switch(op) {
+            case "MAX":
+                if (group[field] == undefined)
+                    group[field] = newVal;
+
+                if (group[field] < newVal)
+                    group[field] = newVal;
+                break;
+            case "MIN":
+                if (group[field] == undefined)
+                    group[field] = newVal;
+
+                if (group[field] > newVal)
+                    group[field] = newVal;
+                break;
+            case "SUM":
+                if (group[field] == undefined)
+                    group[field] = 0;
+                    group[field] += newVal;
+                break;
+            case "AVG":
+                if (group[field] == undefined) {
+                    group[field] = newVal;
+                    group.numBuffer = 1;
+                    return;
+                }
+                group.numBuffer += 1;
+
+                let tempCurVal = group[field]*10;
+                tempCurVal = Number(tempCurVal.toFixed(0));
+                let tempNewVal = newVal*10;
+                tempNewVal = Number(tempNewVal.toFixed(0));
+                tempCurVal += tempNewVal;
+                tempCurVal /= group.numBuffer;
+                tempCurVal /= 10;
+                tempCurVal = Number(tempCurVal.toFixed(2));
+                group[field] = tempCurVal;
+                break;
+            case "COUNT":
+                if (group[field] == undefined) {
+                    group[field] = 1;
+                    group.uniqueBuffer = [newVal];
+                    return;
+                }
+
+                if (!group.uniqueBuffer.includes(newVal)) {
+                    group[field] += 1;
+                    group.uniqueBuffuer.push(newVal);
+                }
+                break;
         }
     }
 

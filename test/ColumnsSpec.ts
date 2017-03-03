@@ -73,6 +73,7 @@ describe("Columns Test", function () {
     /**
      * invalid key in Columns Query
      */
+    /*
     const invalidKeyInColumnsQuery = {
         "WHERE":{
             "GT":{
@@ -96,5 +97,6 @@ describe("Columns Test", function () {
                 expect(err.body).to.deep.equal({error: "abc is not a valid key"});
             })
     });
+    */
 });
 
