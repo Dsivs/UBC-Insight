@@ -4,11 +4,12 @@
 
 import Server from "../src/rest/Server";
 import {expect} from 'chai';
+let chai = require('chai') , chaiHttp = require('chai-http');
+chai.use(chaiHttp);
 import Log from "../src/Util";
 import restify = require('restify');
 import {InsightResponse} from "../src/controller/IInsightFacade";
 import http = require('http');
-import Request from "../src/rest/Request";
 import {isUndefined} from "util";
 let server = new Server(8080);
 let client: any;
@@ -17,11 +18,22 @@ let content:string;
 describe("EchoSpec", function () {
 
 
-    function sanityCheck(response: InsightResponse) {
-        expect(response).to.have.property('code');
-        expect(response).to.have.property('body');
-        expect(response.code).to.be.a('number');
-    }
+
+    const basicGTQuery = {
+        "WHERE":{
+            "GT":{
+                "courses_avg":0
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    };
 
     before(function (done) {
         Log.test('Before: ' + (<any>this).test.parent.title);
@@ -55,7 +67,70 @@ describe("EchoSpec", function () {
             });
     });
 
+    it('request GET', function(done) {
+        //test for GET, sample
+        chai.request('http://localhost:8080')
+            .get('/')
+            .end(function(err: any, res:restify.Response) {
+                expect(res.statusCode).to.equal(200);
+                done();
+            });
+    });
+
+    it('request invalid DELETE', function(done) {
+        chai.request('http://localhost:8080')
+            .del('/dataset/courses')
+            .end(function(err: any, res:restify.Response) {
+                expect(err.status).to.equal(404);
+                done();
+            });
+    });
+
+    it('request PUT courses', function(done) {
+        chai.request('http://localhost:8080')
+            .put('/dataset/courses')
+            .send({ 'content': content})
+            .end(function (err:any, res:any) {
+                if(err)
+                    expect.fail();
+                expect(err).to.be.null;
+                //204 = new id
+                expect(res).to.have.status(204);
+                done();
+            });
+    });
+
+    it('request POST courses', function() {
+        return chai.request('http://localhost:8080')
+            .post('/query')
+            .send(basicGTQuery)
+            .then(function (res:any) {
+                //expect(err).to.be.null;
+                expect(res).to.have.status(200);
+                console.log(res.body);
+            });
+    });
+
+    it('request DELETE courses', function(done) {
+        chai.request('http://localhost:8080')
+            .del('/dataset/courses')
+            .end(function (err:any, res:any) {
+                if(err)
+                    expect.fail();
+                expect(err).to.be.null;
+                //204 = delete ok
+                expect(res).to.have.status(204);
+                done();
+            });
+    });
+
+
+    /*
+
     it("put invalid base64 content", function () {
+
+
+
         client.put('/dataset/room', {'content': 'invalid64string'} ,
             function (err:any,req:restify.Request,res: restify.Response,obj:any) {
             if (err)
@@ -127,6 +202,7 @@ describe("EchoSpec", function () {
         expect(out.body).to.have.property('error');
         expect(out.body).to.deep.equal({error: 'Message not provided'});
     });
+    */
 
     it("stop server", function () {
         server.stop()
