@@ -95,7 +95,8 @@ describe("EchoSpec", function () {
                     expect.fail();
                 expect(err).to.be.null;
                 //204 = new id
-                expect(res).to.have.status(204);
+                expect(res.statusCode).to.equal(204);
+                //expect(res).to.have.status(204);
                 done();
             });
     });
@@ -106,7 +107,8 @@ describe("EchoSpec", function () {
             .send(basicGTQuery)
             .then(function (res:any) {
                 //expect(err).to.be.null;
-                expect(res).to.have.status(200);
+                expect(res.statusCode).to.equal(200);
+                //expect(res).to.have.status(200);
                 console.log(res.body);
             });
     });
@@ -119,7 +121,8 @@ describe("EchoSpec", function () {
                     expect.fail();
                 expect(err).to.be.null;
                 //204 = delete ok
-                expect(res).to.have.status(204);
+                expect(res.statusCode).to.equal(204);
+                //expect(res).to.have.status(204);
                 done();
             });
     });
