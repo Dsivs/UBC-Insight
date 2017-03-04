@@ -9,7 +9,7 @@ let fs = require("fs");
 let content = "";
 const emptyArray: any[] = [];
 
-describe("Valid Basic Query Test", function() {
+describe("Filter Test", function() {
     this.timeout(50000);
     let insight: InsightFacade = new InsightFacade();
 
@@ -34,7 +34,7 @@ describe("Valid Basic Query Test", function() {
     /**
      * load up data for the query tests
      */
-    it("add courses", function() {
+    it("Load valid data set", function() {
         return insight.addDataset('courses', content)
             .then(function(response) {
                 console.log(response);
@@ -46,11 +46,44 @@ describe("Valid Basic Query Test", function() {
     });
 
     /**
-     * basic GT Query
+     * too many keys Query
      */
-    const basicGTQuery = {
+    const tooManyKeysQuery = {
         "WHERE":{
             "GT":{
+                "courses_avg":97
+            },
+            "LT":{
+                "courses_pass": 10
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    };
+    it("too many keys Query", function() {
+        return insight.performQuery(tooManyKeysQuery)
+            .then(function (result) {
+                console.log(result);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({error: "filter must have only one key"});
+            })
+    });
+
+    /**
+     * invalid key Query
+     */
+    const invalidKeyQuery = {
+        "WHERE":{
+            "LOL":{
                 "courses_avg":97
             }
         },
@@ -62,201 +95,26 @@ describe("Valid Basic Query Test", function() {
             "ORDER":"courses_avg",
             "FORM":"TABLE"
         }
-    }
-    it("basic GT Query", function() {
-        return insight.performQuery(basicGTQuery)
+    };
+    it("invalid key Query", function() {
+        return insight.performQuery(invalidKeyQuery)
             .then(function (result) {
-                expect(result.code).to.deep.equal(200);
-                console.log(result.body);
+                console.log(result);
+                expect.fail();
             }).catch(function (err) {
                 console.log(err.body);
-                expect.fail();
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({error: "LOL is not a valid key"});
             })
     });
 
     /**
-     * basic EQ Query
+     * OR/AND is not array Query
      */
-    const basicEQQuery = {
+    const ORANDnotArrayQuery = {
         "WHERE":{
-            "EQ":{
-                "courses_avg":92
-            }
-        },
-        "OPTIONS":{
-            "COLUMNS":[
-                "courses_dept",
-                "courses_avg"
-            ],
-            "ORDER":"courses_avg",
-            "FORM":"TABLE"
-        }
-    }
-    it("basic EQ Query", function() {
-        return insight.performQuery(basicEQQuery)
-            .then(function (result) {
-                expect(result.code).to.deep.equal(200);
-                console.log(result.body);
-            }).catch(function (err) {
-                console.log(err.body);
-                expect.fail();
-            })
-    });
-
-    /**
-     * basic LT Query
-     */
-    const basicLTQuery = {
-        "WHERE":{
-            "LT":{
-                "courses_avg":50
-            }
-        },
-        "OPTIONS":{
-            "COLUMNS":[
-                "courses_dept",
-                "courses_avg"
-            ],
-            "ORDER":"courses_avg",
-            "FORM":"TABLE"
-        }
-    }
-    it("basic LT Query", function() {
-        return insight.performQuery(basicLTQuery)
-            .then(function (result) {
-                expect(result.code).to.deep.equal(200);
-                console.log(result.body);
-            }).catch(function (err) {
-                console.log(err.body);
-                expect.fail();
-            })
-    });
-
-    /**
-     * basic IS no wildcard Query
-     */
-    const basicISnoWildQuery = {
-        "WHERE":{
-            "IS":{
-                "courses_dept":"mtrl"
-            }
-        },
-        "OPTIONS":{
-            "COLUMNS":[
-                "courses_dept",
-                "courses_avg"
-            ],
-            "ORDER":"courses_avg",
-            "FORM":"TABLE"
-        }
-    }
-    it("basic IS no wildcard Query", function() {
-        return insight.performQuery(basicISnoWildQuery)
-            .then(function (result) {
-                expect(result.code).to.deep.equal(200);
-                console.log(result.body);
-            }).catch(function (err) {
-                console.log(err.body);
-                expect.fail();
-            })
-    });
-
-    /**
-     * basic IS front wildcard Query
-     */
-    const basicISfrontWildQuery = {
-        "WHERE":{
-            "IS":{
-                "courses_dept":"*trl"
-            }
-        },
-        "OPTIONS":{
-            "COLUMNS":[
-                "courses_dept",
-                "courses_avg"
-            ],
-            "ORDER":"courses_avg",
-            "FORM":"TABLE"
-        }
-    }
-    it("basic IS front wildcard Query", function() {
-        return insight.performQuery(basicISfrontWildQuery)
-            .then(function (result) {
-                expect(result.code).to.deep.equal(200);
-                console.log(result.body);
-            }).catch(function (err) {
-                console.log(err.body);
-                expect.fail();
-            })
-    });
-
-    /**
-     * basic IS back wildcard Query
-     */
-    const basicISbackWildQuery = {
-        "WHERE":{
-            "IS":{
-                "courses_dept":"mtr*"
-            }
-        },
-        "OPTIONS":{
-            "COLUMNS":[
-                "courses_dept",
-                "courses_avg"
-            ],
-            "ORDER":"courses_avg",
-            "FORM":"TABLE"
-        }
-    }
-    it("basic IS back wildcard Query", function() {
-        return insight.performQuery(basicISbackWildQuery)
-            .then(function (result) {
-                expect(result.code).to.deep.equal(200);
-                console.log(result.body);
-            }).catch(function (err) {
-                console.log(err.body);
-                expect.fail();
-            })
-    });
-
-    /**
-     * basic IS both wildcard Query
-     */
-    const basicISbothWildQuery = {
-        "WHERE":{
-            "IS":{
-                "courses_dept":"*tr*"
-            }
-        },
-        "OPTIONS":{
-            "COLUMNS":[
-                "courses_dept",
-                "courses_avg"
-            ],
-            "ORDER":"courses_avg",
-            "FORM":"TABLE"
-        }
-    }
-    it("basic IS both wildcard Query", function() {
-        return insight.performQuery(basicISbothWildQuery)
-            .then(function (result) {
-                expect(result.code).to.deep.equal(200);
-                console.log(result.body);
-            }).catch(function (err) {
-                console.log(err.body);
-                expect.fail();
-            })
-    });
-
-    /**
-     * basic NOT Query
-     */
-    const basicNOTQuery = {
-        "WHERE":{
-            "NOT": {
-                "GT":{
-                    "courses_avg":30
-                }
+            "OR": {
+                "courses_avg": 90
             }
         },
         "OPTIONS":{
@@ -268,34 +126,24 @@ describe("Valid Basic Query Test", function() {
             "FORM":"TABLE"
         }
     };
-    it("basic NOT Query", function() {
-        return insight.performQuery(basicNOTQuery)
+    it("OR/AND is not array Query", function() {
+        return insight.performQuery(ORANDnotArrayQuery)
             .then(function (result) {
-                expect(result.code).to.deep.equal(200);
-                console.log(result.body);
+                console.log(result);
+                expect.fail();
             }).catch(function (err) {
                 console.log(err.body);
-                expect.fail();
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({error: "value of OR must be an array"});
             })
     });
 
     /**
-     * basic OR Query
+     * OR/AND is empty array Query
      */
-    const basicORQuery = {
+    const ORANDemptyArrayQuery = {
         "WHERE":{
-            "OR":[
-                {
-                    "IS": {
-                        "courses_dept": "adhe"
-                    }
-                },
-                {
-                    "EQ":{
-                        "courses_avg":95
-                    }
-                }
-            ]
+            "AND": emptyArray
         },
         "OPTIONS":{
             "COLUMNS":[
@@ -306,109 +154,222 @@ describe("Valid Basic Query Test", function() {
             "FORM":"TABLE"
         }
     };
-    it("basic OR Query", function() {
-        return insight.performQuery(basicORQuery)
+    it("OR/AND is empty array Query", function() {
+        return insight.performQuery(ORANDemptyArrayQuery)
             .then(function (result) {
-                expect(result.code).to.deep.equal(200);
-                console.log(result.body);
+                console.log(result);
+                expect.fail();
             }).catch(function (err) {
                 console.log(err.body);
-                expect.fail();
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({error: "AND must have at least one key"});
             })
     });
 
     /**
-     * basic AND Query
+     * too many properties Query
      */
-    const basicANDQuery = {
+    const tooManyPropertiesQuery = {
+        "WHERE":{
+            "GT":{
+                "courses_avg":97,
+                "courses_pass":10
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    };
+    it("too many properties Query", function() {
+        return insight.performQuery(tooManyPropertiesQuery)
+            .then(function (result) {
+                console.log(result);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({error: "GT must have exactly one key"});
+            })
+    });
+
+    /**
+     * no ID Key Query
+     */
+    const noIDKeyQuery = {
+        "WHERE":{
+            "GT":{
+                "avg":97
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    };
+    it("no ID Query", function() {
+        return insight.performQuery(noIDKeyQuery)
+            .then(function (result) {
+                console.log(result);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({error: "avg is not a valid key"});
+            })
+    });
+
+    /**
+     * not number Query
+     */
+    const notNumQuery = {
+        "WHERE":{
+            "GT":{
+                "courses_avg": "lol"
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    };
+    it("not number Query", function() {
+        return insight.performQuery(notNumQuery)
+            .then(function (result) {
+                console.log(result);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({error: "value of GT must be a number"});
+            })
+    });
+
+    /**
+     * not string Query
+     */
+    const notStringQuery = {
+        "WHERE":{
+            "IS":{
+                "courses_dept":97
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    };
+    it("not string Query", function() {
+        return insight.performQuery(notStringQuery)
+            .then(function (result) {
+                console.log(result);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({error: "value of IS must be a string"});
+            })
+    });
+
+    /**
+     * invalid property Query
+     */
+    const invalidPropertyQuery = {
+        "WHERE":{
+            "GT":{
+                "courses_lol":97
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    };
+    it("invalid property Query", function() {
+        return insight.performQuery(invalidPropertyQuery)
+            .then(function (result) {
+                console.log(result);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({error: "courses_lol is not a valid key"});
+            })
+    });
+
+    /**
+     * KeyValueMismatchQuery
+     */
+    const keyValueMismatchQuery = {
+        "WHERE":{
+            "GT": {
+                "courses_dept": 97
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    };
+    it("key value mismatch query", function() {
+        return insight.performQuery(keyValueMismatchQuery)
+            .then(function (result) {
+                console.log(result.body);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({error: "type of courses_dept does not match with key value: 97"});
+            })
+    });
+
+    /**
+     * flexquery
+     */
+    const flexQuery = {
         "WHERE":{
             "AND":[
                 {
-                    "IS": {
-                        "courses_dept": "adhe"
-                    }
-                },
-                {
-                    "GT":{
-                        "courses_avg":93
-                    }
-                }
-            ]
-        },
-        "OPTIONS":{
-            "COLUMNS":[
-                "courses_dept",
-                "courses_avg"
-            ],
-            "ORDER":"courses_avg",
-            "FORM":"TABLE"
-        }
-    };
-    it("basic AND Query", function() {
-        return insight.performQuery(basicANDQuery)
-            .then(function (result) {
-                expect(result.code).to.deep.equal(200);
-                console.log(result.body);
-            }).catch(function (err) {
-                console.log(err.body);
-                expect.fail();
-            })
-    });
-
-    /**
-     * Complex Query
-     */
-    const complexQuery = {
-        "WHERE":{
-            "OR":[
-                {
-                    "AND":[
-                        {
-                            "GT":{
-                                "courses_avg":90
-                            }
-                        },
-                        {
-                            "IS":{
-                                "courses_dept":"adhe"
-                            }
-                        }
-                    ]
-                },
-                {
                     "EQ":{
-                        "courses_avg":95
+                        "courses_year":2007
+                    }
+                },
+                {
+                    "IS":{
+                        "courses_dept":"cpsc"
+                    }
+                },
+                {
+                    "IS":{
+                        "courses_id":"121"
                     }
                 }
             ]
         },
-        "OPTIONS":{
-            "COLUMNS":[
-                "courses_dept",
-                "courses_avg",
-                "courses_id"
-            ],
-            "ORDER":"courses_avg",
-            "FORM":"TABLE"
-        }
-    }
-    it("complex Query", function() {
-        return insight.performQuery(complexQuery)
-            .then(function (result) {
-                expect(result.code).to.deep.equal(200);
-                console.log(result.body);
-            }).catch(function (err) {
-                console.log(err.body);
-                expect.fail();
-            })
-    });
-
-
-    /**
-     * empty Filter Query
-     */
-    const emptyFilterQuery = {
-        "WHERE":{},
         "OPTIONS":{
             "COLUMNS":[
                 "courses_uuid"
@@ -417,8 +378,8 @@ describe("Valid Basic Query Test", function() {
             "FORM":"TABLE"
         }
     };
-    it("empty Filter Query", function() {
-        return insight.performQuery(emptyFilterQuery)
+    it("flex Query", function() {
+        return insight.performQuery(flexQuery)
             .then(function (result) {
                 console.log(result.body);
                 expect(result.code).to.deep.equal(200);
@@ -430,7 +391,7 @@ describe("Valid Basic Query Test", function() {
             })
     });
 
-    it("remove courses", function() {
+    it("remove a valid data set", function() {
         return insight.removeDataset('courses')
             .then(function(response) {
                 console.log(response);
@@ -440,4 +401,4 @@ describe("Valid Basic Query Test", function() {
                 expect.fail();
             })
     });
-})
+});

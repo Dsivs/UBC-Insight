@@ -25,12 +25,15 @@ describe("View Test", function () {
             }
         },
         "OPTIONS":{
-            "COLUMNS": ["courses_dept", "courses_avg"],
+            "COLUMNS": [
+                "courses_dept",
+                "courses_avg"
+            ],
             "ORDER": "courses_avg",
             "FORM": "gg"
         }
     };
-    it("invalid columns Query", function() {
+    it("invalid view Query", function() {
         return insight.performQuery(invalidViewQuery)
             .then(function (result) {
                 console.log(result.body);

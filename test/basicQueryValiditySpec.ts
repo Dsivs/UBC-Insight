@@ -51,7 +51,7 @@ describe("check WHERE and OPTIONS are Present Test", function () {
             }
         }
     };
-    it("missing WHERE Query", function() {
+    it("missing OPTIONS Query", function() {
         return insight.performQuery(missingOPTIONSQuery)
             .then(function (result) {
                 console.log(result.body);

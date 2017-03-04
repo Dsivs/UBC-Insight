@@ -303,10 +303,8 @@ export default class QueryController {
     checkInvalidIDs(): any {
         let instance = this;
 
-        if (instance.IDs.length == 1) {
-            if (instance.validIDs.includes(instance.IDs[0]))
-                return instance.IDs[0];
-        }
+        if (instance.IDs.length == 1 && instance.validIDs.includes(instance.IDs[0]))
+            return instance.IDs[0];
 
         let missingIDs: any[] = [];
         for (let id of instance.IDs) {
@@ -378,12 +376,11 @@ export default class QueryController {
                 case "SUM":
                     break;
                 default:
-                    throw ({code: 400, body: {error: string + " is not a valid APPLYKEY property"}});
+                    throw ({code: 400, body: {error: applyToken + " is not a valid APPLYKEY property"}});
             }
 
             let key = applyObj[applyToken];
-            if (typeof key != "string")
-                throw ({code: 400, body: {error: key + " is not a valid APPLYTOKEN property"}});
+            instance.verifyValidKeys([key], id);
         }
     }
 
@@ -455,15 +452,12 @@ export default class QueryController {
                 case "MIN":
                 case "AVG":
                 case "SUM":
-                    if (dataValue == undefined)
-                        throw ({code: 400, body: {error: applyProp + " is not a valid key"}})
                     if (typeof dataValue != "number")
-                        throw ({code: 400, body: {error: applyToken + " must be applied to number data"}})
-                instance.doOperations(applyToken, group, string, dataValue);
+                        throw ({code: 400, body: {error: applyToken + " must be applied to number data"}});
+                    instance.doOperations(applyToken, group, string, dataValue);
                     break;
                 case "COUNT":
-                    if (dataValue == undefined)
-                        throw ({code: 400, body: {error: applyProp + " is not a valid key"}})
+                    instance.doOperations(applyToken, group, string, dataValue);
                     break;
             }
         }
@@ -517,7 +511,7 @@ export default class QueryController {
 
                 if (!group.uniqueBuffer.includes(newVal)) {
                     group[field] += 1;
-                    group.uniqueBuffuer.push(newVal);
+                    group.uniqueBuffer.push(newVal);
                 }
                 break;
         }

@@ -10,7 +10,7 @@ let roomContent: string = "";
 let courseContent: string = "";
 import {expect} from 'chai';
 
-describe("Transformation Test", function () {
+describe("Transformations Query Test", function () {
 
     this.timeout(50000);
     let insight = new InsightFacade();
@@ -67,42 +67,33 @@ describe("Transformation Test", function () {
     });
 
     /**
-     * no sort Query
+     * basic MAX Query
      */
-    const MAXQuery = {
+    const basicMAXQuery = {
         "WHERE": {
-            "AND": [{
-                "IS": {
-                    "rooms_furniture": "*Tables*"
-                }
-            }, {
-                "GT": {
-                    "rooms_seats": 300
-                }
-            }]
+            "IS": {
+                "courses_dept": "math"
+            }
         },
         "OPTIONS": {
             "COLUMNS": [
-                "rooms_shortname",
-                "maxSeats"
+                "courses_dept",
+                "maxAvg"
             ],
-            "ORDER": {
-                "dir": "DOWN",
-                "keys": ["maxSeats"]
-            },
+            "ORDER": "maxAvg",
             "FORM": "TABLE"
         },
         "TRANSFORMATIONS": {
-            "GROUP": ["rooms_shortname"],
+            "GROUP": ["courses_dept"],
             "APPLY": [{
-                "maxSeats": {
-                    "MAX": "rooms_seats"
+                "maxAvg": {
+                    "MAX": "courses_avg"
                 }
             }]
         }
     };
-    it("MAX Query", function() {
-        return insight.performQuery(MAXQuery)
+    it("basic MAX Query", function() {
+        return insight.performQuery(basicMAXQuery)
             .then(function (result) {
                 expect(result.code).to.deep.equal(200);
                 console.log(result.body);
@@ -113,25 +104,33 @@ describe("Transformation Test", function () {
     });
 
     /**
-     * empty APPLY Query
+     * basic MIN Query
      */
-    const emptyArray: any[] = [];
-    const emptyAPPLYQuery = {
-        "WHERE": {},
+    const basicMINQuery = {
+        "WHERE": {
+            "IS": {
+                "courses_dept": "math"
+            }
+        },
         "OPTIONS": {
             "COLUMNS": [
-                "rooms_furniture"
+                "courses_dept",
+                "minAvg"
             ],
-            "ORDER": "rooms_furniture",
+            "ORDER": "minAvg",
             "FORM": "TABLE"
         },
         "TRANSFORMATIONS": {
-            "GROUP": ["rooms_furniture"],
-            "APPLY": emptyArray
+            "GROUP": ["courses_dept"],
+            "APPLY": [{
+                "minAvg": {
+                    "MIN": "courses_avg"
+                }
+            }]
         }
     };
-    it("empty APPLY Query", function() {
-        return insight.performQuery(emptyAPPLYQuery)
+    it("basic MIN Query", function() {
+        return insight.performQuery(basicMINQuery)
             .then(function (result) {
                 expect(result.code).to.deep.equal(200);
                 console.log(result.body);
@@ -142,30 +141,36 @@ describe("Transformation Test", function () {
     });
 
     /**
-     * basic ascending sort Query
+     * basic AVG Query
      */
-    const ascendingSortQuery = {
+    const basicAVGQuery = {
         "WHERE": {
             "IS": {
-                "rooms_shortname": "ALRD"
+                "courses_dept": "math"
             }
         },
         "OPTIONS": {
             "COLUMNS": [
-                "rooms_address", "rooms_name", "rooms_type"
+                "courses_dept",
+                "avgAvg"
             ],
-            "ORDER": {
-                dir: "UP",
-                keys: ["rooms_name"]
-            },
+            "ORDER": "avgAvg",
             "FORM": "TABLE"
+        },
+        "TRANSFORMATIONS": {
+            "GROUP": ["courses_dept"],
+            "APPLY": [{
+                "avgAvg": {
+                    "AVG": "courses_avg"
+                }
+            }]
         }
     };
-    it("ascending sort Query", function() {
-        return insight.performQuery(ascendingSortQuery)
+    it("basic AVG Query", function() {
+        return insight.performQuery(basicAVGQuery)
             .then(function (result) {
-                console.log(result.body);
                 expect(result.code).to.deep.equal(200);
+                console.log(result.body);
             }).catch(function (err) {
                 console.log(err.body);
                 expect.fail();
@@ -173,155 +178,33 @@ describe("Transformation Test", function () {
     });
 
     /**
-     * basic descending sort Query
+     * basic SUM Query
      */
-    const descendingSortQuery = {
+    const basicSUMQuery = {
         "WHERE": {
             "IS": {
-                "rooms_shortname": "ALRD"
+                "courses_dept": "math"
             }
         },
         "OPTIONS": {
             "COLUMNS": [
-                "rooms_address", "rooms_name", "rooms_type"
+                "courses_dept",
+                "sumAvg"
             ],
-            "ORDER": {
-                dir: "DOWN",
-                keys: ["rooms_name"]
-            },
+            "ORDER": "sumAvg",
             "FORM": "TABLE"
-        }
-    };
-    it("descending sort Query", function() {
-        return insight.performQuery(descendingSortQuery)
-            .then(function (result) {
-                console.log(result.body);
-                expect(result.code).to.deep.equal(200);
-            }).catch(function (err) {
-                console.log(err.body);
-                expect.fail();
-            })
-    });
-
-    /**
-     * invalid sort dir Query
-     */
-    const invalidSortDirQuery = {
-        "WHERE":{
-            "GT":{
-                "courses_avg":97
-            }
         },
-        "OPTIONS":{
-            "COLUMNS":[
-                "courses_dept",
-                "courses_avg"
-            ],
-            "ORDER": {
-                dir: "lol",
-                keys: ["courses_avg"]
-            },
-            "FORM":"TABLE"
+        "TRANSFORMATIONS": {
+            "GROUP": ["courses_dept"],
+            "APPLY": [{
+                "sumAvg": {
+                    "SUM": "courses_avg"
+                }
+            }]
         }
     };
-    it("invalid sort dir Query", function() {
-        return insight.performQuery(invalidSortDirQuery)
-            .then(function (result) {
-                console.log(result.body);
-                expect.fail();
-            }).catch(function (err) {
-                console.log(err.body);
-                expect(err.code).to.deep.equal(400);
-                expect(err.body).to.deep.equal({error: "dir must be UP or DOWN"});
-            })
-    });
-
-    /**
-     * invalid sort keys Query
-     */
-    const invalidSortKeysQuery = {
-        "WHERE":{
-            "GT":{
-                "courses_avg":97
-            }
-        },
-        "OPTIONS":{
-            "COLUMNS":[
-                "courses_dept",
-                "courses_avg"
-            ],
-            "ORDER": {
-                dir: "UP",
-                keys: "courses_avg"
-            },
-            "FORM":"TABLE"
-        }
-    };
-    it("invalid sort keys Query", function() {
-        return insight.performQuery(invalidSortKeysQuery)
-            .then(function (result) {
-                console.log(result.body);
-                expect.fail();
-            }).catch(function (err) {
-                console.log(err.body);
-                expect(err.code).to.deep.equal(400);
-                expect(err.body).to.deep.equal({error: "keys must be an array of keys"});
-            })
-    });
-
-    /**
-     * order not in columns Query
-     */
-    const orderNotInColumnsQuery = {
-        "WHERE":{
-            "GT":{
-                "courses_avg":97
-            }
-        },
-        "OPTIONS":{
-            "COLUMNS":[
-                "courses_dept",
-                "courses_avg"
-            ],
-            "ORDER": "courses_asd",
-            "FORM":"TABLE"
-        }
-    };
-    it("order not in columns Query", function() {
-        return insight.performQuery(orderNotInColumnsQuery)
-            .then(function (result) {
-                console.log(result.body);
-                expect.fail();
-            }).catch(function (err) {
-                console.log(err.body);
-                expect(err.code).to.deep.equal(400);
-                expect(err.body).to.deep.equal({error: "courses_asd is not in COLUMNS"})
-            })
-    });
-
-    /**
-     * multiple keys sort Query
-     */
-    const multiKeySortQuery = {
-        "WHERE":{
-            "GT":{
-                "courses_avg":97
-            }
-        },
-        "OPTIONS":{
-            "COLUMNS":[
-                "courses_dept",
-                "courses_avg"
-            ],
-            "ORDER": {
-                dir: "UP",
-                keys: ["courses_dept", "courses_avg"]
-            },
-            "FORM":"TABLE"
-        }
-    };
-    it("multiple keys sort Query", function() {
-        return insight.performQuery(multiKeySortQuery)
+    it("basic SUM Query", function() {
+        return insight.performQuery(basicSUMQuery)
             .then(function (result) {
                 expect(result.code).to.deep.equal(200);
                 console.log(result.body);
@@ -330,6 +213,82 @@ describe("Transformation Test", function () {
                 expect.fail();
             })
     });
+
+    /**
+     * basic COUNT Query
+     */
+    const basicCOUNTQuery = {
+        "WHERE": {
+            "IS": {
+                "courses_dept": "math"
+            }
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "courses_dept",
+                "countAvg"
+            ],
+            "ORDER": "countAvg",
+            "FORM": "TABLE"
+        },
+        "TRANSFORMATIONS": {
+            "GROUP": ["courses_dept"],
+            "APPLY": [{
+                "countAvg": {
+                    "COUNT": "courses_avg"
+                }
+            }]
+        }
+    };
+    it("basic COUNT Query", function() {
+        return insight.performQuery(basicCOUNTQuery)
+            .then(function (result) {
+                expect(result.code).to.deep.equal(200);
+                console.log(result.body);
+            }).catch(function (err) {
+                console.log(err.body);
+                expect.fail();
+            })
+    });
+
+    /**
+     * wrong datatype applied Query
+     */
+    const wrongDatatypeAppliedQuery = {
+        "WHERE": {
+            "IS": {
+                "courses_dept": "math"
+            }
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "courses_dept",
+                "maxAvg"
+            ],
+            "ORDER": "maxAvg",
+            "FORM": "TABLE"
+        },
+        "TRANSFORMATIONS": {
+            "GROUP": ["courses_dept"],
+            "APPLY": [{
+                "maxAvg": {
+                    "MAX": "courses_dept"
+                }
+            }]
+        }
+    };
+    it("wrong datatype applied Query", function() {
+        return insight.performQuery(wrongDatatypeAppliedQuery)
+            .then(function (result) {
+                console.log(result.body);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({error: "MAX must be applied to number data"});
+            })
+    });
+
 
     it("remove rooms", function () {
         return insight.removeDataset('rooms')
