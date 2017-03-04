@@ -8,6 +8,7 @@ import InsightFacade from "../src/controller/InsightFacade";
 const fs = require("fs");
 let roomContent: string = "";
 let courseContent: string = "";
+const emptyArray: any[] = [];
 import {expect} from 'chai';
 
 describe("Sort Test", function () {
@@ -248,6 +249,39 @@ describe("Sort Test", function () {
                 console.log(err.body);
                 expect(err.code).to.deep.equal(400);
                 expect(err.body).to.deep.equal({error: "keys must be an array of keys"});
+            })
+    });
+
+    /**
+     * empty sort keys Query
+     */
+    const emptySortKeysQuery = {
+        "WHERE":{
+            "GT":{
+                "courses_avg":97
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER": {
+                dir: "UP",
+                keys: emptyArray
+            },
+            "FORM":"TABLE"
+        }
+    };
+    it("empty sort keys Query", function() {
+        return insight.performQuery(emptySortKeysQuery)
+            .then(function (result) {
+                console.log(result.body);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({error: "keys must not be empty"});
             })
     });
 

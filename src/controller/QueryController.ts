@@ -156,6 +156,8 @@ export default class QueryController {
 
         if (!Array.isArray(keys))
             throw ({code: 400, body: {error: "keys must be an array of keys"}});
+        if (keys.length == 0)
+            throw ({code: 400, body: {error: "keys must not be empty"}});
 
         return {
             dir: direction,

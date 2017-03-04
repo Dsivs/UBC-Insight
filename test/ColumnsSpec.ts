@@ -8,6 +8,7 @@ import InsightFacade from "../src/controller/InsightFacade";
 const fs = require("fs");
 let roomContent: string = "";
 let courseContent: string = "";
+const emptyArray: any[] = [];
 import {expect} from 'chai';
 
 describe("Columns Test", function () {
@@ -45,7 +46,6 @@ describe("Columns Test", function () {
     /**
      * empty Columns Query
      */
-    const emptyArray: any[] = [];
     const emptyColumnsQuery = {
         "WHERE":{
             "GT":{
