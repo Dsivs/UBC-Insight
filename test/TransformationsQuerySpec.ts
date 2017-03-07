@@ -85,7 +85,7 @@ describe("Transformations Query Test", function () {
             "FORM": "TABLE"
         },
         "TRANSFORMATIONS": {
-            "GROUP": ["courses_dept"],
+            "GROUP": ["courses_dept", "courses_instructor"],
             "APPLY": [{
                 "maxAvg": {
                     "MAX": "courses_avg"
@@ -292,27 +292,31 @@ describe("Transformations Query Test", function () {
 
     const flexQuery = {
         "WHERE": {
-            "AND": [
-                {"GT": {"courses_year": 2014}},
-                {"IS": {"courses_dept": "cp*"}}
-            ]
+            "AND": [{
+                "IS": {
+                    "rooms_furniture": "*Tables*"
+                }
+            }]
         },
         "OPTIONS": {
             "COLUMNS": [
-                "courses_dept",
-                "courses_instructor",
-                "avgGrade"
+                "rooms_shortname",
+                "maxLat"
             ],
-            "ORDER": "avgGrade",
+            "ORDER": {
+                "dir": "DOWN",
+                "keys": ["maxLat"]
+            },
             "FORM": "TABLE"
         },
         "TRANSFORMATIONS": {
-            "GROUP": ["courses_dept", "courses_instructor"],
-            "APPLY": [{
-                "avgGrade": {
-                    "AVG": "courses_avg"
-                }
-            }]
+            "GROUP": ["rooms_shortname"],
+            "APPLY": [
+                {
+                    "maxLat": {
+                        "MAX": "rooms_lat"
+                    }
+                }]
         }
     };
 
