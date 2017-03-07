@@ -3,6 +3,7 @@ import Log from "../Util";
 import Server from "./Server";
 import restify = require('restify');
 import InsightFacade from "../controller/InsightFacade";
+import {isUndefined} from "util";
 let insight = new InsightFacade();
 
 /**
@@ -75,12 +76,21 @@ export default class Request
             switch (method) {
                 case 'PUT':
                     //addData
-                    let dataStr = new Buffer(req.params.body).toString('base64');
-                    insight.addDataset(id, dataStr).then(function (respond: any) {
-                        fulfill(respond);
-                    }).catch(function (err: any) {
+                    try {
+                        let dataStr = new Buffer(req.params.body).toString('base64');
+                        insight.addDataset(id, dataStr).then(function (respond: any) {
+                            fulfill(respond);
+                        }).catch(function (err: any) {
+                            reject(err);
+                        });
+                    }catch (err)
+                    {
+                        if (isUndefined(err.code))
+                        {
+                            reject({code: 400, body: {'error': err}});
+                        }
                         reject(err);
-                    });
+                    }
                     break;
                 case 'GET':
                     //Retrieval and return a html file
