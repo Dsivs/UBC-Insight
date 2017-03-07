@@ -41,7 +41,7 @@ export default class Request
             }
         });
 
-        Promise.all([promise]).then( function (res) {
+        promise.then( function (res) {
             return next();
         }).catch( function (err) {
             return next();
@@ -54,14 +54,11 @@ export default class Request
         let id:string;
         let body = JSON.parse(JSON.stringify(req.params));
 
+        //if id is passed and needed
         if (method !== 'POST') {
             for (let value in body) {
                 if (value == 'id' && body.hasOwnProperty(value)) {
                     id = body[value];
-                    //debug
-                    while (id !== null && id.indexOf(':') >= 0) {
-                        id = id.substr(id.indexOf(':') + 1, id.length);
-                    }
                 }
                 //if auto test failed for add Dataset via client, this is the bug:
                 //client type mismatch, current assumed client type is JsonClient
@@ -77,7 +74,9 @@ export default class Request
                 case 'PUT':
                     //addData
                     try {
+
                         let dataStr = new Buffer(req.params.body).toString('base64');
+
                         insight.addDataset(id, dataStr).then(function (respond: any) {
                             fulfill(respond);
                         }).catch(function (err: any) {
