@@ -293,6 +293,55 @@ describe("Transformations Validity Test", function () {
     });
 
     /**
+     * APPLY keys do not match no underscore keys in Columns Query
+     */
+    const ApplyColumnsQuery = {
+        "WHERE": {
+            "IS": {
+                "rooms_furniture": "*Tables*"
+            }
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "rooms_shortname",
+                "maxLat"
+            ],
+            "ORDER": "maxLat",
+            "FORM": "TABLE"
+        },
+        "TRANSFORMATIONS": {
+            "GROUP": ["rooms_shortname", "rooms_name"],
+            "APPLY": [{
+                "maxSeats": {
+                    "MAX": "rooms_seats"
+                }
+            },
+                {
+                    "maxLat": {
+                        "MAX": "rooms_lat"
+                    }
+                },
+                {
+                    "max_Lat": {
+                        "MAX": "rooms_lat"
+                    }
+                }]
+        }
+    };
+    it("apply can have more keys than columns Query", function() {
+        return insight.performQuery(ApplyColumnsQuery)
+            .then(function (result) {
+                console.log(result.body);
+                expect(result.code).to.deep.equal(200);
+            }).catch(function (err) {
+                console.log(err);
+                //expect(err.code).to.deep.equal(400);
+                //expect(err.body).to.deep.equal({error: "COLUMNS keys must match APPLY keys"});
+                expect.fail();
+            })
+    });
+
+    /**
      * invalid APPLY string Query
      */
     const invalidApplyStringQuery = {
