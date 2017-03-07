@@ -10,7 +10,6 @@ const fs = require("fs");
 const JSZip = require("jszip");
 const http = require('http');
 var roomArray: any = [];
-var count = 0;
 export default class DataController {
 
     private loadedCourses: any[];
@@ -35,7 +34,7 @@ export default class DataController {
                     return Promise.all(instance.readContents(zipContents))
                 })
                 .then(function (arrayOfFileContents) {
-                    //console.log(arrayOfFileContents);
+                    console.log(arrayOfFileContents);
                     return instance.parseFileContents(arrayOfFileContents)
                 })
                 .then(function (arrayOfJSONObj) {
@@ -60,12 +59,15 @@ export default class DataController {
     //takes in a string and tries to parse it into a JSZip
     private parseToZip(content: string): Promise<any> {
         return new Promise(function(fulfill, reject) {
+            console.log("Datacontroller -> parse to zip");
             let zip = new JSZip();
             zip.loadAsync(content, {base64:true})
                 .then(function (result: any) {
+                    console.log("Datacontroller -> parse to zip -> then");
                     fulfill(result);
                 })
                 .catch(function (err: any) {
+                    console.log("Datacontroller -> parse to zip -> catch: err = " + err);
                     reject({"code": 400, body: {"error": "Content is not a valid base64 zip"}});
                 })
         })
@@ -73,6 +75,8 @@ export default class DataController {
 
     //given a JSZip returns an array of the contents of the files in the JSZip
     private readContents(zipContents: any): Promise<any>[] {
+
+        console.log('Datacontroller -> readContents -> START');
         let arrayOfFileContents: Promise<any>[] = [];
 
         for (let filename in zipContents.files) {
@@ -82,26 +86,31 @@ export default class DataController {
             }
         }
 
+        console.log('Datacontroller -> readContents -> END');
         return arrayOfFileContents;
     }
 
     //given an array of file contents returns an array of file contents that are valid json
     private parseFileContents(arrayOfFileContents: string[]): Promise<any> {
         return new Promise(function (fulfill, reject) {
+            console.log("Datacontroller -> parseFileContents -> start");
             let arrayOfJSONObj: any[] = [];
 
             for (let fileContent of arrayOfFileContents) {
                 try {
                     arrayOfJSONObj.push(JSON.parse(fileContent));
                 } catch (err) {
-                    //console.log("This is not valid JSON:")
-                    //console.log(fileContent)
+                    reject({"code": 400, "body": {"error": "Zip contained no valid data"}});
+                    console.log("This is not valid JSON:")
+                    //console.log(fileContent);
                 }
             }
 
             if (arrayOfJSONObj.length == 0) {
+                console.log("Datacontroller -> parseFileContents -> reject");
                 reject({"code": 400, "body": {"error": "Zip contained no valid data"}})
             } else {
+                console.log("Datacontroller -> parseFileContents -> fulfill");
                 fulfill(arrayOfJSONObj)
             }
         })
