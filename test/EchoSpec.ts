@@ -11,6 +11,7 @@ import restify = require('restify');
 import {InsightResponse} from "../src/controller/IInsightFacade";
 import http = require('http');
 import {isUndefined} from "util";
+import Response = ChaiHttp.Response;
 let server = new Server(8080);
 let client: any;
 let fs = require("fs");
@@ -64,6 +65,7 @@ describe("EchoSpec", function () {
             }).catch(function (err: any){
                 console.log(err);
                 expect.fail();
+                done();
             });
     });
 
@@ -86,7 +88,26 @@ describe("EchoSpec", function () {
             });
     });
 
-    it('request PUT courses', function(done) {
+
+    it("PUT description", function () {
+        return chai.request('http://localhost:8080')
+            .put('/dataset/courses')
+            .attach("body", fs.readFileSync('./zips/demo.zip'), "demo.zip")
+            .then(function (res: any) {
+                Log.trace('then:');
+                // some assertions
+                expect(res.statusCode).to.equal(204);
+            })
+            .catch(function (err:any) {
+                Log.trace('catch:');
+                // some assertions
+                expect.fail();
+            });
+    });
+
+
+
+    /*it('request PUT courses', function(done) {
         chai.request('http://localhost:8080')
             .put('/dataset/courses')
             .send({ 'content': content})
@@ -99,9 +120,9 @@ describe("EchoSpec", function () {
                 //expect(res).to.have.status(204);
                 done();
             });
-    });
+    });*/
 
-    it('request POST courses', function() {
+    /*it('request POST courses', function() {
         return chai.request('http://localhost:8080')
             .post('/query')
             .send(basicGTQuery)
@@ -110,6 +131,22 @@ describe("EchoSpec", function () {
                 expect(res.statusCode).to.equal(200);
                 //expect(res).to.have.status(200);
                 console.log(res.body);
+            });
+    });*/
+
+    it("POST description", function () {
+        return chai.request('http://localhost:8080')
+            .post('/dataset/courses')
+            .send(basicGTQuery)
+            .then(function (res: any) {
+                Log.trace('then:');
+                expect(res.statusCode).to.equal(200);
+                // some assertions
+            })
+            .catch(function (err:any) {
+                Log.trace('catch:');
+                // some assertions
+                expect.fail();
             });
     });
 
