@@ -488,7 +488,7 @@ export default class QueryController {
                     group[field] += newVal;
                 break;
             case "AVG":
-                /*
+
                 if (group[field] == undefined) {
                     group[field] = instance.doMath(0, newVal, 0);
                     group.numBuffer = 1;
@@ -500,7 +500,6 @@ export default class QueryController {
                 group.numBuffer += 1;
 
                 group[field] = newAvg;
-                */
 
                 break;
             case "COUNT":
