@@ -39,7 +39,6 @@ export default class QueryController {
                  */
                 let id = instance.checkInvalidIDs();
 
-
                 let columns = options.columns;
 
                 /**

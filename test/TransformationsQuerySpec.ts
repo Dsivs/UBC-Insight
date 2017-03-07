@@ -289,6 +289,64 @@ describe("Transformations Query Test", function () {
             })
     });
 
+    const flexQuery = {
+        "WHERE": {
+            "AND": [
+                {
+                    "IS": {
+                        "rooms_furniture": "*Tables*"
+                    }
+                },
+                {
+                    "GT": {
+                        "rooms_seats": 300
+                    }
+                }
+            ]
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "rooms_shortname",
+                "rooms_address",
+                "totalSeats",
+                "avgSeats"
+            ],
+            "ORDER": {
+                "dir": "DOWN",
+                "keys": ["totalSeats"]
+            },
+            "FORM": "TABLE"
+        },
+        "TRANSFORMATIONS": {
+            "GROUP": [
+                "rooms_shortname",
+                "rooms_address"
+            ],
+            "APPLY": [
+                {
+                    "totalSeats": {
+                        "SUM": "rooms_seats"
+                    }
+                },
+                {
+                    "avgSeats": {
+                        "AVG": "rooms_seats"
+                    }
+                }
+            ]
+        }
+    };
+
+    it("flex Query", function() {
+        return insight.performQuery(flexQuery)
+            .then(function (result) {
+                expect(result.code).to.deep.equal(200);
+                console.log(result.body);
+            }).catch(function (err) {
+                console.log(err.body);
+                expect.fail();
+            })
+    });
 
     it("remove rooms", function () {
         return insight.removeDataset('rooms')
