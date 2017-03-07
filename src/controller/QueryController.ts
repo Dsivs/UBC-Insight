@@ -368,6 +368,8 @@ export default class QueryController {
                 throw ({code: 400, body: {error: "APPLYKEY must have exactly one string"}});
 
             let string = Object.keys(applyKey)[0];
+            if (string.includes("_"))
+                throw ({code: 400, body: {error: "APPLY keys cannot contain _"}});
             strings.push(string);
             //if (!applyKeys.includes(string))
             //    throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
@@ -394,7 +396,7 @@ export default class QueryController {
 
         for (let key of applyKeys) {
             if (!strings.includes(key))
-                throw ({code: 400, body: {error: "COLUMNS keys must match GROUP keys"}});
+                throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
         }
 
     }
