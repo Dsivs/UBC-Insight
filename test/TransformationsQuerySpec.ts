@@ -8,6 +8,7 @@ import InsightFacade from "../src/controller/InsightFacade";
 const fs = require("fs");
 let roomContent: string = "";
 let courseContent: string = "";
+const emptyArray: any[] = [];
 import {expect} from 'chai';
 
 describe("Transformations Query Test", function () {
@@ -292,48 +293,21 @@ describe("Transformations Query Test", function () {
     const flexQuery = {
         "WHERE": {
             "AND": [
-                {
-                    "IS": {
-                        "rooms_furniture": "*Tables*"
-                    }
-                },
-                {
-                    "GT": {
-                        "rooms_seats": 300
-                    }
-                }
+                {"GT": {"courses_year": 2014}},
+                {"IS": {"courses_dept": "cp*"}}
             ]
         },
         "OPTIONS": {
             "COLUMNS": [
-                "rooms_shortname",
-                "rooms_address",
-                "totalSeats",
-                "avgSeats"
+                "courses_dept",
+                "courses_instructor"
             ],
-            "ORDER": {
-                "dir": "DOWN",
-                "keys": ["totalSeats"]
-            },
+            "ORDER": "courses_instructor",
             "FORM": "TABLE"
         },
         "TRANSFORMATIONS": {
-            "GROUP": [
-                "rooms_shortname",
-                "rooms_address"
-            ],
-            "APPLY": [
-                {
-                    "totalSeats": {
-                        "SUM": "rooms_seats"
-                    }
-                },
-                {
-                    "avgSeats": {
-                        "AVG": "rooms_seats"
-                    }
-                }
-            ]
+            "GROUP": ["courses_dept", "courses_instructor"],
+            "APPLY": emptyArray
         }
     };
 

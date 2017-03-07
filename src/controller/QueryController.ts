@@ -353,6 +353,9 @@ export default class QueryController {
         }
         instance.verifyValidKeys(groupKeys, id);
 
+        console.log(applyKeys);
+        console.log(apply);
+
         if (applyKeys.length != apply.length)
             throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
 
@@ -406,6 +409,8 @@ export default class QueryController {
     }
 
     transformData(tfs: any, data: any): any {
+        //console.log(data);
+
         if (tfs == undefined)
             return data;
 
@@ -425,8 +430,6 @@ export default class QueryController {
                 for (let term of group) {
                     newObj[term] = obj[term];
                 }
-                newObj.num = 0;
-                newObj.uniqueVals = [];
                 groupedData[hash] = newObj;
             }
             instance.applyTFs(groupedData[hash], obj, apply);
@@ -465,6 +468,8 @@ export default class QueryController {
     }
 
     doOperations(op: any, group: any, field: any, newVal: any) {
+        let instance = this;
+
         switch(op) {
             case "MAX":
                 if (group[field] == undefined)
@@ -487,21 +492,17 @@ export default class QueryController {
                 break;
             case "AVG":
                 if (group[field] == undefined) {
-                    group[field] = newVal;
+                    group[field] = instance.doMath(0, newVal, 0);
                     group.numBuffer = 1;
                     return;
                 }
+
+                let newAvg: number = instance.doMath(group[field], newVal, group.numBuffer);
+
                 group.numBuffer += 1;
 
-                let tempCurVal = group[field]*10;
-                tempCurVal = Number(tempCurVal.toFixed(0));
-                let tempNewVal = newVal*10;
-                tempNewVal = Number(tempNewVal.toFixed(0));
-                tempCurVal += tempNewVal;
-                tempCurVal /= group.numBuffer;
-                tempCurVal /= 10;
-                tempCurVal = Number(tempCurVal.toFixed(2));
-                group[field] = tempCurVal;
+                group[field] = newAvg;
+
                 break;
             case "COUNT":
                 if (group[field] == undefined) {
@@ -516,6 +517,24 @@ export default class QueryController {
                 }
                 break;
         }
+    }
+
+    doMath(curVal: any, newVal: any, count: any): any {
+        curVal *= count*10;
+        curVal = Number(curVal.toFixed(0));
+
+        newVal *= 10;
+        newVal = Number(newVal.toFixed(0));
+
+        curVal += newVal;
+
+        count++;
+
+        curVal /= count;
+        curVal /= 10;
+        curVal = Number(curVal.toFixed(2));
+
+        return curVal;
     }
 
     sortData(order: any, data: any[]): any[] {
