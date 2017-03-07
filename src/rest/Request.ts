@@ -85,11 +85,7 @@ export default class Request
                         });
                     }catch (err)
                     {
-                        if (isUndefined(err.code))
-                        {
-                            reject({code: 400, body: {'error': err}});
-                        }
-                        reject(err);
+                        reject({code: 400, body: {'error': "some error happened"}});
                     }
                     break;
                 case 'GET':
