@@ -85,7 +85,7 @@ describe("Transformations Query Test", function () {
             "FORM": "TABLE"
         },
         "TRANSFORMATIONS": {
-            "GROUP": ["courses_dept", "courses_instructor"],
+            "GROUP": ["courses_dept"],
             "APPLY": [{
                 "maxAvg": {
                     "MAX": "courses_avg"
