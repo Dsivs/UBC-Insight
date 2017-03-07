@@ -18,23 +18,23 @@ export default class Request
     // By updating the Server.echo function pointer above, these methods can be easily moved.
 
     public static echo(req: restify.Request, res: restify.Response, next: restify.Next) {
-        Log.trace('Server::echo(..) - params: ' + JSON.stringify(req.params));
+        //Log.trace('Server::echo(..) - params: ' + JSON.stringify(req.params));
 
         let promise = new Promise( function (fulfill, reject){
             try {
                 Request.handleReq(req).then( function(responding){
                     //let result = Request.performEcho(req.params.msg);
-                    Log.info('Server::echo(..) - responding ' + responding.code);
+                    //Log.info('Server::echo(..) - responding ' + responding.code);
                     res.json(responding.code, responding.body);
                     fulfill();
 
                 }).catch( function(err){
-                    Log.error('Server::echo(..) - responding 400');
+                    //Log.error('Server::echo(..) - responding 400');
                     res.json(err.code, err.body);
                     reject();
                 });
             } catch (err) {
-                Log.error('Server::echo(..) - responding 400');
+                //Log.error('Server::echo(..) - responding 400');
                 res.json(400, {error: err.message});
                 reject();
             }
