@@ -300,14 +300,19 @@ describe("Transformations Query Test", function () {
         "OPTIONS": {
             "COLUMNS": [
                 "courses_dept",
-                "courses_instructor"
+                "courses_instructor",
+                "avgGrade"
             ],
-            "ORDER": "courses_instructor",
+            "ORDER": "avgGrade",
             "FORM": "TABLE"
         },
         "TRANSFORMATIONS": {
             "GROUP": ["courses_dept", "courses_instructor"],
-            "APPLY": emptyArray
+            "APPLY": [{
+                "avgGrade": {
+                    "AVG": "courses_avg"
+                }
+            }]
         }
     };
 

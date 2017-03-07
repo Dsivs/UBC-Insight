@@ -345,16 +345,16 @@ export default class QueryController {
                 applyKeys.push(column);
         }
 
-        //if (groupKeys.length != group.length)
-        //    throw ({code: 400, body: {error: "COLUMNS keys must match GROUP keys"}});
-        for (let groupkey of groupKeys) {
-            if (!group.includes(groupkey))
+        if (groupKeys.length != group.length)
+            throw ({code: 400, body: {error: "COLUMNS keys must match GROUP keys"}});
+        for (let term of group) {
+            if (!groupKeys.includes(term))
                 throw ({code: 400, body: {error: "COLUMNS keys must match GROUP keys"}});
         }
         instance.verifyValidKeys(groupKeys, id);
 
-        //if (applyKeys.length != apply.length)
-        //    throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
+        if (applyKeys.length != apply.length)
+            throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
 
         for (let applyKey of apply) {
             if (Object.keys(applyKey).length != 1)
