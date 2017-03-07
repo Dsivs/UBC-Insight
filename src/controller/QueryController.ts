@@ -345,25 +345,32 @@ export default class QueryController {
                 applyKeys.push(column);
         }
 
-        if (groupKeys.length != group.length)
-            throw ({code: 400, body: {error: "COLUMNS keys must match GROUP keys"}});
-        for (let term of group) {
-            if (!groupKeys.includes(term))
+        //if (groupKeys.length != group.length)
+        //    throw ({code: 400, body: {error: "COLUMNS keys must match GROUP keys"}});
+        for (let key of groupKeys) {
+            if (!group.includes(key))
                 throw ({code: 400, body: {error: "COLUMNS keys must match GROUP keys"}});
         }
-        instance.verifyValidKeys(groupKeys, id);
+
+        //for (let term of group) {
+        //    if (!groupKeys.includes(term))
+        //        throw ({code: 400, body: {error: "COLUMNS keys must match GROUP keys"}});
+        //}
+        instance.verifyValidKeys(group, id);
 
 
-        if (applyKeys.length != apply.length)
-            throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
+        //if (applyKeys.length != apply.length)
+        //    throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
+        let strings: any = [];
 
         for (let applyKey of apply) {
             if (Object.keys(applyKey).length != 1)
                 throw ({code: 400, body: {error: "APPLYKEY must have exactly one string"}});
 
             let string = Object.keys(applyKey)[0];
-            if (!applyKeys.includes(string))
-                throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
+            strings.push(string);
+            //if (!applyKeys.includes(string))
+            //    throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
 
             let applyObj = applyKey[string];
             if (Object.keys(applyObj).length != 1)
@@ -384,6 +391,12 @@ export default class QueryController {
             let key = applyObj[applyToken];
             instance.verifyValidKeys([key], id);
         }
+
+        for (let key of applyKeys) {
+            if (!strings.includes(key))
+                throw ({code: 400, body: {error: "COLUMNS keys must match GROUP keys"}});
+        }
+
     }
 
     verifyValidKeys(keys: any, id: string) {
