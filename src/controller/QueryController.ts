@@ -353,6 +353,7 @@ export default class QueryController {
         }
         instance.verifyValidKeys(groupKeys, id);
 
+
         if (applyKeys.length != apply.length)
             throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
 
