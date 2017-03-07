@@ -75,7 +75,8 @@ export default class Request
             switch (method) {
                 case 'PUT':
                     //addData
-                    insight.addDataset(id, body).then(function (respond: any) {
+                    let dataStr = new Buffer(req.params.body).toString('base64');
+                    insight.addDataset(id, dataStr).then(function (respond: any) {
                         fulfill(respond);
                     }).catch(function (err: any) {
                         reject(err);
@@ -88,7 +89,7 @@ export default class Request
                     break;
                 case 'POST':
                     //post
-                    insight.performQuery(body).then(function (res: any) {
+                    insight.performQuery(req.body).then(function (res: any) {
                         fulfill(res);
                     }).catch(function (err: any) {
                         reject(err);

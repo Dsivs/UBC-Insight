@@ -57,10 +57,11 @@ export default class Server {
                 // curl -is  http://localhost:4321/echo/myMessage
                 //that.rest.get('/echo/:msg', Request.echo);
                 that.rest.use(restify.acceptParser(that.rest.acceptable));
-                that.rest.use(restify.bodyParser());
+                that.rest.use(restify.bodyParser({mapParams: true, mapFiles: true}));
                 that.rest.get('/', Request.echo);
                 that.rest.put('/dataset/:id', Request.echo);
                 that.rest.del('/dataset/:id', Request.echo);
+                that.rest.post('/dataset/:id', Request.echo);
                 that.rest.post('/query', Request.echo);
 
                 // Other endpoints will go here
