@@ -50,12 +50,14 @@ export default class Request
 
     public static handleReq(req: restify.Request): Promise<any>
     {
+        Log.trace('begin handleReg');
         let method = req.method;
         let id:string;
         let body = JSON.parse(JSON.stringify(req.params));
 
         //if id is passed and needed
         if (method !== 'POST') {
+            Log.trace('id method != post');
             for (let value in body) {
                 if (value == 'id' && body.hasOwnProperty(value)) {
                     id = body[value];
@@ -74,12 +76,16 @@ export default class Request
                 case 'PUT':
                     //addData
                     try {
+                        console.log("PUT in switch ");
 
                         let dataStr = new Buffer(req.params.body).toString('base64');
 
+                        console.log("PUT in Switch after buffer");
                         insight.addDataset(id, dataStr).then(function (respond: any) {
+                            Log.trace('PUT addDataSet THEN:');
                             fulfill(respond);
                         }).catch(function (err: any) {
+                            Log.trace('PUT addDataSet CATCH:');
                             reject(err);
                         });
                     }catch (err)
