@@ -432,7 +432,6 @@ export default class QueryController {
             }
             instance.applyTFs(groupedData[hash], obj, apply);
         }
-        console.log(groupedData);
 
         instance.finalizeAvg(groupedData);
 
