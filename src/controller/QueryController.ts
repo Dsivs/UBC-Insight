@@ -492,7 +492,7 @@ export default class QueryController {
                 break;
             case "AVG":
                 if (group[field] == undefined) {
-                    group[field] = instance.doMath(0, newVal, 0);
+                    group[field] = newVal;
                     group.numBuffer = 1;
                     return;
                 }
