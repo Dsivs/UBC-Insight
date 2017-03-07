@@ -301,8 +301,7 @@ describe("Transformations Query Test", function () {
         "OPTIONS": {
             "COLUMNS": [
                 "rooms_shortname",
-                "maxLat",
-                "avgLat"
+                "maxLat"
             ],
             "ORDER": {
                 "dir": "DOWN",
@@ -316,11 +315,6 @@ describe("Transformations Query Test", function () {
                 {
                     "maxLat": {
                         "MAX": "rooms_lat"
-                    }
-                },
-                {
-                    "avgLat": {
-                        "AVG": "rooms_lat"
                     }
                 }]
         }
