@@ -36,6 +36,8 @@ describe("EchoSpec", function () {
         }
     };
 
+    this.timeout(500);
+
     before(function (done) {
         Log.test('Before: ' + (<any>this).test.parent.title);
 
@@ -110,6 +112,38 @@ describe("EchoSpec", function () {
         return chai.request('http://localhost:4321')
             .put('/dataset/courses')
             .attach("body", "./zips/novalid.zip", "novalid.zip")
+            .then(function (res: any) {
+                Log.trace('then:');
+                expect.fail();
+                // some assertions
+            })
+            .catch(function (err:any) {
+                Log.trace('catch:');
+                // some assertions
+                expect(err.status).to.equal(400);
+            });
+    });
+
+    it("PUT invalid content", function () {
+        return chai.request('http://localhost:4321')
+            .put('/dataset/courses')
+            .attach("body", "./zips/novalid.zip", "novalid.zip")
+            .then(function (res: any) {
+                Log.trace('then:');
+                expect.fail();
+                // some assertions
+            })
+            .catch(function (err:any) {
+                Log.trace('catch:');
+                // some assertions
+                expect(err.status).to.equal(400);
+            });
+    });
+
+    it("PUT invalid zip", function () {
+        return chai.request('http://localhost:4321')
+            .put('/dataset/courses')
+            .attach("body", "./zips/roomscopy.abc", "roomscopy.abc")
             .then(function (res: any) {
                 Log.trace('then:');
                 expect.fail();
