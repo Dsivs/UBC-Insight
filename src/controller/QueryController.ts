@@ -432,6 +432,7 @@ export default class QueryController {
             }
             instance.applyTFs(groupedData[hash], obj, apply);
         }
+        //console.log(groupedData);
 
         instance.finalizeAvg(groupedData);
 
@@ -496,6 +497,8 @@ export default class QueryController {
                     group[field].sum = 0;
                     group[field].numBuffer = 0;
                 }
+                newVal *= 10;
+                newVal = Number(newVal.toFixed(0));
                 group[field].sum += newVal;
                 group[field].numBuffer++;
 
@@ -528,10 +531,6 @@ export default class QueryController {
     }
 
     doMath(curVal: any, count: any): any {
-
-        curVal *= 10;
-        curVal = Number(curVal.toFixed(0));
-
         curVal /= count;
         curVal /= 10;
         curVal = Number(curVal.toFixed(2));
