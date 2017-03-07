@@ -12,7 +12,7 @@ import {InsightResponse} from "../src/controller/IInsightFacade";
 import http = require('http');
 import {isUndefined} from "util";
 import Response = ChaiHttp.Response;
-let server = new Server(8080);
+let server = new Server(4321);
 let client: any;
 let fs = require("fs");
 let content:string;
@@ -44,7 +44,7 @@ describe("EchoSpec", function () {
                 return result;
             }).then( function(res){
                 client = restify.createJsonClient({
-                    url: 'http://localhost:8080/'
+                    url: 'http://localhost:4321/'
                 });
 
             fs.readFile('./zips/demo.zip', function(err: any, data: any){
@@ -71,7 +71,7 @@ describe("EchoSpec", function () {
 
     it('request GET', function(done) {
         //test for GET, sample
-        chai.request('http://localhost:8080')
+        chai.request('http://localhost:4321')
             .get('/')
             .end(function(err: any, res:restify.Response) {
                 expect(res.statusCode).to.equal(200);
@@ -80,7 +80,7 @@ describe("EchoSpec", function () {
     });
 
     it('request invalid DELETE', function(done) {
-        chai.request('http://localhost:8080')
+        chai.request('http://localhost:4321')
             .del('/dataset/courses')
             .end(function(err: any, res:restify.Response) {
                 expect(err.status).to.equal(404);
@@ -90,7 +90,7 @@ describe("EchoSpec", function () {
 
 
     it("PUT description", function () {
-        return chai.request('http://localhost:8080')
+        return chai.request('http://localhost:4321')
             .put('/dataset/courses')
             .attach("body", fs.readFileSync('./zips/demo.zip'), "demo.zip")
             .then(function (res: any) {
@@ -106,9 +106,26 @@ describe("EchoSpec", function () {
     });
 
 
+    it("PUT null", function () {
+        return chai.request('http://localhost:4321')
+            .put('/dataset/courses')
+            .attach("body", "./zips/novalid.zip", "novalid.zip")
+            .then(function (res: any) {
+                Log.trace('then:');
+                expect.fail();
+                // some assertions
+            })
+            .catch(function (err:any) {
+                Log.trace('catch:');
+                // some assertions
+                expect(err.status).to.equal(400);
+            });
+    });
+
+
 
     /*it('request PUT courses', function(done) {
-        chai.request('http://localhost:8080')
+        chai.request('http://localhost:4321')
             .put('/dataset/courses')
             .send({ 'content': content})
             .end(function (err:any, res:any) {
@@ -123,7 +140,7 @@ describe("EchoSpec", function () {
     });*/
 
     /*it('request POST courses', function() {
-        return chai.request('http://localhost:8080')
+        return chai.request('http://localhost:4321')
             .post('/query')
             .send(basicGTQuery)
             .then(function (res:any) {
@@ -135,7 +152,7 @@ describe("EchoSpec", function () {
     });*/
 
     it("POST description", function () {
-        return chai.request('http://localhost:8080')
+        return chai.request('http://localhost:4321')
             .post('/dataset/courses')
             .send(basicGTQuery)
             .then(function (res: any) {
@@ -151,7 +168,7 @@ describe("EchoSpec", function () {
     });
 
     it('request DELETE courses', function(done) {
-        chai.request('http://localhost:8080')
+        chai.request('http://localhost:4321')
             .del('/dataset/courses')
             .end(function (err:any, res:any) {
                 if(err)
