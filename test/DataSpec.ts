@@ -13,7 +13,7 @@ let fs = require("fs");
 let courseContent: string = "";
 let invalidContent: string = "";
 let novalidContent: string = "";
-let longContent: string = "";
+let crapContent: string = "";
 
 describe("DataTest", function () {
 
@@ -50,6 +50,20 @@ describe("DataTest", function () {
             }
         });
 
+        fs.readFile('./zips/roomscopy.abc', function(err: any, data: any){
+            if (err) {
+                //invalid zip file is given
+                console.log(err);
+            }
+            else if (!isUndefined(data) || data !== null)
+            {
+                //debug, if given content is invalid
+                //since given data is a array buffer, we can convert right away
+                crapContent = data.toString('base64');
+                console.log("Before: content is done!");
+            }
+        });
+
         fs.readFile('./zips/invalidContent.zip', function(err: any, data: any) {
             if (err) {
                 //invalid zip file is given
@@ -72,7 +86,7 @@ describe("DataTest", function () {
     })
 
     it("add invalid zip", function() {
-        return insight.addDataset('test1', 'SW52YWxpZCBTdHJpbmc=')
+        return insight.addDataset('courses', crapContent)
             .then(function(response) {
                 console.log(response);
                 expect.fail();
@@ -86,7 +100,7 @@ describe("DataTest", function () {
         //test string has upper/lower letter + number + "="
         //has multiple size of 4 bytes
         //satisfied conditions but not valid base64
-        return insight.addDataset('testNoBase64', "InVa=65D")
+        return insight.addDataset('courses', "InVa=65D")
             .then(function(result) {
                 console.log(result);
                 expect.fail();

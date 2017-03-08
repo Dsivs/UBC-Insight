@@ -22,7 +22,6 @@ export default class Request
         //Log.trace('Server::echo(..) - params: ' + JSON.stringify(req.params));
 
         let promise = new Promise( function (fulfill, reject){
-            try {
                 Request.handleReq(req).then( function(responding){
                     //let result = Request.performEcho(req.params.msg);
                     //Log.info('Server::echo(..) - responding ' + responding.code);
@@ -34,12 +33,6 @@ export default class Request
                     res.json(err.code, err.body);
                     reject();
                 });
-            } catch (err) {
-                Log.trace("out ter 400 is caught");
-                //Log.error('Server::echo(..) - responding 400');
-                res.json(400, {error: err.message});
-                reject();
-            }
         });
 
         promise.then( function (res) {
@@ -58,24 +51,22 @@ export default class Request
             switch (method) {
                 case 'PUT':
                     //addData
+                    let data = req.params.body;
+                    console.log("HI");
+                    console.log(data);
                     try {
-                        Log.trace("PUT in switch ");
-
-                        insight.addDataset(req.params.id, new Buffer(req.params.body).toString('base64'))
+                        data = data.toString("base64");
+                        insight.addDataset(req.params.id, data)
                             .then(function (respond: any) {
-                            Log.trace('PUT addDataSet THEN:');
-                            fulfill(respond);
-                        }).catch(function (err: any) {
-                            Log.trace('PUT addDataSet CATCH:');
-                            reject(err);
-                        });
-                    }catch (err)
-                    {
-                        if (isUndefined(err.code))
-                        {
-                            reject({"code": 400, "body": {"error": "Zip contained no valid data"}})
-                        }
-                        reject(err);
+                                Log.trace('PUT addDataSet THEN:');
+                                fulfill(respond);
+                            })
+                            .catch(function (err: any) {
+                                Log.trace('PUT addDataSet CATCH:');
+                                reject(err);
+                            });
+                    } catch(err) {
+                        reject({"code": 400, "body": {"error": "problem with buffer"}});
                     }
                     break;
                 case 'GET':

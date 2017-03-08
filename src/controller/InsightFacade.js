@@ -31,7 +31,7 @@ var InsightFacade = (function () {
                     });
                     break;
                 default:
-                    reject({ code: 400, body: { error: content + " is not a valid dataset id." } });
+                    reject({ code: 400, body: { error: id + " is not a valid dataset id." } });
             }
         });
     };

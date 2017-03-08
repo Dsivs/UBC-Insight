@@ -68,7 +68,7 @@ export default class InsightFacade implements IInsightFacade {
                         });
                     break;
                 default:
-                    reject({code: 400, body: {error: content + " is not a valid dataset id."}})
+                    reject({code: 400, body: {error: id + " is not a valid dataset id."}})
             }
         })
     }
