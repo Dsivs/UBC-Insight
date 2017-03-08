@@ -359,8 +359,8 @@ export default class QueryController {
         instance.verifyValidKeys(group, id);
 
 
-        if (applyKeys.length != apply.length)
-            throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
+        //if (applyKeys.length != apply.length)
+        //    throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
         let strings: any = [];
 
         for (let applyKey of apply) {
@@ -368,11 +368,11 @@ export default class QueryController {
                 throw ({code: 400, body: {error: "APPLYKEY must have exactly one string"}});
 
             let string = Object.keys(applyKey)[0];
-            //if (string.includes("_"))
-            //    throw ({code: 400, body: {error: "APPLY keys cannot contain _"}});
-            //strings.push(string);
-            if (!applyKeys.includes(string))
-                throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
+            if (string.includes("_"))
+                throw ({code: 400, body: {error: "APPLY keys cannot contain _"}});
+            strings.push(string);
+            //if (!applyKeys.includes(string))
+            //    throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
 
             let applyObj = applyKey[string];
             if (Object.keys(applyObj).length != 1)
@@ -394,12 +394,12 @@ export default class QueryController {
             instance.verifyValidKeys([key], id);
         }
 
-        /*
+
         for (let key of applyKeys) {
             if (!strings.includes(key))
                 throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
         }
-        */
+
 
     }
 
