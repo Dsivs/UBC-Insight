@@ -291,39 +291,39 @@ describe("Transformations Query Test", function () {
         "WHERE":{},
         "OPTIONS": {
             "COLUMNS": [
-                "rooms_shortname",
-                "countLat",
-                "avgLat",
-                "numRooms"
+                "courses_dept",
+                "avgAvg",
+                "avgPass",
+                "uuid"
             ],
             "ORDER": {
-                "dir": "DOWN",
-                "keys": ["numRooms", "countLat", "avgLat"]
+                "dir": "UP",
+                "keys": ["uuid"]
             },
             "FORM": "TABLE"
         },
         "TRANSFORMATIONS": {
-            "GROUP": ["rooms_shortname"],
+            "GROUP": ["courses_dept", "courses_instructor"],
             "APPLY": [
                 {
-                    "countLat": {
-                        "COUNT": "rooms_lat"
+                    "avgAvg": {
+                        "AVG": "courses_avg"
                     }
                 },
                 {
-                    "avgLat": {
-                        "AVG": "rooms_lat"
+                    "avgPass": {
+                        "AVG": "courses_pass"
                     }
                 },
                 {
-                    "numRooms": {
-                        "COUNT": "rooms_name"
+                    "uuid": {
+                        "COUNT": "courses_uuid"
                     }
                 }
             ]
         }
     };
-    
+
     it("flex Query", function() {
         return insight.performQuery(flexQuery)
             .then(function (result) {
