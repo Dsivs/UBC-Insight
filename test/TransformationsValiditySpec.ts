@@ -189,13 +189,14 @@ describe("Transformations Validity Test", function () {
         "OPTIONS": {
             "COLUMNS": [
                 "rooms_shortname",
+                "rooms_name",
                 "maxSeats"
             ],
             "ORDER": "maxSeats",
             "FORM": "TABLE"
         },
         "TRANSFORMATIONS": {
-            "GROUP": ["ayy_lmao"],
+            "GROUP": ["rooms_name"],
             "APPLY": [{
                 "maxSeats": {
                     "MAX": "rooms_seats"
@@ -216,9 +217,85 @@ describe("Transformations Validity Test", function () {
     });
 
     /**
-     * num of APPLY keys does not match num of no underscore keys in Columns Query
+     * GROUP has APPLY keys Query
      */
-    const ApplyColumnsMismatchQuery1 = {
+    const GroupHasApplyKeysQuery = {
+        "WHERE": {
+            "IS": {
+                "rooms_furniture": "*Tables*"
+            }
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "rooms_shortname",
+                "rooms_name",
+                "maxSeats"
+            ],
+            "ORDER": "maxSeats",
+            "FORM": "TABLE"
+        },
+        "TRANSFORMATIONS": {
+            "GROUP": ["rooms_name", "rooms_shortname", "maxSeats"],
+            "APPLY": [{
+                "maxSeats": {
+                    "MAX": "rooms_seats"
+                }
+            }]
+        }
+    };
+    it("GROUP has APPLY keys Query", function() {
+        return insight.performQuery(GroupHasApplyKeysQuery)
+            .then(function (result) {
+                console.log(result.body);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({error: "GROUP cannot contain APPLY keys"});
+            })
+    });
+
+    /**
+     * GROUP has more keys than COLUMNS Query
+     */
+    const GroupMoreThanColumnsQuery = {
+        "WHERE": {
+            "IS": {
+                "rooms_furniture": "*Tables*"
+            }
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "rooms_shortname",
+                "maxSeats"
+            ],
+            "ORDER": "maxSeats",
+            "FORM": "TABLE"
+        },
+        "TRANSFORMATIONS": {
+            "GROUP": ["rooms_name", "rooms_shortname"],
+            "APPLY": [{
+                "maxSeats": {
+                    "MAX": "rooms_seats"
+                }
+            }]
+        }
+    };
+    it("GROUP has more keys than COLUMNS Query", function() {
+        return insight.performQuery(GroupMoreThanColumnsQuery)
+            .then(function (result) {
+                console.log(result.body);
+                expect(result.code).to.deep.equal(200);
+            }).catch(function (err) {
+                console.log(err.body);
+                expect.fail();
+            })
+    });
+
+    /**
+     * APPLY keys do not match COLUMNS Query
+     */
+    const ApplyColumnsMismatchQuery = {
         "WHERE": {
             "IS": {
                 "rooms_furniture": "*Tables*"
@@ -242,8 +319,8 @@ describe("Transformations Validity Test", function () {
             }]
         }
     };
-    it("num of APPLY keys does not match num of no underscore keys in Columns Query", function() {
-        return insight.performQuery(ApplyColumnsMismatchQuery1)
+    it("APPLY keys do not match COLUMNS Query", function() {
+        return insight.performQuery(ApplyColumnsMismatchQuery)
             .then(function (result) {
                 console.log(result.body);
                 expect.fail();
@@ -255,9 +332,9 @@ describe("Transformations Validity Test", function () {
     });
 
     /**
-     * APPLY keys do not match no underscore keys in Columns Query
+     * APPLY keys contain underscore Query
      */
-    const ApplyColumnsMismatchQuery2 = {
+    const ApplyKeysContainUnderscoreQuery = {
             "WHERE": {
                 "IS": {
                     "rooms_furniture": "*Tables*"
@@ -266,78 +343,79 @@ describe("Transformations Validity Test", function () {
             "OPTIONS": {
                 "COLUMNS": [
                     "rooms_shortname",
-                    "maxLat"
+                    "maxSeats"
                 ],
-                "ORDER": "maxLat",
+                "ORDER": "maxSeats",
                 "FORM": "TABLE"
             },
             "TRANSFORMATIONS": {
                 "GROUP": ["rooms_shortname"],
-                "APPLY": [{
-                    "maxSeats": {
-                        "MAX": "rooms_seats"
+                "APPLY": [
+                    {
+                        "maxSeats": {
+                            "MAX": "rooms_seats"
+                        }
+                    },
+                    {
+                        "rooms_lat": {
+                            "MAX": "rooms_lat"
+                        }
                     }
-                }]
+                ]
             }
         };
-    it("APPLY keys do not match no underscore keys in Columns Query", function() {
-        return insight.performQuery(ApplyColumnsMismatchQuery2)
+    it("APPLY keys contain underscore Query", function() {
+        return insight.performQuery(ApplyKeysContainUnderscoreQuery)
             .then(function (result) {
                 console.log(result.body);
                 expect.fail();
             }).catch(function (err) {
                 console.log(err.body);
                 expect(err.code).to.deep.equal(400);
-                expect(err.body).to.deep.equal({error: "COLUMNS keys must match APPLY keys"});
+                expect(err.body).to.deep.equal({error: "APPLY keys cannot contain _"});
             })
     });
 
     /**
-     * APPLY keys do not match no underscore keys in Columns Query
+     * APPLY has more keys than COLUMNS Query
      */
-    const ApplyColumnsQuery = {
+    const ApplyMoreThanColumnsQuery = {
         "WHERE": {
+            "IS": {
+                "rooms_furniture": "*Tables*"
+            }
         },
         "OPTIONS": {
             "COLUMNS": [
                 "rooms_shortname",
-                "maxLat"
+                "maxSeats"
             ],
-            "ORDER": "maxLat",
+            "ORDER": "maxSeats",
             "FORM": "TABLE"
         },
         "TRANSFORMATIONS": {
-            "GROUP": ["rooms_shortname", "rooms_name"],
-            "APPLY": [{
-                "maxSeats": {
-                    "MAX": "rooms_seats"
-                }
-            },
+            "GROUP": ["rooms_name", "rooms_shortname"],
+            "APPLY": [
+                {
+                    "maxSeats": {
+                        "MAX": "rooms_seats"
+                    }
+                },
                 {
                     "maxLat": {
                         "MAX": "rooms_lat"
                     }
-                },
-                {
-                    "maadaLat": {
-                        "MAX": "rooms_lat"
-                    }
-                }]
+                }
+            ]
         }
     };
-
-    //const res = {"render":"TABLE","result":[{"rooms_shortname":"FSC","maxLat":49.26044},{"rooms_shortname":"FSC","maxLat":49.26044},{"rooms_shortname":"FSC","maxLat":49.26044},{"rooms_shortname":"FSC","maxLat":49.26044},{"rooms_shortname":"FSC","maxLat":49.26044},{"rooms_shortname":"FSC","maxLat":49.26044},{"rooms_shortname":"FSC","maxLat":49.26044},{"rooms_shortname":"FSC","maxLat":49.26044},{"rooms_shortname":"FSC","maxLat":49.26044},{"rooms_shortname":"FSC","maxLat":49.26044},{"rooms_shortname":"OSBO","maxLat":49.26047},{"rooms_shortname":"OSBO","maxLat":49.26047},{"rooms_shortname":"OSBO","maxLat":49.26047},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"ORCH","maxLat":49.26048},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"MCML","maxLat":49.26114},{"rooms_shortname":"DMP","maxLat":49.26125},{"rooms_shortname":"DMP","maxLat":49.26125},{"rooms_shortname":"DMP","maxLat":49.26125},{"rooms_shortname":"DMP","maxLat":49.26125},{"rooms_shortname":"DMP","maxLat":49.26125},{"rooms_shortname":"MCLD","maxLat":49.26176},{"rooms_shortname":"MCLD","maxLat":49.26176},{"rooms_shortname":"MCLD","maxLat":49.26176},{"rooms_shortname":"MCLD","maxLat":49.26176},{"rooms_shortname":"MCLD","maxLat":49.26176},{"rooms_shortname":"MCLD","maxLat":49.26176},{"rooms_shortname":"FORW","maxLat":49.26176},{"rooms_shortname":"FORW","maxLat":49.26176},{"rooms_shortname":"FORW","maxLat":49.26176},{"rooms_shortname":"CIRS","maxLat":49.26207},{"rooms_shortname":"CHBE","maxLat":49.26228},{"rooms_shortname":"CHBE","maxLat":49.26228},{"rooms_shortname":"EOSM","maxLat":49.26228},{"rooms_shortname":"CHBE","maxLat":49.26228},{"rooms_shortname":"PHRM","maxLat":49.26229},{"rooms_shortname":"PHRM","maxLat":49.26229},{"rooms_shortname":"PHRM","maxLat":49.26229},{"rooms_shortname":"PHRM","maxLat":49.26229},{"rooms_shortname":"PHRM","maxLat":49.26229},{"rooms_shortname":"PHRM","maxLat":49.26229},{"rooms_shortname":"PHRM","maxLat":49.26229},{"rooms_shortname":"PHRM","maxLat":49.26229},{"rooms_shortname":"PHRM","maxLat":49.26229},{"rooms_shortname":"PHRM","maxLat":49.26229},{"rooms_shortname":"PHRM","maxLat":49.26229},{"rooms_shortname":"LSC","maxLat":49.26236},{"rooms_shortname":"LSC","maxLat":49.26236},{"rooms_shortname":"LSC","maxLat":49.26236},{"rooms_shortname":"CEME","maxLat":49.26273},{"rooms_shortname":"CEME","maxLat":49.26273},{"rooms_shortname":"CEME","maxLat":49.26273},{"rooms_shortname":"CEME","maxLat":49.26273},{"rooms_shortname":"CEME","maxLat":49.26273},{"rooms_shortname":"CEME","maxLat":49.26273},{"rooms_shortname":"ESB","maxLat":49.26274},{"rooms_shortname":"ESB","maxLat":49.26274},{"rooms_shortname":"ESB","maxLat":49.26274},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"SWNG","maxLat":49.26293},{"rooms_shortname":"AERL","maxLat":49.26372},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"SCRF","maxLat":49.26398},{"rooms_shortname":"PCOH","maxLat":49.264},{"rooms_shortname":"PCOH","maxLat":49.264},{"rooms_shortname":"PCOH","maxLat":49.264},{"rooms_shortname":"PCOH","maxLat":49.264},{"rooms_shortname":"PCOH","maxLat":49.264},{"rooms_shortname":"PCOH","maxLat":49.264},{"rooms_shortname":"PCOH","maxLat":49.264},{"rooms_shortname":"PCOH","maxLat":49.264},{"rooms_shortname":"FNH","maxLat":49.26414},{"rooms_shortname":"FNH","maxLat":49.26414},{"rooms_shortname":"FNH","maxLat":49.26414},{"rooms_shortname":"FNH","maxLat":49.26414},{"rooms_shortname":"FNH","maxLat":49.26414},{"rooms_shortname":"FNH","maxLat":49.26414},{"rooms_shortname":"SPPH","maxLat":49.2642},{"rooms_shortname":"SPPH","maxLat":49.2642},{"rooms_shortname":"SPPH","maxLat":49.2642},{"rooms_shortname":"SPPH","maxLat":49.2642},{"rooms_shortname":"SPPH","maxLat":49.2642},{"rooms_shortname":"SPPH","maxLat":49.2642},{"rooms_shortname":"SOWK","maxLat":49.2643},{"rooms_shortname":"SOWK","maxLat":49.2643},{"rooms_shortname":"SOWK","maxLat":49.2643},{"rooms_shortname":"SOWK","maxLat":49.2643},{"rooms_shortname":"SOWK","maxLat":49.2643},{"rooms_shortname":"SOWK","maxLat":49.2643},{"rooms_shortname":"SOWK","maxLat":49.2643},{"rooms_shortname":"WOOD","maxLat":49.26478},{"rooms_shortname":"WOOD","maxLat":49.26478},{"rooms_shortname":"WOOD","maxLat":49.26478},{"rooms_shortname":"WOOD","maxLat":49.26478},{"rooms_shortname":"WOOD","maxLat":49.26478},{"rooms_shortname":"WOOD","maxLat":49.26478},{"rooms_shortname":"WOOD","maxLat":49.26478},{"rooms_shortname":"WOOD","maxLat":49.26478},{"rooms_shortname":"WOOD","maxLat":49.26478},{"rooms_shortname":"WOOD","maxLat":49.26478},{"rooms_shortname":"WOOD","maxLat":49.26478},{"rooms_shortname":"WOOD","maxLat":49.26478},{"rooms_shortname":"WOOD","maxLat":49.26478},{"rooms_shortname":"WOOD","maxLat":49.26478},{"rooms_shortname":"WOOD","maxLat":49.26478},{"rooms_shortname":"WOOD","maxLat":49.26478},{"rooms_shortname":"BIOL","maxLat":49.26479},{"rooms_shortname":"BIOL","maxLat":49.26479},{"rooms_shortname":"BIOL","maxLat":49.26479},{"rooms_shortname":"BIOL","maxLat":49.26479},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"ANGU","maxLat":49.26486},{"rooms_shortname":"WESB","maxLat":49.26517},{"rooms_shortname":"WESB","maxLat":49.26517},{"rooms_shortname":"FRDM","maxLat":49.26541},{"rooms_shortname":"LSK","maxLat":49.26545},{"rooms_shortname":"LSK","maxLat":49.26545},{"rooms_shortname":"LSK","maxLat":49.26545},{"rooms_shortname":"LSK","maxLat":49.26545},{"rooms_shortname":"CHEM","maxLat":49.2659},{"rooms_shortname":"CHEM","maxLat":49.2659},{"rooms_shortname":"CHEM","maxLat":49.2659},{"rooms_shortname":"CHEM","maxLat":49.2659},{"rooms_shortname":"CHEM","maxLat":49.2659},{"rooms_shortname":"CHEM","maxLat":49.2659},{"rooms_shortname":"GEOG","maxLat":49.26605},{"rooms_shortname":"GEOG","maxLat":49.26605},{"rooms_shortname":"GEOG","maxLat":49.26605},{"rooms_shortname":"GEOG","maxLat":49.26605},{"rooms_shortname":"GEOG","maxLat":49.26605},{"rooms_shortname":"GEOG","maxLat":49.26605},{"rooms_shortname":"GEOG","maxLat":49.26605},{"rooms_shortname":"GEOG","maxLat":49.26605},{"rooms_shortname":"MATX","maxLat":49.266089},{"rooms_shortname":"HEBB","maxLat":49.2661},{"rooms_shortname":"HEBB","maxLat":49.2661},{"rooms_shortname":"HEBB","maxLat":49.2661},{"rooms_shortname":"HEBB","maxLat":49.2661},{"rooms_shortname":"HENN","maxLat":49.26627},{"rooms_shortname":"HENN","maxLat":49.26627},{"rooms_shortname":"HENN","maxLat":49.26627},{"rooms_shortname":"HENN","maxLat":49.26627},{"rooms_shortname":"HENN","maxLat":49.26627},{"rooms_shortname":"HENN","maxLat":49.26627},{"rooms_shortname":"MGYM","maxLat":49.2663},{"rooms_shortname":"MGYM","maxLat":49.2663},{"rooms_shortname":"MATH","maxLat":49.266463},{"rooms_shortname":"MATH","maxLat":49.266463},{"rooms_shortname":"MATH","maxLat":49.266463},{"rooms_shortname":"MATH","maxLat":49.266463},{"rooms_shortname":"MATH","maxLat":49.266463},{"rooms_shortname":"MATH","maxLat":49.266463},{"rooms_shortname":"MATH","maxLat":49.266463},{"rooms_shortname":"MATH","maxLat":49.266463},{"rooms_shortname":"AUDX","maxLat":49.2666},{"rooms_shortname":"AUDX","maxLat":49.2666},{"rooms_shortname":"IBLC","maxLat":49.26766},{"rooms_shortname":"IBLC","maxLat":49.26766},{"rooms_shortname":"IBLC","maxLat":49.26766},{"rooms_shortname":"IBLC","maxLat":49.26766},{"rooms_shortname":"IBLC","maxLat":49.26766},{"rooms_shortname":"IBLC","maxLat":49.26766},{"rooms_shortname":"IBLC","maxLat":49.26766},{"rooms_shortname":"IBLC","maxLat":49.26766},{"rooms_shortname":"IBLC","maxLat":49.26766},{"rooms_shortname":"IBLC","maxLat":49.26766},{"rooms_shortname":"IBLC","maxLat":49.26766},{"rooms_shortname":"IBLC","maxLat":49.26766},{"rooms_shortname":"IBLC","maxLat":49.26766},{"rooms_shortname":"IBLC","maxLat":49.26766},{"rooms_shortname":"IBLC","maxLat":49.26766},{"rooms_shortname":"IBLC","maxLat":49.26766},{"rooms_shortname":"IBLC","maxLat":49.26766},{"rooms_shortname":"IBLC","maxLat":49.26766},{"rooms_shortname":"LASR","maxLat":49.26767},{"rooms_shortname":"LASR","maxLat":49.26767},{"rooms_shortname":"LASR","maxLat":49.26767},{"rooms_shortname":"LASR","maxLat":49.26767},{"rooms_shortname":"LASR","maxLat":49.26767},{"rooms_shortname":"LASR","maxLat":49.26767},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"BUCH","maxLat":49.26826},{"rooms_shortname":"SRC","maxLat":49.2683},{"rooms_shortname":"SRC","maxLat":49.2683},{"rooms_shortname":"SRC","maxLat":49.2683},{"rooms_shortname":"BRKX","maxLat":49.26862},{"rooms_shortname":"BRKX","maxLat":49.26862},{"rooms_shortname":"UCLL","maxLat":49.26867},{"rooms_shortname":"UCLL","maxLat":49.26867},{"rooms_shortname":"UCLL","maxLat":49.26867},{"rooms_shortname":"UCLL","maxLat":49.26867},{"rooms_shortname":"ANSO","maxLat":49.26958},{"rooms_shortname":"ANSO","maxLat":49.26958},{"rooms_shortname":"ANSO","maxLat":49.26958},{"rooms_shortname":"ANSO","maxLat":49.26958},{"rooms_shortname":"ALRD","maxLat":49.2699},{"rooms_shortname":"ALRD","maxLat":49.2699},{"rooms_shortname":"ALRD","maxLat":49.2699},{"rooms_shortname":"ALRD","maxLat":49.2699},{"rooms_shortname":"ALRD","maxLat":49.2699},{"rooms_shortname":"IONA","maxLat":49.27106},{"rooms_shortname":"IONA","maxLat":49.27106}]};
-    it("apply can have more keys than columns Query", function() {
-        return insight.performQuery(ApplyColumnsQuery)
+    it("APPLY has more keys than COLUMNS Query", function() {
+        return insight.performQuery(GroupMoreThanColumnsQuery)
             .then(function (result) {
-                //console.log(JSON.stringify(result.body));
-                //console.log(JSON.stringify(res));
+                console.log(result.body);
                 expect(result.code).to.deep.equal(200);
-                //expect(result.body).to.deep.equal();
             }).catch(function (err) {
-                console.log(err);
-                //expect(err.code).to.deep.equal(400);
-                //expect(err.body).to.deep.equal({error: "COLUMNS keys must match APPLY keys"});
+                console.log(err.body);
                 expect.fail();
             })
     });

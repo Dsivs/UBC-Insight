@@ -345,6 +345,9 @@ export default class QueryController {
                 applyKeys.push(column);
         }
 
+
+        //console.log(groupKeys);
+        //console.log(group);
         //if (groupKeys.length != group.length)
         //    throw ({code: 400, body: {error: "COLUMNS keys must match GROUP keys"}});
         for (let key of groupKeys) {
@@ -352,12 +355,12 @@ export default class QueryController {
                 throw ({code: 400, body: {error: "COLUMNS keys must match GROUP keys"}});
         }
 
-        //for (let term of group) {
-        //    if (!groupKeys.includes(term))
-        //        throw ({code: 400, body: {error: "COLUMNS keys must match GROUP keys"}});
-        //}
-        instance.verifyValidKeys(group, id);
 
+        for (let term of group) {
+            if (!term.includes("_"))
+                throw ({code: 400, body: {error: "GROUP cannot contain APPLY keys"}});
+        }
+        instance.verifyValidKeys(group, id);
 
         //if (applyKeys.length != apply.length)
         //    throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
@@ -395,6 +398,8 @@ export default class QueryController {
         }
 
 
+        //console.log(applyKeys);
+        //console.log(strings);
         for (let key of applyKeys) {
             if (!strings.includes(key))
                 throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
