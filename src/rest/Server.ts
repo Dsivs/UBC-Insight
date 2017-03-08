@@ -34,6 +34,8 @@ export default class Server {
             try {
                 that.rest.close(function () {
                     fulfill(true);
+                }).catch(function (err: any) {
+                    fulfill(true);
                 });
             }catch (err)
             {
@@ -61,7 +63,7 @@ export default class Server {
                 // provides the echo service
                 // curl -is  http://localhost:4321/echo/myMessage
                 //that.rest.get('/echo/:msg', Request.echo);
-                that.rest.use(restify.acceptParser(that.rest.acceptable));
+                //that.rest.use(restify.acceptParser(that.rest.acceptable));
                 that.rest.use(restify.bodyParser({mapParams: true, mapFiles: true}));
                 that.rest.get('/', Request.echo);
                 that.rest.put('/dataset/:id', Request.echo);

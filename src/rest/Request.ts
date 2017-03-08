@@ -35,6 +35,7 @@ export default class Request
                     reject();
                 });
             } catch (err) {
+                Log.trace("out ter 400 is caught");
                 //Log.error('Server::echo(..) - responding 400');
                 res.json(400, {error: err.message});
                 reject();
@@ -45,53 +46,23 @@ export default class Request
             return next();
         }).catch( function (err) {
             return next();
-        })
+        });
     }
 
     public static handleReq(req: restify.Request): Promise<any>
     {
         Log.trace('begin handleReg');
         let method = req.method;
-        let id:string;
-        console.log(req.params.id);
-        if (isUndefined(req.params.id))
-        {
-            //default, should never be used
-            id = 'courses';
-        }
-        else
-        {
-            id = req.params.id;
-        }
-       /*let body = JSON.parse(JSON.stringify(req.params.id));
-
-        //if id is passed and needed
-        if (method !== 'POST') {
-            Log.trace('id method != post');
-            for (let value in body) {
-                if (value == 'id' && body.hasOwnProperty(value)) {
-                    id = body[value];
-                }
-                //if auto test failed for add Dataset via client, this is the bug:
-                //client type mismatch, current assumed client type is JsonClient
-                else if (body.hasOwnProperty(value)) {
-                    body = body[value];
-                    break;
-                }
-            }
-        }*/
         return new Promise( function(fulfill, reject) {
 
             switch (method) {
                 case 'PUT':
                     //addData
                     try {
-                        console.log("PUT in switch ");
+                        Log.trace("PUT in switch ");
 
-                        let dataStr = new Buffer(req.params.body).toString('base64');
-
-                        console.log("PUT in Switch after buffer");
-                        insight.addDataset(id, dataStr).then(function (respond: any) {
+                        insight.addDataset(req.params.id, new Buffer(req.params.body).toString('base64'))
+                            .then(function (respond: any) {
                             Log.trace('PUT addDataSet THEN:');
                             fulfill(respond);
                         }).catch(function (err: any) {
@@ -122,7 +93,7 @@ export default class Request
                     break;
                 case 'DELETE':
                     //delete
-                    insight.removeDataset(id).then(function (respond: any) {
+                    insight.removeDataset(req.params.id).then(function (respond: any) {
                         fulfill(respond);
                     }).catch(function (err: any) {
                         reject(err);
