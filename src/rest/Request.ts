@@ -53,7 +53,17 @@ export default class Request
         Log.trace('begin handleReg');
         let method = req.method;
         let id:string;
-        let body = JSON.parse(JSON.stringify(req.params));
+        console.log(req.params.id);
+        if (isUndefined(req.params.id))
+        {
+            //default, should never be used
+            id = 'courses';
+        }
+        else
+        {
+            id = req.params.id;
+        }
+       /*let body = JSON.parse(JSON.stringify(req.params.id));
 
         //if id is passed and needed
         if (method !== 'POST') {
@@ -69,7 +79,7 @@ export default class Request
                     break;
                 }
             }
-        }
+        }*/
         return new Promise( function(fulfill, reject) {
 
             switch (method) {
@@ -92,7 +102,7 @@ export default class Request
                     {
                         if (isUndefined(err.code))
                         {
-                            reject({code: 400, body: {'error': err}});
+                            reject({"code": 400, "body": {"error": "Zip contained no valid data"}})
                         }
                         reject(err);
                     }
