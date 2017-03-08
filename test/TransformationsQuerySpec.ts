@@ -288,22 +288,17 @@ describe("Transformations Query Test", function () {
     });
 
     const flexQuery = {
-        "WHERE": {
-            "AND": [{
-                "IS": {
-                    "rooms_furniture": "*Tables*"
-                }
-            }]
-        },
+        "WHERE":{},
         "OPTIONS": {
             "COLUMNS": [
                 "rooms_shortname",
-                "maxLat",
-                "minLat"
+                "countLat",
+                "avgLat",
+                "numRooms"
             ],
             "ORDER": {
                 "dir": "DOWN",
-                "keys": ["maxLat"]
+                "keys": ["numRooms", "countLat", "avgLat"]
             },
             "FORM": "TABLE"
         },
@@ -311,18 +306,24 @@ describe("Transformations Query Test", function () {
             "GROUP": ["rooms_shortname"],
             "APPLY": [
                 {
-                    "maxLat": {
-                        "MAX": "rooms_lat"
+                    "countLat": {
+                        "COUNT": "rooms_lat"
                     }
                 },
                 {
-                    "minLat": {
-                        "MIN": "rooms_lat"
+                    "avgLat": {
+                        "AVG": "rooms_lat"
                     }
-                }]
+                },
+                {
+                    "numRooms": {
+                        "COUNT": "rooms_name"
+                    }
+                }
+            ]
         }
     };
-
+    
     it("flex Query", function() {
         return insight.performQuery(flexQuery)
             .then(function (result) {
