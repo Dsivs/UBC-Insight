@@ -31,11 +31,14 @@ export default class Server {
         Log.info('Server::close()');
         let that = this;
         return new Promise(function (fulfill) {
-            that.rest.close(function () {
+            try {
+                that.rest.close(function () {
+                    fulfill(true);
+                });
+            }catch (err)
+            {
                 fulfill(true);
-            }).catch( function(err:any){
-                fulfill(true);
-            });
+            }
         });
     }
 
