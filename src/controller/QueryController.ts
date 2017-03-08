@@ -454,7 +454,7 @@ export default class QueryController {
         }
         //console.log(groupedData);
 
-        instance.finalizeAvg(groupedData);
+        instance.processAVGCOUNT(groupedData);
 
         for (let key in groupedData) {
             transformedData.push(groupedData[key])
@@ -524,31 +524,31 @@ export default class QueryController {
 
                 break;
             case "COUNT":
-                if (group.uniqueBuffer == undefined)
-                    group.uniqueBuffer = [];
 
                 if (group[field] == undefined) {
-                    group[field] = 1;
-                    if (!group.uniqueBuffer.includes(newVal))
-                        group.uniqueBuffer.push(newVal);
-                    return;
+                    group[field] = {};
+                    group[field].num = 0;
+                    group[field].uniqueBuffer = [];
                 }
 
-                if (!group.uniqueBuffer.includes(newVal)) {
-                    group[field] += 1;
-                    group.uniqueBuffer.push(newVal);
+                if (!group[field].uniqueBuffer.includes(newVal)) {
+                    group[field].num++;
+                    group[field].uniqueBuffer.push(newVal);
                 }
                 break;
         }
     }
 
-    finalizeAvg(groupedData: any) {
+    processAVGCOUNT(groupedData: any) {
         let instance = this;
         for (let key in groupedData) {
             let row = groupedData[key];
             for (let subkey in row) {
                 if (typeof row[subkey] == "object") {
-                    row[subkey] = instance.doMath(row[subkey].sum, row[subkey].numBuffer);
+                    if (row[subkey].sum)
+                        row[subkey] = instance.doMath(row[subkey].sum, row[subkey].numBuffer);
+                    else
+                        row[subkey] = row[subkey].num;
                 }
             }
         }

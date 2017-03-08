@@ -291,33 +291,39 @@ describe("Transformations Query Test", function () {
         "WHERE":{},
         "OPTIONS": {
             "COLUMNS": [
-                "courses_dept",
-                "avgAvg",
-                "avgPass",
-                "uuid"
+                "courses_dept", "avgAvg1", "avgAvg2",
+                "uuid1", "uuid2",
+                "countInstr"
             ],
-            "ORDER": {
-                "dir": "UP",
-                "keys": ["uuid"]
-            },
+            "ORDER": "courses_dept",
             "FORM": "TABLE"
         },
         "TRANSFORMATIONS": {
-            "GROUP": ["courses_dept", "courses_instructor"],
+            "GROUP": ["courses_dept"],
             "APPLY": [
                 {
-                    "avgAvg": {
+                    "avgAvg1": {
                         "AVG": "courses_avg"
                     }
                 },
                 {
-                    "avgPass": {
-                        "AVG": "courses_pass"
+                    "avgAvg2": {
+                        "AVG": "courses_avg"
                     }
                 },
                 {
-                    "uuid": {
+                    "uuid1": {
                         "COUNT": "courses_uuid"
+                    }
+                },
+                {
+                    "uuid2": {
+                        "COUNT": "courses_uuid"
+                    }
+                },
+                {
+                    "countInstr": {
+                        "COUNT": "courses_instructor"
                     }
                 }
             ]
