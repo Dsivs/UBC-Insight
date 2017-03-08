@@ -33,6 +33,8 @@ export default class Server {
         return new Promise(function (fulfill) {
             that.rest.close(function () {
                 fulfill(true);
+            }).catch( function(err:any){
+                fulfill(err);
             });
         });
     }
