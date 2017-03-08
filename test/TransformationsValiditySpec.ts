@@ -312,11 +312,7 @@ describe("Transformations Validity Test", function () {
         },
         "TRANSFORMATIONS": {
             "GROUP": ["rooms_shortname"],
-            "APPLY": [{
-                "maxSeats": {
-                    "MAX": "rooms_seats"
-                }
-            }]
+            "APPLY": emptyArray
         }
     };
     it("APPLY keys do not match COLUMNS Query", function() {
@@ -417,6 +413,51 @@ describe("Transformations Validity Test", function () {
             }).catch(function (err) {
                 console.log(err.body);
                 expect.fail();
+            })
+    });
+
+    /**
+     * duplicate APPLY strings Query
+     */
+    const DupApplyStringsQuery = {
+        "WHERE": {
+            "IS": {
+                "rooms_furniture": "*Tables*"
+            }
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "rooms_shortname",
+                "maxSeats"
+            ],
+            "ORDER": "maxSeats",
+            "FORM": "TABLE"
+        },
+        "TRANSFORMATIONS": {
+            "GROUP": ["rooms_name", "rooms_shortname"],
+            "APPLY": [
+                {
+                    "maxSeats": {
+                        "MAX": "rooms_seats"
+                    }
+                },
+                {
+                    "maxSeats": {
+                        "MAX": "rooms_lat"
+                    }
+                }
+            ]
+        }
+    };
+    it("duplicate APPLY strings Query", function() {
+        return insight.performQuery(DupApplyStringsQuery)
+            .then(function (result) {
+                console.log(result.body);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({error: "APPLY strings must be unique"});
             })
     });
 
@@ -535,6 +576,44 @@ describe("Transformations Validity Test", function () {
                 console.log(err.body);
                 expect(err.code).to.deep.equal(400);
                 expect(err.body).to.deep.equal({error: "lol is not a valid APPLYKEY property"});
+            })
+    });
+
+    /**
+     * invalid key in APPLY Query
+     */
+    const invalidKeyInApplyQuery = {
+        "WHERE": {
+            "IS": {
+                "rooms_furniture": "*Tables*"
+            }
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "rooms_shortname",
+                "maxSeats"
+            ],
+            "ORDER": "maxSeats",
+            "FORM": "TABLE"
+        },
+        "TRANSFORMATIONS": {
+            "GROUP": ["rooms_shortname"],
+            "APPLY": [{
+                "maxSeats": {
+                    "MAX": "rooms_des"
+                }
+            }]
+        }
+    };
+    it("invalid key in APPLY Query", function() {
+        return insight.performQuery(invalidKeyInApplyQuery)
+            .then(function (result) {
+                console.log(result.body);
+                expect.fail();
+            }).catch(function (err) {
+                console.log(err.body);
+                expect(err.code).to.deep.equal(400);
+                expect(err.body).to.deep.equal({error: "rooms_des is not a valid key"});
             })
     });
 

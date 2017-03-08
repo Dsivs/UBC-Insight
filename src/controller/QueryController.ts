@@ -373,9 +373,10 @@ export default class QueryController {
             let string = Object.keys(applyKey)[0];
             if (string.includes("_"))
                 throw ({code: 400, body: {error: "APPLY keys cannot contain _"}});
+            if (strings.includes(string))
+                throw ({code: 400, body: {error: "APPLY strings must be unique"}});
+
             strings.push(string);
-            //if (!applyKeys.includes(string))
-            //    throw ({code: 400, body: {error: "COLUMNS keys must match APPLY keys"}});
 
             let applyObj = applyKey[string];
             if (Object.keys(applyObj).length != 1)
@@ -420,9 +421,6 @@ export default class QueryController {
                 break;
         }
         for (let key of keys) {
-            if (!key.includes("_"))
-                throw ({code: 400, body: {error: key + " is not a valid key"}})
-
             if (!validKeys.includes(key))
                 throw ({code: 400, body: {error: key + " is not a valid key"}})
         }
