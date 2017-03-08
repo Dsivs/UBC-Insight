@@ -34,7 +34,7 @@ export default class DataController {
                     return Promise.all(instance.readContents(zipContents))
                 })
                 .then(function (arrayOfFileContents) {
-                    console.log(arrayOfFileContents);
+                    //console.log(arrayOfFileContents);
                     return instance.parseFileContents(arrayOfFileContents)
                 })
                 .then(function (arrayOfJSONObj) {
