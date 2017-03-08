@@ -524,19 +524,19 @@ export default class QueryController {
 
                 break;
             case "COUNT":
-                if (group.uniqueBufffer == undefined)
-                    group.uniqueBufffer = [];
+                if (group.uniqueBuffer == undefined)
+                    group.uniqueBuffer = [];
 
                 if (group[field] == undefined) {
                     group[field] = 1;
-                    if (!group.uniqueBufffer.includes(newVal))
-                        group.uniqueBufffer.push(newVal);
+                    if (!group.uniqueBuffer.includes(newVal))
+                        group.uniqueBuffer.push(newVal);
                     return;
                 }
 
-                if (!group.uniqueBufffer.includes(newVal)) {
+                if (!group.uniqueBuffer.includes(newVal)) {
                     group[field] += 1;
-                    group.uniqueBufffer.push(newVal);
+                    group.uniqueBuffer.push(newVal);
                 }
                 break;
         }
