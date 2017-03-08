@@ -34,7 +34,7 @@ export default class Server {
             that.rest.close(function () {
                 fulfill(true);
             }).catch( function(err:any){
-                fulfill(err);
+                fulfill(true);
             });
         });
     }
