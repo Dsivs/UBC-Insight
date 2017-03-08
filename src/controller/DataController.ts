@@ -2,6 +2,7 @@ import {InsightResponse, GeoResponse} from "./IInsightFacade";
 import Course from "./Course";
 import {isUndefined} from "util";
 import Room from "./Room";
+import Log from "../Util";
 /**
  * Created by Axiaz on 2017-02-06.
  */
@@ -59,15 +60,15 @@ export default class DataController {
     //takes in a string and tries to parse it into a JSZip
     private parseToZip(content: string): Promise<any> {
         return new Promise(function(fulfill, reject) {
-            console.log("Datacontroller -> parse to zip");
+            Log.trace("Datacontroller -> parse to zip");
             let zip = new JSZip();
             zip.loadAsync(content, {base64:true})
                 .then(function (result: any) {
-                    console.log("Datacontroller -> parse to zip -> then");
+                    Log.trace("Datacontroller -> parse to zip -> then");
                     fulfill(result);
                 })
                 .catch(function (err: any) {
-                    console.log("Datacontroller -> parse to zip -> catch: err = " + err);
+                    Log.trace("Datacontroller -> parse to zip -> catch: err = " + err);
                     reject({"code": 400, body: {"error": "Content is not a valid base64 zip"}});
                 })
         })
@@ -101,7 +102,7 @@ export default class DataController {
                     arrayOfJSONObj.push(JSON.parse(fileContent));
                 } catch (err) {
                     reject({"code": 400, "body": {"error": "Zip contained no valid data"}});
-                    console.log("This is not valid JSON:")
+                    console.log("This is not valid JSON:");
                     //console.log(fileContent);
                 }
             }
@@ -192,6 +193,9 @@ export default class DataController {
     }
 
     private room_readValidContents(zipContents: any): Promise<any>[] {
+
+        //console.log('Datacontroller -> room-> readContents -> START');
+
         let contents: Promise<any>[] = [];
         const instance = this;
         for (let filename in zipContents.files) {
@@ -209,6 +213,7 @@ export default class DataController {
                 contents.push(file.async("string"));
             }
         }
+        //console.log('Datacontroller -> room-> readContents -> END');
         return contents;
     }
 
@@ -278,7 +283,7 @@ export default class DataController {
                 });
 
                 res.on('error', function (err: any) {
-                    console.log("HI");
+                    //console.log("HI");
                     console.log(err);
                     reject(err);
                 })
@@ -295,10 +300,18 @@ export default class DataController {
 
     private room_parseContent(arrayOfFileContents: string[]): Promise<any> {
         const instance = this;
+        console.log('Datacontroller -> room_parseContent -> START');
         return new Promise(function (fulfill, reject) {
             let arrayOfJSONObj: any[] = [];
 
             for (let fileContent of arrayOfFileContents) {
+                //using a regExp to check html pattern
+                //if given file is not html, reject right away
+                let pattern = new RegExp(/<a\s.*?<\/a>/);
+                if (!pattern.test(fileContent)) {
+                    reject({"code": 400, "body": {"error": "given file is not html"}})
+                }
+
                 var pms = instance.room_htmlParser(fileContent).then(function (array: any){
                     arrayOfJSONObj.push(array);
                 }).catch( function (err: any)
@@ -309,11 +322,14 @@ export default class DataController {
 
             Promise.all([pms]).then( function() {
                 if (arrayOfJSONObj.length == 0) {
+                    console.log('Datacontroller -> room_parseContent -> reject -> 0');
                     reject({"code": 400, "body": {"error": "Zip contained no valid data"}})
                 } else {
+                    console.log('Datacontroller -> room_parseContent -> fulfill');
                     fulfill(roomArray);
                 }
             }).catch( function(){
+                console.log('Datacontroller -> room_parseContent -> reject -> unknown');
                 reject({"code": 400, "body": {"error": "unknow error"}})
             });
         })
@@ -321,6 +337,7 @@ export default class DataController {
 
     private room_htmlParser(content: any): Promise<any>
     {
+        //console.log('Datacontroller -> room_htmlParser -> START');
         const instance = this;
         const parse5 = require('parse5');
         //let res = parse5.parse(content);
@@ -333,6 +350,7 @@ export default class DataController {
             //var fragment = parse5.parseFragment('<tbody></tbody>');
             //fragment = parse5.parseFragment('<tbody></tbody>', {locationInfo: true});
             var Readable = require('stream').Readable;
+            let isHtml = false;
 
             //create a readable obj s
             var s = new Readable();
@@ -364,6 +382,7 @@ export default class DataController {
                 if (res === 'tbody') {
                     isTd = false;
                     isTbody = false;
+                    //console.log('Datacontroller -> room_htmlParser -> fulfill -> roomArray');
                     fulfill(roomArray);
                     //console.log(context);
                 }
