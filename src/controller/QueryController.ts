@@ -3,7 +3,7 @@ import Course from "./Course";
 import Room from "./Room";
 
 /**
- * Created by Axiaz on 2017-02-06.
+ * Created by Axiaz  on 2017-02-06.
  */
 
 export default class QueryController {
