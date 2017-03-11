@@ -27,7 +27,7 @@ Implemetation of EchoSpec
 
 
 #retrospective
-Although D3 was query-based deliverable, REST implementation was quite tricky at the beginning. The biggest challenge was to 
-investigate the source of timing out. After using serval logs, the problem turns out to be in DataController. The room parser 
+Although D3 was a query-based deliverable, REST implementation was quite tricky at the beginning. The biggest challenge was to 
+investigate the source of timing out. After using several logs, the problem turns out to be in DataController. The room parser 
 was not having a proper html validator and hence causing listeners hanging and timeout. Other than this, D3 was quite light 
 comparing to D1.
