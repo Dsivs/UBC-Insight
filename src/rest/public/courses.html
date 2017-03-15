@@ -1,12 +1,104 @@
 <!DOCTYPE html>
+<style>
+    input[type=text], select {
+        width: auto;
+        padding: 12px 20px;
+        margin: 8px 0;
+        display: inline-block;
+        border: 1px solid #000000;
+        border-radius: 4px;
+        box-sizing: border-box;
+    }
+
+    input[type=submit] {
+        width: 50%;
+        background-color: #ff443d;
+        color: #ffffff;
+        padding: 8px 10px;
+        margin: 8px 0;
+        border: none;
+        border-radius: 10px;
+    }
+
+    input[type=submit]:hover {
+        background-color: #730612;
+    }
+
+    div.special {
+        width: 70%;
+        color: #ffffff;
+        border-radius: 15px;
+        background-color: #183b85;
+        padding: 20px;
+    }
+</style>
+
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Course Explore</title>
+        <title>Course Explore</title>
 </head>
 <body>
-<h1 align="center">Course</h1>
-<p align="center">testing</p>
+
+<div class="wrap" style="background: gainsboro">
+    <h1 align="center">Course</h1>
+    <p align="center">testing</p>
+</div>
+
+
+<!------REST Button Implementation -------->
+<!------http://stackoverflow.com/questions/36975619/-------->
+
+
+        <div class="wrap" align="center">
+            <div class="special" style="alignment: center">
+                <form style="alignment: center">
+                    <label for="courses_dept">courses_dept</label>
+                    <input type="text" id="courses_dept" name="courses_dept" placeholder="CPSC">
+
+                    <label for="courses_id">courses_id</label>
+                    <input type="text" id="courses_id" name="courses_id" placeholder="310">
+
+                    <p><hr></p>
+                    <label for="Filter">Filter: </label>
+                    <select id="Filter" name="Filter">
+                        <option value="none" selected>no filter</option>
+                        <option value="courses_dept">courses_dept</option>
+                        <option value="courses_id">courses_id</option>
+                        <option value="courses_title">courses_title</option>
+                        <option value="courses_size">courses_size</option>
+                    </select>
+                    <p><hr></p>
+                    <label for="Order">Order: </label>
+                    <select id="Order" name="Filter">
+                        <option value="none" selected>no order</option>
+                        <option value="courses_avg">courses_avg</option>
+                        <option value="courses_pass">courses_pass</option>
+                        <option value="courses_fail">courses_fail</option>
+                        <option value="courses_size">courses_size</option>
+                    </select>
+                    <p><hr></p>
+                    <label for="Form">Form</label>
+                    <select id="Form" name="Form">
+                        <option value="table">table</option>
+                    </select>
+
+                    <p></p>
+                    <input type="submit" value="Submit" onclick= sure()>
+                    <script>
+                        function sure() {
+                            var r = confirm('Are you ready to submit?');
+                            if (r == true) {
+                               alert('ok');
+                            } else {
+                               alert('cancel');
+                            }
+                        }
+                    </script>
+                </form>
+            </div>
+            <div class="content"></div>
+        </div>
 
 </body>
 <footer>
