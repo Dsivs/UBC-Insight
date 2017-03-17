@@ -1,19 +1,98 @@
 <!DOCTYPE html>
-<html>
+
+<html lang="en">
 <head>
+    <link rel="stylesheet" type="text/css" href="main.css" media="screen" />
+    <meta charset="UTF-8">
+        <title>Course Explore</title>
 </head>
 <body>
 
-<h1 align="center">Room</h1>
-<p align="center">testing</p>
+<div class="wrap" style="background: gainsboro">
+    <h1 align="center">Room</h1>
+    <p align="center">testing</p>
+</div>
 
+
+<!------REST Button Implementation -------->
+<!------http://stackoverflow.com/questions/36975619/-------->
+
+
+        <div class="wrap" align="center">
+            <div class="special" style="alignment: center">
+                <form style="alignment: center">
+
+                    <!-----
+                    Show all rooms in building X.
+                    Show all rooms within X meters of building X.
+                    Show all rooms over size X.
+                    Previous task within X meters of building X.
+                    Show all rooms with type X or furniture X.
+                    Previous task within X meters of building X.----->
+
+                    <label for="building">I want to get all room in</label>
+                    <label for="building">building</label>
+                    <input type="text" id="building" name="building" placeholder="any">
+
+                    <label for="size">over size</label>
+                    <input type="text" id="size" name="size" placeholder="any">
+
+                    <label for="type">with type</label>
+                    <input type="text" id="type" name="type" placeholder="any">
+
+                    <label for="furniture">furniture</label>
+                    <input type="text" id="furniture" name="furniture" placeholder="any">
+
+                    <label for="within">within:</label>
+                    <input type="text" id="within" name="within" placeholder="any">
+                    <label for="sub">meters of building:</label>
+                    <input type="text" id="sub" name="sub" placeholder="any">
+
+                    <p><hr></p>
+                    <label for="Filter">Filter: </label>
+                    <select id="Filter" name="Filter">
+                        <option value="none" selected>no filter</option>
+                        <option value="courses_dept">courses_dept</option>
+                        <option value="courses_id">courses_id</option>
+                        <option value="courses_title">courses_title</option>
+                        <option value="courses_size">courses_size</option>
+                    </select>
+                    <p><hr></p>
+                    <label for="Order">Order: </label>
+                    <select id="Order" name="Filter">
+                        <option value="none" selected>no order</option>
+                        <option value="courses_avg">courses_avg</option>
+                        <option value="courses_pass">courses_pass</option>
+                        <option value="courses_fail">courses_fail</option>
+                        <option value="courses_size">courses_size</option>
+                    </select>
+                    <p><hr></p>
+                    <label for="Form">Form</label>
+                    <select id="Form" name="Form">
+                        <option value="table">table</option>
+                    </select>
+
+                    <p></p>
+                    <input type="submit" value="Submit" onclick= sure()>
+                    <script>
+                        function sure() {
+                            var r = confirm('Are you ready to submit?');
+                            if (r == true) {
+                               alert('ok');
+                            } else {
+                               alert('cancel');
+                            }
+                        }
+                    </script>
+                </form>
+            </div>
+            <div class="content"></div>
+        </div>
 
 </body>
-
 <footer>
-  <p align="center">&copy; 2017 | John Peng, Micheal Chen | All Rights Reserved</p>
-  <p align="center">This is a demo webpage for CPSC 310 project.</p>
+    <p align="center">&copy; 2017 | John Peng, Micheal Chen | All Rights Reserved</p>
+    <p align="center">This is a demo webpage for CPSC 310 project.</p>
 </footer>
-
 
 </html>

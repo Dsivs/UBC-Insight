@@ -1,64 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<style>
-.option {
-    display: flex;
-  align-items: center;
-  justify-content: center
-    width: 50%;
-}
-
-.image {
-  opacity: 1;
-  display: block;
-  width: 50%;
-  height: auto;
-  transition: .5s ease;
-  backface-visibility: hidden;
-}
-
-.middle {
-  transition: .5s ease;
-  opacity: 0;
-  position: absolute;
-  align-items: center;
-  justify-content: center
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  -ms-transform: translate(-50%, -50%);
-}
-
-.option:hover .image {
-  opacity: 0.7;
-  background: #000000;
-}
-
-.option:hover .middle {
-  opacity: 1;
-}
-
-.text {
-  background-color: #262797;
-  color: white;
-  font-size: 16px;
-  padding: 15px 80px;
-}
-</style>
-<style>
-table {
-    border-collapse: collapse;
-    width: 100%;
-}
-
-th, td {
-    text-align: left;
-    padding: 8px;
-}
-
-tr:nth-child(even){background-color: #f2f2f2}
-</style>
+    <link rel="stylesheet" type="text/css" href="main.css" media="screen" />
 </head>
 <body>
 
@@ -67,7 +10,7 @@ tr:nth-child(even){background-color: #f2f2f2}
 
   <div class="option" align="center">
   <img src="pics/ubc.jpg" alt="Avatar" class="image" style="width:100%; align-content: center">
-  <div class="middle" align="center">
+  <div class="middle">
     <a class="text" href="courses.html">Explore Courses</a>
   </div>
 </div>
