@@ -143,20 +143,29 @@ function checkDistance(array, columns, building_shortname) {
 
             var distance = getDis(array[i].rooms_lat, array[i].rooms_lon);
             console.log(distance + " > " + building_distance);
+            array_temp[i].distance = distance;
 
-            if (distance > building_distance) {
-                array_temp.splice(i, 1);
-            }
-            else {
-                array_temp[i].distance = distance;
-                //array[i].push({"Distance": distance});
             }
             i++;
+        });
+
+
+    i = 0;
+
+    $.each(array, function(){
+
+        if (array[i] != null) {
+            if (array_temp[i].distance > building_distance) {
+                array_temp.splice(i, 1);
+                i--;
+            }
+            i++;
+
         }
     });
 
-    console.log("HERE!!");
-    console.log(array);
+    //console.log("HERE!!");
+    //console.log(array);
     columns.push("Distance to " + building_shortname);
     generateTable(array_temp, columns);
 }
