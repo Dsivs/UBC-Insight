@@ -3,15 +3,18 @@
 <html lang="en">
 <head>
     <link rel="stylesheet" type="text/css" href="main.css" media="screen" />
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script language="JavaScript" type="text/javascript" src="formValidation.js"></script>
     <meta charset="UTF-8">
         <title>Room Explorer</title>
 </head>
 <body>
 
+
 <div class="wrap" style="background: #767676; border-radius: 5px;">
     <img src="pics/rooms.jpg" width = 100%>
-    <h1 align="center">Room</h1>
-    <p align="center">testing</p>
+    <h1 align="center">Room Explorer</h1>
+    <hr>
 </div>
 
 
@@ -22,7 +25,7 @@
         <div class="wrap" align="center" style="background: #e6e6e6; border-radius: 15px;">
             <div><br></div>
             <div class="special" style="alignment: left; height: 10%" >
-                <form style="alignment: left">
+                <form id="main-form" style="alignment: left">
 
                     <!-----
                     Show all rooms in building X.
@@ -34,58 +37,83 @@
 
                     <label>Please select or enter the room criteria:</label>
 
+
+
+
                     <main>
                         <h2 style="color: black"><b>Room Query Engine V2.0</b></h2>
-                        <main>
+                            <label style="color: black; align-content: left">Select A Query Type: </label>
+                            <input id = "and" name ="type" value="1" type="radio" align="left" checked="checked">
+                            <label for = "and" style="color: black; align-content: left" >AND</label>
+                            <input id = "or" name ="type" value="2" type="radio" align="left">
+                            <label for = "or" style="color: black; align-content: left">OR</label>
+
+                        <hr>
+
                             <!-----1--->
-                            <input id="toggle1" type="checkbox" align="left">
-                            <label for="toggle1" style="color: black; align-content: left">Specific a room number</label>
-                            <div id="expand1">
-                                <section>
+                            <input id="toggle1" value="1" name="roomToggle" type="checkbox" align="left">
+                            <label for="toggle1" style="color: black; align-content: left; margin-left: 0; alignment: left">Specify a room number</label>
+                            <div id="expand1" style="alignment: left; align-content: left; margin-left: 0">
+                                <section >
                                     <label for="room">Enter The Room Number:</label>
-                                    <input type="text" id="room" name="room" placeholder="X243">
+                                    <input type="text" id="room" name="room" placeholder="1001">
                                 </section>
                             </div>
                             <div><br></div>
 
-                            <input id="toggle2" type="checkbox">
-                            <label for="toggle2" style="color: black">Specific a building</label>
+                            <input id="toggle2" value="1" name="buildingToggle" type="checkbox">
+                            <label for="toggle2" style="color: black">Specify a building</label>
                             <div id="expand2">
                                 <section>
                                     <label for="building">Enter The Building Name:</label>
-                                    <input type="text" id="building" name="room" placeholder="ICCS">
+                                    <input type="text" id="building" name="building" placeholder="ESB">
                                 </section>
                             </div>
                             <div><br></div>
-                            <input id="toggle3" type="checkbox">
-                            <label for="toggle3" style="color: black">Specific room size</label>
+
+
+                            <input id="toggle3" value="1" name="sizeToggle" type="checkbox">
+                            <label for="toggle3" style="color: black">Specify room size</label>
                             <div id="expand3">
                                 <section>
                                     <label for="size">Enter room size:</label>
                                     <input type="text" id="size" name="size" placeholder="150">
+                                    <br>
+                                    <input id = "over" name="compType" value="1" type="radio" align="left" checked="checked">
+                                    <label for = "over" style="color: black; align-content: left">OVER</label>
+                                    <input id = "equal" name="compType" value="2" type="radio" align="left">
+                                    <label for = "equal" style="color: black; align-content: left">EQUAL</label>
+                                    <input id = "less" name="compType" value="3" type="radio" align="left">
+                                    <label for = "less" style="color: black; align-content: left">LESS</label>
                                 </section>
                             </div>
                             <div><br></div>
-                            <input id="toggle4" type="checkbox">
-                            <label for="toggle4" style="color: black">Specific room type</label>
+
+
+                            <input id="toggle4" value="1" name="roomTypeToggle" type="checkbox">
+                            <label for="toggle4" style="color: black">Specify room type</label>
                             <div id="expand4">
                                 <section>
-                                    <label for="type">Enter room type:</label>
-                                    <input type="text" id="type" name="type" placeholder="Tiered Large Group">
+                                    <label for="roomtype">Enter room type:</label>
+                                    <input type="text" id="roomtype" name="roomtype" placeholder="*Group*">
                                 </section>
                             </div>
                             <div><br></div>
-                            <input id="toggle5" type="checkbox">
-                            <label for="toggle5" style="color: black">Specific room furniture</label>
+
+
+                            <input id="toggle5" value="1" name="furnitureToggle" type="checkbox">
+                            <label for="toggle5" style="color: black">Specify room furniture</label>
                             <div id="expand5">
                                 <section>
                                     <label for="furniture">Enter room furniture:</label>
-                                    <input type="text" id="furniture" name="furniture" placeholder="Classroom-Fixed Tablets">
+                                    <input type="text" id="furniture" name="furniture" placeholder="*Table*">
                                 </section>
                             </div>
                             <div><br></div>
-                            <input id="toggle6" type="checkbox">
-                            <label for="toggle6" style="color: black">Specific the room distance</label>
+
+
+                            <input id="toggle6" value="1" name="distance" type="checkbox">
+                            <label for="toggle6" style="color: black">Specify the room distance</label>
                             <div id="expand6">
                                 <section>
                                     <label for="meter">The room(s) should be within:</label>
@@ -96,58 +124,29 @@
                             </div>
 
                         </main>
-                        <div style="color: black; text-shadow: 0 3px 5px rgba(0,0,0,0.2)">Click boxes to get started</div>
-                    </main>
 
-
-                    <p><hr>
-                    <label for="Filter">Filter: </label>
-                    <select id="Filter" name="Filter">
-                        <option value="none" selected>no filter</option>
-                        <option value="courses_dept">courses_dept</option>
-                        <option value="courses_id">courses_id</option>
-                        <option value="courses_title">courses_title</option>
-                        <option value="courses_size">courses_size</option>
-                    </select>
-                    <p><hr>
-                    <label for="Order">Order: </label>
-                    <select id="Order" name="Filter">
-                        <option value="none" selected>no order</option>
-                        <option value="courses_avg">courses_avg</option>
-                        <option value="courses_pass">courses_pass</option>
-                        <option value="courses_fail">courses_fail</option>
-                        <option value="courses_size">courses_size</option>
-                    </select>
-                    <p><hr>
-                    <label for="Form">Form</label>
-                    <select id="Form" name="Form">
-                        <option value="table">table</option>
-                    </select>
 
                     <p></p>
-                    <input type="submit" value="Submit" onclick= sure()>
-                    <form action="index.html">
-                        <input type="submit" value = "Go Back To Homepage"/>
-                    </form>
-                    <script>
-                        function sure() {
-                            var r = confirm('Are you ready to submit?');
-                            if (r == true) {
-                               alert('ok');
-                            } else {
-                               alert('cancel');
-                            }
-                        }
-                    </script>
+                    <input type="button" value="Submit" onclick= sure()>
+                    <input type="button" value="Clear" onclick="window.location.reload()">
+                    <input type="button" value = "Go Back To Homepage" onClick="location.href='index.html'"/>
                 </form>
             </div>
-            <div class="content"></div>
+
+            <br>
+
+            <div class="content" id="result" style="display: none">
+                <h1>You Query Result: </h1>
+                <hr>
+                <table id="tblResults"></table>
+                <hr>
+            </div>
         </div>
 
 </body>
 <footer>
-    <p align="center">&copy; 2017 | John Peng, Micheal Chen | All Rights Reserved</p>
-    <p align="center">This is a demo webpage for CPSC 310 project.</p>
+    <p align="center">&copy; 2017 | John Peng, Michael Chen | All Rights Reserved</p>
+    <p align="center">A demo webpage for CPSC 310 project.</p>
 </footer>
 
 </html>

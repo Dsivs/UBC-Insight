@@ -35,37 +35,11 @@
 }
 
 .text {
-    background-color: #262797;
+    background-color: #ff443d;
     color: white;
     font-size: 16px;
     padding: 15px 80px;
 }
-
-.btn {
-    background: #f73b3b;
-    background-image: -webkit-linear-gradient(top, #f73b3b, #781c1c);
-    background-image: -moz-linear-gradient(top, #f73b3b, #781c1c);
-    background-image: -ms-linear-gradient(top, #f73b3b, #781c1c);
-    background-image: -o-linear-gradient(top, #f73b3b, #781c1c);
-    background-image: linear-gradient(to bottom, #f73b3b, #781c1c);
-    -webkit-border-radius: 7;
-    -moz-border-radius: 7;
-    border-radius: 7px;
-    color: #ffffff;
-    font-size: 20px;
-    text-decoration: none;
-}
-
-.btn:hover {
-    background: #ff3c00;
-    background-image: -webkit-linear-gradient(top, #ff3c00, #fa5050);
-    background-image: -moz-linear-gradient(top, #ff3c00, #fa5050);
-    background-image: -ms-linear-gradient(top, #ff3c00, #fa5050);
-    background-image: -o-linear-gradient(top, #ff3c00, #fa5050);
-    background-image: linear-gradient(to bottom, #ff3c00, #fa5050);
-    text-decoration: none;
-}
-
 
 table {
       border-collapse: collapse;
@@ -91,7 +65,7 @@ input[type=text], select {
     box-sizing: border-box;
 }
 
-input[type=submit] {
+input[type=button] {
     width: 50%;
     background-color: #ff443d;
     color: #ffffff;
@@ -101,7 +75,21 @@ input[type=submit] {
     border-radius: 10px;
 }
 
-input[type=submit]:hover {
+input[type=button]:hover {
+    background-color: #730612;
+}
+
+input[type=search] {
+    width: 50%;
+    background-color: #ff443d;
+    color: #ffffff;
+    padding: 8px 10px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 10px;
+}
+
+input[type=search]:hover {
     background-color: #730612;
 }
 
@@ -120,11 +108,14 @@ div.special {
 
 */
 body {
+    padding: 0;
+    font-family: "Roboto",-apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue","Helvetica","Arial",sans-serif;
     background: #cac6c9;
+    margin: 0;
 }
 main {
     background: #e7e7e7;
-    width: 600px;
+    width: 90%;
     margin: 20px auto;
     padding: 10px 0;
     box-shadow: 0 3px 5px rgba(0,0,0,0.3);
@@ -143,6 +134,8 @@ main.input {
     visibility: hidden;
 }
 main.label {
+    margin-left: 0;
+    alignment: left;
     display: block;
     padding: 0.5em;
     border-bottom: 1px solid #000000;
@@ -189,7 +182,7 @@ main.label::before {
     color: #000000;
 }
 #toggle3:checked ~ #expand3 {
-    height: 50px;
+    height: 80px;
 }
 
 #expand4 {
@@ -218,7 +211,18 @@ main.label::before {
     color: #000000;
 }
 #toggle6:checked ~ #expand6 {
-    height: 130px;
+    height: 110px;
+}
+
+
+#expand7 {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.5s;
+    color: #000000;
+}
+#toggle7:checked ~ #expand7 {
+    height: 110px;
 }
 main.section {
     padding: 0 20px;
@@ -247,3 +251,21 @@ input[type="checkbox"]:focus{
     box-shadow: none;
 }
 
+table {
+    color: #333; /* Lighten up font color */
+    font-family: Helvetica, Arial, sans-serif; /* Nicer font */
+    width: 30%;
+    border-collapse: collapse; border-spacing: 0;
+}
+
+td, th { border: 3px solid #CCC; height: 30px; } /* Make cells a bit taller */
+
+th {
+    background: #F3F3F3; /* Light grey background */
+    font-weight: bold; /* Make sure they're bold */
+}
+
+td {
+    background: #FAFAFA; /* Lighter grey background */
+    text-align: center; /* Center our text */
+}
