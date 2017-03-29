@@ -16,6 +16,7 @@ function doStuff() {
     var details = [
         "courses_dept",
         "courses_id",
+        "courses_section",
         "courses_avg",
         "courses_instructor",
         "courses_title",
