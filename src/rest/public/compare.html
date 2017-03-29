@@ -69,10 +69,10 @@
                 function compare()
                 {
                     alert("sample data graph will be shown");
-                    document.getElementById("chart_div").style.display = "";
+                    google.charts.load('current', {packages: ['corechart', 'bar']});
+                    google.charts.setOnLoadCallback(drawColColors);
                 }
-                google.charts.load('current', {packages: ['corechart', 'bar']});
-                google.charts.setOnLoadCallback(drawColColors);
+
 
                 function drawColColors() {
                     var data = new google.visualization.DataTable();
@@ -90,12 +90,12 @@
                         [{v: [14, 0, 0], f: '2 pm'}, 7, 4],
                         [{v: [15, 0, 0], f: '3 pm'}, 8, 5.25],
                         [{v: [16, 0, 0], f: '4 pm'}, 9, 7.5],
-                        [{v: [17, 0, 0], f: '5 pm'}, 10, 10],
+                        [{v: [17, 0, 0], f: '5 pm'}, 10, 10]
                     ]);
 
                     var options = {
                         title: 'Motivation and Energy Level Throughout the Day',
-                        colors: ['#9575cd', '#33ac71'],
+                        colors: ['#143B5E', '#BF2C2C'],
                         hAxis: {
                             title: 'Time of Day',
                             format: 'h:mm a',
@@ -109,15 +109,16 @@
                         }
                     };
 
+
+                    $("#placeholder").append("<div id='chart_div' style='height: 25em;'></div>");
                     var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
                     chart.draw(data, options);
                 }
 
             </script>
-
         </main>
-            <br><br>
-            <div id="chart_div" style="display: none;"></div>
+            <div id="placeholder"></div>
+            <br><br><br>
         </div>
 
     </div>
