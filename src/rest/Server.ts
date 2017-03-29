@@ -17,7 +17,7 @@ export default class Server {
     private rest: restify.Server;
 
     constructor(port: number) {
-        Log.info("Server::<init>( " + port + " )");
+        //Log.info("Server::<init>( " + port + " )");
         this.port = port;
     }
 
@@ -28,7 +28,7 @@ export default class Server {
      * @returns {Promise<boolean>}
      */
     public stop(): Promise<boolean> {
-        Log.info('Server::close()');
+        //Log.info('Server::close()');
         let that = this;
         return new Promise(function (fulfill) {
             try {

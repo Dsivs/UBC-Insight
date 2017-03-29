@@ -19,7 +19,7 @@ export default class Request
     // By updating the Server.echo function pointer above, these methods can be easily moved.
 
     public static echo(req: restify.Request, res: restify.Response, next: restify.Next) {
-        Log.trace('Server::echo(..) - params: ' + JSON.stringify(req.params));
+        //Log.trace('Server::echo(..) - params: ' + JSON.stringify(req.params));
 
         let promise = new Promise( function (fulfill, reject){
                 Request.handleReq(req).then( function(responding){
@@ -58,11 +58,11 @@ export default class Request
                         data = data.toString("base64");
                         insight.addDataset(req.params.id, data)
                             .then(function (respond: any) {
-                                Log.trace('PUT addDataSet THEN:');
+                                //Log.trace('PUT addDataSet THEN:');
                                 fulfill(respond);
                             })
                             .catch(function (err: any) {
-                                Log.trace('PUT addDataSet CATCH:');
+                                //Log.trace('PUT addDataSet CATCH:');
                                 reject(err);
                             });
                     } catch(err) {
@@ -80,10 +80,10 @@ export default class Request
                     //console.log("req.body = ");
                     //console.log(req.body);
                     insight.performQuery(req.body).then(function (res: any) {
-                        console.log("fulfill with res = " + res);
+                        //console.log("fulfill with res = " + res);
                         //fulfill(res);
                     }).catch(function (err: any) {
-                        console.log("request.ts reject");
+                        //console.log("request.ts reject");
                         //console.log(err);
                         reject(err);
                     });
