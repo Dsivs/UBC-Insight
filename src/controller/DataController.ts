@@ -128,7 +128,7 @@ export default class DataController {
                     for (let section of jsonObjResultProp) {
                         let year = parseInt(section.Year);
                         if (section.Section === "overall")
-                            year = 1900;
+                            continue;
 
                         finalResult.push(new Course(section.Subject,
                             section.Course,

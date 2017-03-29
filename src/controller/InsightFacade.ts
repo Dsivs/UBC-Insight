@@ -125,14 +125,19 @@ export default class InsightFacade implements IInsightFacade {
      *
      */
     performQuery(query: QueryRequest): Promise <InsightResponse> {
+        console.log("perform query called");
         const instance = this;
         return new Promise(function (fulfill, reject) {
             instance.queryController.performQuery(query, instance)
                 .then(function (result) {
+                    console.log("query ok");
                     fulfill(result)
                 })
                 .catch(function (err) {
+                    console.log("query rejected");
+                    console.log(err);
                     reject(err)
+
                 })
         })
     }

@@ -18,6 +18,7 @@ export default class Course {
     //The number of students that failed the course offering.
     courses_fail: number;
     //The number of students that audited the course offering.
+    courses_size: number;
     courses_audit: number;
     //the unique id of a course offering.
     courses_uuid: string;
@@ -34,6 +35,7 @@ export default class Course {
         this.courses_title = title;
         this.courses_pass = pass;
         this.courses_fail = fail;
+        this.courses_size = pass+fail;
         this.courses_audit = audit;
         this.courses_uuid = uuid;
         this.courses_year = year;
