@@ -5,6 +5,7 @@
     <link rel="stylesheet" type="text/css" href="main.css" media="screen" />
     <meta charset="UTF-8">
         <title>Course Explore</title>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script type="text/javascript" src="courseValidation.js"></script>
 
 </head>
@@ -137,8 +138,15 @@
             <input type="button" value="Clear" onclick="window.location.reload()">
             <input type="button" value = "Go Back To Homepage" onClick="location.href='index.html'"/>
         </form>
+
     </div>
-    <div class="content"></div>
+
+    <div class="content" id="result" style="display: none">
+        <h1>Your Query Result: </h1>
+        <hr>
+        <table id="tblResults"></table>
+        <hr>
+    </div>
 
 </div>
 </body>
