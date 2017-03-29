@@ -260,13 +260,13 @@ main.label::before {
 }
 
 #expandLarge {
-    height: 0px;
+    display: none;
+    height: auto;
     overflow: hidden;
-    transition: height 0.5s;
     color: #000000;
 }
 #sectionsToggle:checked ~ #expandLarge {
-    height: 350px;
+    display: block;
 }
 
 main.section {

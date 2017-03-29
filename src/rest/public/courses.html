@@ -5,7 +5,7 @@
     <link rel="stylesheet" type="text/css" href="main.css" media="screen" />
     <meta charset="UTF-8">
         <title>Course Explore</title>
-    <script language="JavaScript" type="text/javascript" src="courseValidation.js"></script>
+    <script type="text/javascript" src="courseValidation.js"></script>
 
 </head>
 <body>
@@ -76,53 +76,59 @@
             <hr>
                 <input id="sectionsToggle" name="sectionsToggle" value="1" type="checkbox">
                 <label for ="sectionsToggle">Group Sections</label>
-                <div id="expandLarge">
-                    <section>
-                        <hr>
-                        <input id="toggleMedium1" name="sizeToggle" value="1" type="checkbox">
-                        <label for="toggleMedium1" style="color: white">Specify course size</label>
-                        <div id="expandMedium1">
-                            <section>
-                                <label for="size" style="color: white">Enter a section size:</label>
-                                <input type="text" id="size" name="size" placeholder="100">
-                                <br>
-                                <input id = "over" name ="compType" value="1" type="radio" align="left" checked="checked">
-                                <label for = "over" style="color: white; align-content: left">OVER</label>
-                                <input id = "equal" name ="compType" value="2" type="radio" align="left">
-                                <label for = "equal" style="color: white; align-content: left">EQUAL</label>
-                                <input id = "less" name ="compType" value="3" type="radio" align="left">
-                                <label for = "less" style="color: white; align-content: left">LESS</label>
-                            </section>
-                        </div>
+                    <div id="expandLarge">
+                        <section>
+                            <hr>
+                            <input id="toggleMedium1" name="sizeToggle" value="1" type="checkbox">
+                            <label for="toggleMedium1" style="color: white">Specify course size</label>
+                            <div id="expandMedium1">
+                                <section>
+                                    <label for="size" style="color: white">Enter a section size:</label>
+                                    <input type="text" id="size" name="size" placeholder="100">
+                                    <br>
+                                    <input id = "over" name ="compType" value="1" type="radio" align="left" checked="checked">
+                                    <label for = "over" style="color: white; align-content: left">OVER</label>
+                                    <input id = "equal" name ="compType" value="2" type="radio" align="left">
+                                    <label for = "equal" style="color: white; align-content: left">EQUAL</label>
+                                    <input id = "less" name ="compType" value="3" type="radio" align="left">
+                                    <label for = "less" style="color: white; align-content: left">LESS</label>
+                                </section>
+                            </div>
 
-                        <div><br></div>
-                        <input id="toggleMedium2" name="titleToggle" value="1" type="checkbox">
-                        <label for="toggleMedium2" style="color: white">Specify a course title</label>
-                        <div id="expandMedium2">
-                            <section>
-                                <label for="title" style="color: white">Enter the course title:</label>
-                                <input type="text" id="title" name="title" placeholder="intr sftwr eng">
-                            </section>
-                        </div>
-                        <div><br></div>
+                            <div><br></div>
+                            <input id="toggleMedium2" name="titleToggle" value="1" type="checkbox">
+                            <label for="toggleMedium2" style="color: white">Specify a course title</label>
+                            <div id="expandMedium2">
+                                <section>
+                                    <label for="title" style="color: white">Enter the course title:</label>
+                                    <input type="text" id="title" name="title" placeholder="intr sftwr eng">
+                                </section>
+                            </div>
+                            <div><br></div>
 
-                        <h2 style="color: white">Sort Based On</h2>
-                        <div>
-                            <input id="byFail" name="sort" value="1" type="checkbox">
-                            <label for="byFail" style="color: white">Most Failing Students</label>
-                        </div>
-                        <div>
-                            <input id="byPass" name="sort" value="1" type="checkbox">
-                            <label for="byPass" style="color: white">Most Passing Students</label>
-                        </div>
-                        <div>
-                            <input id="byGrade" name="sort" value="1" type="checkbox">
-                            <label for="byGrade" style="color: white">Average Grade</label>
-                        </div>
+                            <h2 style="color: white">Sort Based On</h2>
+                            <div>
+                                <input id="byFail" name="byFail" value="1" type="checkbox">
+                                <label for="byFail" style="color: white">Most Failing Students</label>
+                            </div>
+                            <div>
+                                <input id="byPass" name="byPass" value="1" type="checkbox">
+                                <label for="byPass" style="color: white">Most Passing Students</label>
+                            </div>
+                            <div>
+                                <input id="byGrade" name="byGrade" value="1" type="checkbox">
+                                <label for="byGrade" style="color: white">Average Grade</label>
+                            </div>
+                            <div>
+                                <label style="color: black; align-content: left">Select A Query Type: </label>
+                                <input id = "ascending" name ="sortOrder" value="1" type="radio" align="left" checked="checked">
+                                <label for = "ascending" style="color: black; align-content: left" >Ascending</label>
+                                <input id = "descending" name ="sortOrder" value="2" type="radio" align="left">
+                                <label for = "descending" style="color: black; align-content: left">Descending</label>
+                            </div>
 
-
-                    </section>
-                </div>
+                        </section>
+                    </div>
             <hr>
 
             <input type="button" value="Submit" onclick= sure()>
