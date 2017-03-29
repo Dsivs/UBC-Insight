@@ -25,9 +25,11 @@ export default class Course {
     //the year the course was offered
     courses_year: number;
 
+    courses_section: number;
+
     static courseKeys = ["courses_dept", "courses_id", "courses_avg", "courses_instructor", "courses_title", "courses_pass", "courses_fail", "courses_audit", "courses_uuid", "courses_year"];
 
-    constructor(dept: string, id: string, avg: number, instructor: string, title: string, pass: number, fail: number, audit: number, uuid: string, year: number) {
+    constructor(dept: string, id: string, avg: number, instructor: string, title: string, pass: number, fail: number, audit: number, uuid: string, year: number, section: number) {
         this.courses_dept = dept;
         this.courses_id = id;
         this.courses_avg = avg;
@@ -39,5 +41,6 @@ export default class Course {
         this.courses_audit = audit;
         this.courses_uuid = uuid;
         this.courses_year = year;
+        this.courses_section = section;
     }
 }

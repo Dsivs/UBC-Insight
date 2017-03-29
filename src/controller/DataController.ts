@@ -139,7 +139,8 @@ export default class DataController {
                             section.Fail,
                             section.Audit,
                             section.id.toString(),
-                            year));
+                            year,
+                            section.Section));
                     }
                 }
             }

@@ -48,13 +48,17 @@ var InsightFacade = (function () {
         });
     };
     InsightFacade.prototype.performQuery = function (query) {
+        console.log("perform query called");
         var instance = this;
         return new Promise(function (fulfill, reject) {
             instance.queryController.performQuery(query, instance)
                 .then(function (result) {
+                console.log("query ok");
                 fulfill(result);
             })
                 .catch(function (err) {
+                console.log("query rejected");
+                console.log(err);
                 reject(err);
             });
         });
