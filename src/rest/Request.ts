@@ -52,8 +52,8 @@ export default class Request
                 case 'PUT':
                     //addData
                     let data = req.params.body;
-                    console.log("HI");
-                    console.log(data);
+                    //console.log("HI");
+                    //console.log(data);
                     try {
                         data = data.toString("base64");
                         insight.addDataset(req.params.id, data)
@@ -76,15 +76,15 @@ export default class Request
                     break;
                 case 'POST':
                     //post
-                    console.log("POST is called");
-                    console.log("req.body = ");
-                    console.log(req.body);
+                    //console.log("POST is called");
+                    //console.log("req.body = ");
+                    //console.log(req.body);
                     insight.performQuery(req.body).then(function (res: any) {
-                        console.log("fulfill with res = " + res);
+                        //console.log("fulfill with res = " + res);
                         fulfill(res);
                     }).catch(function (err: any) {
-                        console.log("request.ts reject");
-                        console.log(err);
+                        //console.log("request.ts reject");
+                        //console.log(err);
                         reject(err);
                     });
                     break;
