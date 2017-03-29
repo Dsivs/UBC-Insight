@@ -180,7 +180,7 @@ function doStuff() {
         }
         else if(isDistance && typeOfQuery == 2)
         {
-            generateTable(mergeArray(roomDistanceFilter(getAllRooms()), data.result), columns);
+            getAllRooms(data.result, columns, building_shortname);
         }
         else
         {
@@ -192,20 +192,33 @@ function doStuff() {
     });
 }
 
+
 function mergeArray(array_all, array_unique)
 {
+    var i = 0;
+    $.each(array_unique, function(){
+        if (array_unique[i] != null) {
+            var distance = getDis(array_unique[i].rooms_lat, array_unique[i].rooms_lon);
+            array_unique[i].distance = distance;
+        }
+        i++;
+    });
+
     console.log("mergeArray called");
     var merged = array_all.concat(array_unique);
-    var i = 0;
 
+
+    i = 0;
     //remove duplicate
     $.each(merged, function(){
         var j = i+1;
         $.each(merged, function(){
-           if (merged[i].rooms_name == merged[j].rooms_name)
-           {
-                merged.splice(j--,1);
-           }
+
+            if(merged[i] != null && merged[j] != null) {
+                if (merged[i].rooms_name == merged[j].rooms_name) {
+                    merged.splice(j--, 1);
+                }
+            }
             j++;
         });
         i++;
@@ -213,7 +226,7 @@ function mergeArray(array_all, array_unique)
     return merged;
 }
 
-function getAllRooms()
+function getAllRooms(array, columns, building_shortname)
 {
     console.log("getALLRooms()");
     var query = {
@@ -236,7 +249,9 @@ function getAllRooms()
         cache: false,
         contentType: 'application/json'
     }).done( function(data){
-        return data.result;
+        var merged = mergeArray(roomDistanceFilter(data.result), array);
+        columns.push("Distance to " + building_shortname);
+        generateTable(merged,columns);
     }).fail( function(err){
         alert(err.responseText);
         console.log(err);
@@ -291,15 +306,21 @@ function checkDistance(array, columns, building_shortname) {
     $.each(array, function(){
 
         if (array[i] != null) {
+
+
             var distance = getDis(array[i].rooms_lat, array[i].rooms_lon);
             console.log(distance + " > " + building_distance);
             array_temp[i].distance = distance;
+
         }
         i++;
     });
+
+
     i = 0;
 
     $.each(array, function(){
+
         if (array[i] != null) {
             if (array_temp[i].distance > building_distance) {
                 array_temp.splice(i, 1);
@@ -318,8 +339,6 @@ function checkDistance(array, columns, building_shortname) {
 
 
 function getDis(lat1, lon1) {
-    //Haversine formula, source1: https://en.wikipedia.org/wiki/Haversine_formula
-    //source2: https://en.wikipedia.org/wiki/Haversine_formula
     var lat2 = target_lat;
     var lon2 = target_lon;
     var p = 0.017453292519943295;    // Math.PI / 180
@@ -331,6 +350,21 @@ function getDis(lat1, lon1) {
     return 12742 * Math.asin(Math.sqrt(a)) * 1000; // 2 * R; R = 6371 km
 }
 
+
+function getDis_temp(lat,lon) {
+    var radius = 6371; // Radius of the earth in km
+    var dLat = (lat-target_lat) * (Math.PI/180);
+    var dLon = (lon-target_lon) * (Math.PI/180);
+
+    //Haversine formula, source1: https://en.wikipedia.org/wiki/Haversine_formula
+    //source2: https://en.wikipedia.org/wiki/Haversine_formula
+    var a =
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos((target_lat)* (Math.PI/180)) * Math.cos((lat)* (Math.PI/180)) *
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+    var distance = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return radius * distance * 1000;
+}
 
 function generateTable(data, columns) {
     var tbl_body = document.createElement("tbody");
