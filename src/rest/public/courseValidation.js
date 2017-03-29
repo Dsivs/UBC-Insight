@@ -112,7 +112,7 @@ function doStuff() {
         var title = formData.get("titleToggle");
         if (title == 1) {
             var titleVal = formData.get("title");
-            if (isEmpty(profVal)) {
+            if (isEmpty(titleVal)) {
                 emptyFieldAlert();
                 return;
             }

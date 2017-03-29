@@ -22,133 +22,139 @@
 <!------http://stackoverflow.com/questions/36975619/-------->
 
 
-<div class="wrap" align="center" style="background: #e6e6e6; border-radius: 15px;">
-    <div><br></div>
-    <div class="special" style="alignment: left; height: 10%" >
-        <form id="main-form" style="alignment: left">
+    <div class="wrap" align="center" style="background: #e6e6e6; border-radius: 15px;">
+        <div><br></div>
+        <div class="special" style="alignment: left; height: 10%" >
+            <form id="main-form" style="alignment: left">
 
-            <!-----
-            Show all rooms in building X.
-            Show all rooms within X meters of building X.
-            Show all rooms over size X.
-            Previous task within X meters of building X.
-            Show all rooms with type X or furniture X.
-            Previous task within X meters of building X.----->
+                <!-----
+                Show all rooms in building X.
+                Show all rooms within X meters of building X.
+                Show all rooms over size X.
+                Previous task within X meters of building X.
+                Show all rooms with type X or furniture X.
+                Previous task within X meters of building X.----->
 
-            <label>Please select or enter the course criteria:</label>
+                <label>Please select or enter the course criteria:</label>
 
-            <main>
-                <h2 style="color: black"><b>Course Query Engine V1.0</b></h2>
-
-
-                    <label style="color: black; align-content: left">Select A Query Type: </label>
-                    <input id = "and" name ="queryType" value="1" type="radio" align="left" checked="checked">
-                    <label for = "and" style="color: black; align-content: left" >AND</label>
-                    <input id = "or" name ="queryType" value="2" type="radio" align="left">
-                    <label for = "or" style="color: black; align-content: left">OR</label>
-                    <hr>
-
-                <!-----1--->
-
-                <input id="toggle1" name="deptToggle" value="1" type="checkbox">
-                <label for="toggle1" style="color: black">Specify a department</label>
-                <div id="expand1">
-                    <section>
-                        <label for="department">Enter The department Name:</label>
-                        <input type="text" id="department" name="department" placeholder="cpsc">
-                    </section>
-                </div>
-
-                <div><br></div>
-                <input id="toggle4" name="profToggle" value="1" type="checkbox">
-                <label for="toggle4" style="color: black">Specify a professor</label>
-                <div id="expand4">
-                    <section>
-                        <label for="profName">Instructor's name:</label>
-                        <input type="text" id="profName" name="profName" placeholder="John">
-                    </section>
-                </div>
-                <div><br></div>
-
-            </main>
+                <main>
+                    <h2 style="color: black"><b>Course Query Engine V1.0</b></h2>
 
 
-            <p></p>
-            <hr>
-                <input id="sectionsToggle" name="sectionsToggle" value="1" type="checkbox">
-                <label for ="sectionsToggle">Group Sections</label>
-                    <div id="expandLarge">
+                        <label style="color: black; align-content: left">Select A Query Type: </label>
+                        <input id = "and" name ="queryType" value="1" type="radio" align="left" checked="checked">
+                        <label for = "and" style="color: black; align-content: left" >AND</label>
+                        <input id = "or" name ="queryType" value="2" type="radio" align="left">
+                        <label for = "or" style="color: black; align-content: left">OR</label>
+                        <hr>
+
+                    <!-----1--->
+
+                    <input id="toggle1" name="deptToggle" value="1" type="checkbox">
+                    <label for="toggle1" style="color: black">Specify a department</label>
+                    <div id="expand1">
                         <section>
-                            <hr>
-                            <input id="toggleMedium1" name="sizeToggle" value="1" type="checkbox">
-                            <label for="toggleMedium1" style="color: white">Specify course size</label>
-                            <div id="expandMedium1">
-                                <section>
-                                    <label for="size" style="color: white">Enter a section size:</label>
-                                    <input type="text" id="size" name="size" placeholder="100">
-                                    <br>
-                                    <input id = "over" name ="compType" value="1" type="radio" align="left" checked="checked">
-                                    <label for = "over" style="color: white; align-content: left">OVER</label>
-                                    <input id = "equal" name ="compType" value="2" type="radio" align="left">
-                                    <label for = "equal" style="color: white; align-content: left">EQUAL</label>
-                                    <input id = "less" name ="compType" value="3" type="radio" align="left">
-                                    <label for = "less" style="color: white; align-content: left">LESS</label>
-                                </section>
-                            </div>
-
-                            <div><br></div>
-                            <input id="toggleMedium2" name="titleToggle" value="1" type="checkbox">
-                            <label for="toggleMedium2" style="color: white">Specify a course title</label>
-                            <div id="expandMedium2">
-                                <section>
-                                    <label for="title" style="color: white">Enter the course title:</label>
-                                    <input type="text" id="title" name="title" placeholder="intr sftwr eng">
-                                </section>
-                            </div>
-                            <div><br></div>
-
-                            <h2 style="color: white">Sort Based On</h2>
-                            <div>
-                                <input id="byFail" name="byFail" value="1" type="checkbox">
-                                <label for="byFail" style="color: white">Most Failing Students</label>
-                            </div>
-                            <div>
-                                <input id="byPass" name="byPass" value="1" type="checkbox">
-                                <label for="byPass" style="color: white">Most Passing Students</label>
-                            </div>
-                            <div>
-                                <input id="byGrade" name="byGrade" value="1" type="checkbox">
-                                <label for="byGrade" style="color: white">Average Grade</label>
-                            </div>
-
-                            <div><br></div>
-                            <div>
-                                <label style="color: white; align-content: left">Select Sort Order: </label>
-                                <input id = "ascending" name ="sortOrder" value="1" type="radio" align="left" checked="checked">
-                                <label for = "ascending" style="color: white; align-content: left" >Ascending</label>
-                                <input id = "descending" name ="sortOrder" value="2" type="radio" align="left">
-                                <label for = "descending" style="color: white; align-content: left">Descending</label>
-                            </div>
-
+                            <label for="department">Enter The department Name:</label>
+                            <input type="text" id="department" name="department" placeholder="cpsc">
                         </section>
                     </div>
+
+                    <div><br></div>
+                    <input id="toggle4" name="profToggle" value="1" type="checkbox">
+                    <label for="toggle4" style="color: black">Specify a professor</label>
+                    <div id="expand4">
+                        <section>
+                            <label for="profName">Instructor's name:</label>
+                            <input type="text" id="profName" name="profName" placeholder="John">
+                        </section>
+                    </div>
+                    <div><br></div>
+
+                </main>
+
+
+                <p></p>
+                <hr>
+                    <input id="sectionsToggle" name="sectionsToggle" value="1" type="checkbox">
+                    <label for ="sectionsToggle">Group Sections</label>
+                        <div id="expandLarge">
+                            <section>
+                                <hr>
+                                <input id="toggleMedium1" name="sizeToggle" value="1" type="checkbox">
+                                <label for="toggleMedium1" style="color: white">Specify course size</label>
+                                <div id="expandMedium1">
+                                    <section>
+                                        <label for="size" style="color: white">Enter a section size:</label>
+                                        <input type="text" id="size" name="size" placeholder="100">
+                                        <br>
+                                        <input id = "over" name ="compType" value="1" type="radio" align="left" checked="checked">
+                                        <label for = "over" style="color: white; align-content: left">OVER</label>
+                                        <input id = "equal" name ="compType" value="2" type="radio" align="left">
+                                        <label for = "equal" style="color: white; align-content: left">EQUAL</label>
+                                        <input id = "less" name ="compType" value="3" type="radio" align="left">
+                                        <label for = "less" style="color: white; align-content: left">LESS</label>
+                                    </section>
+                                </div>
+
+                                <div><br></div>
+                                <input id="toggleMedium2" name="titleToggle" value="1" type="checkbox">
+                                <label for="toggleMedium2" style="color: white">Specify a course title</label>
+                                <div id="expandMedium2">
+                                    <section>
+                                        <label for="title" style="color: white">Enter the course title:</label>
+                                        <input type="text" id="title" name="title" placeholder="intr sftwr eng">
+                                    </section>
+                                </div>
+                                <div><br></div>
+
+                                <h2 style="color: white">Sort Based On</h2>
+                                <div>
+                                    <input id="byFail" name="byFail" value="1" type="checkbox">
+                                    <label for="byFail" style="color: white">Most Failing Students</label>
+                                </div>
+                                <div>
+                                    <input id="byPass" name="byPass" value="1" type="checkbox">
+                                    <label for="byPass" style="color: white">Most Passing Students</label>
+                                </div>
+                                <div>
+                                    <input id="byGrade" name="byGrade" value="1" type="checkbox">
+                                    <label for="byGrade" style="color: white">Average Grade</label>
+                                </div>
+
+                                <div><br></div>
+                                <div>
+                                    <label style="color: white; align-content: left">Select Sort Order: </label>
+                                    <input id = "ascending" name ="sortOrder" value="1" type="radio" align="left" checked="checked">
+                                    <label for = "ascending" style="color: white; align-content: left" >Ascending</label>
+                                    <input id = "descending" name ="sortOrder" value="2" type="radio" align="left">
+                                    <label for = "descending" style="color: white; align-content: left">Descending</label>
+                                </div>
+
+                            </section>
+                        </div>
+                <hr>
+
+                <input type="button" value="Submit" onclick= sure()>
+                <input type="button" value="Clear" onclick= resetFields()>
+                <input type="button" value = "Go Back To Homepage" onClick="location.href='index.html'"/>
+            </form>
+
+        </div>
+
+        <div class="content" id="result" style="display: none">
+            <h1>Your Query Result: </h1>
             <hr>
-
-            <input type="button" value="Submit" onclick= sure()>
-            <input type="button" value="Clear" onclick="window.location.reload()">
-            <input type="button" value = "Go Back To Homepage" onClick="location.href='index.html'"/>
-        </form>
-
+            <table id="tblResults"></table>
+            <hr>
+        </div>
     </div>
 
-    <div class="content" id="result" style="display: none">
-        <h1>Your Query Result: </h1>
-        <hr>
-        <table id="tblResults"></table>
-        <hr>
-    </div>
-
-</div>
+    <script>
+        function resetFields() {
+            document.getElementById("main-form").reset();
+            document.getElementById("result").style.display = "none";
+        }
+    </script>
 </body>
 <footer>
     <p align="center">&copy; 2017 | John Peng, Michael Chen | All Rights Reserved</p>

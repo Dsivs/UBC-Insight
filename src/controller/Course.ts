@@ -39,7 +39,12 @@ export default class Course {
     courses_D: number; //50
     courses_F: number;
 
-    static courseKeys = ["courses_dept", "courses_id", "courses_avg", "courses_instructor", "courses_title", "courses_pass", "courses_fail", "courses_audit", "courses_uuid", "courses_year"];
+    static courseKeys = ["courses_dept", "courses_id", "courses_avg", "courses_instructor", "courses_title", "courses_pass", "courses_fail",
+        "courses_audit", "courses_uuid", "courses_year",
+        "courses_section", "courses_size",
+        "courses_APlus", "courses_A", "courses_AMinus",
+        "courses_BPlus", "courses_B", "courses_BMinus",
+        "courses_CPlus", "courses_C", "courses_CMinus", "courses_D", "courses_F"];
 
     constructor(dept: string, id: string, avg: number, instructor: string, title: string, pass: number, fail: number, audit: number, uuid: string, year: number, section: number) {
         this.courses_dept = dept;
