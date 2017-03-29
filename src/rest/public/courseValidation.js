@@ -41,7 +41,6 @@ function doStuff() {
     };
 
     var filter = [];
-    var columns = query.OPTIONS.COLUMNS;
 
     var form = document.getElementById("main-form");
     var formData = new FormData(form);
@@ -67,7 +66,12 @@ function doStuff() {
     }
 
     var group = formData.get("sectionsToggle");
+
+
     if (group == 1) {
+
+
+
         var tf = {
             GROUP: ["courses_dept", "courses_id"],
             APPLY: []
@@ -181,9 +185,76 @@ function doStuff() {
     }
 
 
+
+
     console.log("DONE");
 
     console.log(JSON.stringify(query, null, 4));
+
+    $.ajax({
+        url: 'http://localhost:63342/query',
+        type: 'POST',
+        data: JSON.stringify(query),
+        dataType: 'json',
+        crossOrigin: true,
+        cache: false,
+        contentType: 'application/json'
+    }).done( function(data){
+        //data will be the result json obj
+        console.log('response: ' + data);
+
+        generateTable(data.result, query.OPTIONS.COLUMNS);
+    }).fail( function(err){
+        alert(err.responseText);
+        console.log(err);
+    });
+
+}
+
+
+function generateTable(data, columns) {
+    var tbl_body = document.createElement("tbody");
+    var odd_even = false;
+    console.log("DATA", data);
+
+    if (data == null || data.length == 0)
+    {
+        alert("No Result Found, Please Try Search Something Else");
+        document.getElementById("tblResults").innerHTML = '';
+        document.getElementById("result").style.display = "none";
+    }
+    else {
+        document.getElementById("result").style.display = "";
+        if ($('#tblResults').children().length > 0)
+        {
+            document.getElementById("tblResults").innerHTML = '';
+        }
+        $.each(data, function () {
+            var tbl_row = tbl_body.insertRow();
+            tbl_row.className = odd_even ? "odd" : "even";
+            $.each(this, function (k, v) {
+                var cell = tbl_row.insertCell();
+                cell.appendChild(document.createTextNode(v.toString()));
+            });
+            odd_even = !odd_even;
+        });
+
+
+        var table = document.getElementById("tblResults");
+        var header = table.createTHead();
+        var row = header.insertRow(0);
+        var i = 0;
+        $.each(columns, function () {
+            var cell = row.insertCell();
+            cell.innerHTML = "<strong>" + columns[i].toString() + "</strong>";
+            i++;
+        });
+
+        //document.getElementById("tblResults").appendChild(tbl_head);
+        document.getElementById("tblResults").appendChild(tbl_body);
+        window.location = "#result";
+        // $("#tblResults").appendChild(tbl_body);
+    }
 }
 
 
