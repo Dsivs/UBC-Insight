@@ -17,7 +17,7 @@ export default class Server {
     private rest: restify.Server;
 
     constructor(port: number) {
-        //Log.info("Server::<init>( " + port + " )");
+        Log.info("Server::<init>( " + port + " )");
         this.port = port;
     }
 
@@ -28,7 +28,7 @@ export default class Server {
      * @returns {Promise<boolean>}
      */
     public stop(): Promise<boolean> {
-        //Log.info('Server::close()');
+        Log.info('Server::close()');
         let that = this;
         return new Promise(function (fulfill) {
             try {
@@ -60,8 +60,12 @@ export default class Server {
                 that.rest = restify.createServer({
                     name: 'insightUBC'
                 });
-            
+                // provides the echo service
+                // curl -is  http://localhost:4321/echo/myMessage
+                //that.rest.get('/echo/:msg', Request.echo);
+                //that.rest.use(restify.acceptParser(that.rest.acceptable));
                 that.rest.use(restify.bodyParser({mapParams: true, mapFiles: true}));
+
                 //debug
                 that.rest.use(
                     function crossOrigin(req,res,next){
@@ -71,6 +75,10 @@ export default class Server {
                         return next();
                     }
                 );
+
+
+
+
 
                 that.rest.get('/:name', restify.serveStatic({
                     'directory': __dirname + "/public",

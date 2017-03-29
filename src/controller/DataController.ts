@@ -130,17 +130,31 @@ export default class DataController {
                         if (section.Section === "overall")
                             continue;
 
-                        finalResult.push(new Course(section.Subject,
-                            section.Course,
-                            section.Avg,
-                            section.Professor,
-                            section.Title,
-                            section.Pass,
-                            section.Fail,
-                            section.Audit,
-                            section.id.toString(),
-                            year,
-                            section.Section));
+                        let course = new Course(section.Subject,
+                                                section.Course,
+                                                section.Avg,
+                                                section.Professor,
+                                                section.Title,
+                                                section.Pass,
+                                                section.Fail,
+                                                section.Audit,
+                                                section.id.toString(),
+                                                year,
+                                                section.Section);
+                        course.courses_APlus = section.tier_ninety;
+                        course.courses_A = section.tier_eighty_five;
+                        course.courses_AMinus = section.tier_eighty;
+                        course.courses_BPlus = section.tier_seventy_six;
+                        course.courses_B = section.tier_seventy_two;
+                        course.courses_BMinus = section.tier_sixty_eight;
+                        course.courses_CPlus = section.tier_sixty_four;
+                        course.courses_C = section.tier_sixty;
+                        course.courses_CMinus = section.tier_fifty_five;
+                        course.courses_D = section.tier_fifty;
+                        course.courses_F = section.tier_zero + section.tier_ten + section.tier_twenty + section.tier_thirty + section.tier_forty;
+
+
+                        finalResult.push(course);
                     }
                 }
             }
