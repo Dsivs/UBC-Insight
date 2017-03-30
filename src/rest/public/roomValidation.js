@@ -173,9 +173,14 @@ function doStuff() {
         //data will be the result json obj
         console.log('response: ' + data);
 
-        if (isDistance)
+        //query == and
+        if (isDistance && typeOfQuery == 1)
         {
             checkDistance(data.result, columns, building_shortname);
+        }
+        else if(isDistance && typeOfQuery == 2)
+        {
+            getAllRooms(data.result, columns, building_shortname);
         }
         else
         {
@@ -185,6 +190,102 @@ function doStuff() {
         alert(err.responseText);
         console.log(err);
     });
+}
+
+
+function mergeArray(array_all, array_unique)
+{
+    var i = 0;
+    $.each(array_unique, function(){
+        if (array_unique[i] != null) {
+            var distance = getDis(array_unique[i].rooms_lat, array_unique[i].rooms_lon);
+            array_unique[i].distance = distance;
+        }
+        i++;
+    });
+
+    console.log("mergeArray called");
+    var merged = array_all.concat(array_unique);
+
+
+    i = 0;
+    //remove duplicate
+    $.each(merged, function(){
+        var j = i+1;
+        $.each(merged, function(){
+
+            if(merged[i] != null && merged[j] != null) {
+                if (merged[i].rooms_name == merged[j].rooms_name) {
+                    merged.splice(j--, 1);
+                }
+            }
+            j++;
+        });
+        i++;
+    });
+    return merged;
+}
+
+function getAllRooms(array, columns, building_shortname)
+{
+    console.log("getALLRooms()");
+    var query = {
+        "WHERE": {
+        },
+        "OPTIONS": {
+            "COLUMNS": [
+                "rooms_fullname", "rooms_shortname", "rooms_number", "rooms_name", "rooms_address", "rooms_lat", "rooms_lon", "rooms_seats", "rooms_type", "rooms_furniture", "rooms_href"
+            ],
+            "FORM": "TABLE"
+        }
+    };
+
+    $.ajax({
+        url: 'http://localhost:63342/query',
+        type: 'POST',
+        data: JSON.stringify(query),
+        dataType: 'json',
+        crossOrigin: true,
+        cache: false,
+        contentType: 'application/json'
+    }).done( function(data){
+        var merged = mergeArray(roomDistanceFilter(data.result), array);
+        columns.push("Distance to " + building_shortname);
+        generateTable(merged,columns);
+    }).fail( function(err){
+        alert(err.responseText);
+        console.log(err);
+    });
+}
+
+function roomDistanceFilter(array)
+{
+    console.log("roomDistanceFilter(array) called");
+    var i = 0;
+
+    var array_temp = array.slice();
+
+    $.each(array, function(){
+
+        if (array[i] != null) {
+            var distance = getDis(array[i].rooms_lat, array[i].rooms_lon);
+            console.log(distance + " > " + building_distance);
+            array_temp[i].distance = distance;
+        }
+        i++;
+    });
+    i = 0;
+
+    $.each(array, function(){
+        if (array[i] != null) {
+            if (array_temp[i].distance > building_distance) {
+                array_temp.splice(i, 1);
+                i--;
+            }
+            i++;
+        }
+    });
+    return array_temp;
 }
 
 
