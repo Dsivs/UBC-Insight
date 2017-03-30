@@ -259,6 +259,16 @@ main.label::before {
     height: 80px;
 }
 
+#expandMedium3 {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.5s;
+    color: #000000;
+}
+#toggleMedium3:checked ~ #expandMedium3 {
+    height: 120px;
+}
+
 #expandLarge {
     display: none;
     height: auto;
