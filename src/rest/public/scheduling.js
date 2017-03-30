@@ -56,14 +56,29 @@ function scheduling()
 
     var courseFilters = [];
 
-    var course_dept = formData.get("dept");
     var course_num = formData.get("num");
 
-    if (course_dept.trim() != "")
-        courseFilters.push({IS: {courses_dept: course_dept}});
+    var dept = formData.get("deptToggle");
+    if (dept == 1) {
+        var deptVal = formData.get("dept");
+        if (isEmpty(deptVal)) {
+            emptyFieldAlert();
+            return;
+        }
 
-    if (course_num.trim() != "")
-        courseFilters.push({IS: {courses_id: course_num}});
+        courseFilters.push({IS: {courses_dept: deptVal}});
+    }
+
+    var num = formData.get("nameToggle");
+    if (num == 1) {
+        var numVal = formData.get("courseName");
+        if (isEmpty(numVal)) {
+            emptyFieldAlert();
+            return;
+        }
+
+        courseFilters.push({IS: {courses_id: numVal}});
+    }
 
     if (courseFilters.length > 0) {
         var courseQueryType = formData.get("courseQueryType");
@@ -73,12 +88,37 @@ function scheduling()
             courseQuery.WHERE.OR = courseFilters;
     }
 
-    var buildingVal = formData.get("building");
-    var meters = formData.get("meters");
-    var withinBuilding = formData.get("building");
+    var dis = formData.get("distanceToggle");
+    if (dis == 1) {
 
-    if (buildingVal.trim() != "")
-        roomQuery.WHERE = {IS: {rooms_shortname: buildingVal}};
+        var building_distance = formData.get("meter");
+
+        if (isEmpty(building_distance)) {
+            emptyFieldAlert();
+            return;
+        }
+
+        if (isNaN(building_distance)) {
+            alert("Distance must be a nonnegative number");
+            return;
+        }
+
+        building_distance = parseFloat(building_distance);
+
+        if (building_distance < 0) {
+            alert("Distance must be a nonnegative number");
+            return;
+        }
+
+        var building_shortname = formData.get("within");
+
+        if (isEmpty(building_shortname)) {
+            emptyFieldAlert();
+            return;
+        }
+
+        //do your distance thingy here
+    }
 
     console.log(JSON.stringify(courseQuery, null, 4));
     console.log(JSON.stringify(roomQuery, null, 4));
@@ -151,4 +191,12 @@ function generateTable(data, columns) {
         window.location = "#result";
         // $("#tblResults").appendChild(tbl_body);
     }
+}
+
+function isEmpty(someField) {
+    return (someField.trim() == "");
+}
+
+function emptyFieldAlert() {
+    alert("Please fill out the field");
 }

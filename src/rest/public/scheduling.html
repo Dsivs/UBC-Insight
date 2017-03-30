@@ -39,15 +39,26 @@
 
 
                             <!-----1--->
+                        <div><br></div>
 
-                                <section >
-                                    <label for="dept" style="color: black">Enter The Course Department:</label>
-                                    <input type="text" id="dept" name="dept" placeholder="cpsc">
+                            <input id="toggle1" name="deptToggle" value="1" type="checkbox">
+                            <label for="toggle1" style="color: black">Specify a department</label>
+                            <div id="expand1">
+                                <section>
+                                    <label for="department">Enter The Department Name:</label>
+                                    <input type="text" id="department" name="dept" placeholder="cpsc">
                                 </section>
-                                <section >
-                                    <label for="num" style="color: black">Enter The Course Number:</label>
-                                    <input type="text" id="num" name="num" placeholder="310">
+                            </div>
+
+                            <input id="toggle2" name="nameToggle" value="1" type="checkbox">
+                            <label for="toggle2" style="color: black">Specify a course number</label>
+                            <div id="expand2">
+                                <section>
+                                    <label for="num">Enter The Course Number:</label>
+                                    <input type="text" id="num" name="courseName" placeholder="310">
                                 </section>
+                            </div>
+                        <div><br></div>
                         <hr>
 
                         <h3 style="color: black"><b>Enter Building Info:</b></h3>
@@ -59,17 +70,27 @@
 
 
                         <!-----1--->
+                        <div><br></div>
 
-                        <section >
-                            <label for="building" style="color: black">Enter The Building Name:</label>
-                            <input type="text" id="building" name="building" placeholder="ESB">
-                        </section>
-                        <section >
-                            <label for="meters" style="color: black">Within</label>
-                            <input type="text" id="meters" name="meters" placeholder="50">
-                            <label for="withinBuilding" style="color: black">meters of building: </label>
-                            <input type="text" id="withinBuilding" name="withinBuilding" placeholder="DMP">
-                        </section>
+                        <input id="toggle3" value="1" name="buildingToggle" type="checkbox">
+                        <label for="toggle3" style="color: black">Specify a building</label>
+                        <div id="expand3">
+                            <section>
+                                <label for="building">Enter The Building Name:</label>
+                                <input type="text" id="building" name="building" placeholder="ESB">
+                            </section>
+                        </div>
+                        <div><br></div>
+                        <input id="toggleMedium2" value="1" name="distanceToggle" type="checkbox">
+                        <label for="toggleMedium2" style="color: black">Specify the room distance</label>
+                        <div id="expandMedium2">
+                            <section>
+                                <label for="meter">The room(s) should be within:</label>
+                                <input type="text" id="meter" name="meter" placeholder="300">
+                                <label for="within">metres of the building:</label>
+                                <input type="text" id="within" name="within" placeholder="ESB">
+                            </section>
+                        </div>
 
                         </main>
 
@@ -79,7 +100,7 @@
 
                     <p></p>
                     <input type="button" value="Submit" onclick=scheduling()>
-                    <input type="button" value="Clear" onclick="window.location.reload()">
+                    <input type="button" value="Clear" onclick= resetFields()>
                     <input type="button" value = "Go Back To Homepage" onClick="location.href='index.html'"/>
 
                 </form>
@@ -97,6 +118,13 @@
                 <hr>
             </div>
         </div>
+
+        <script>
+            function resetFields() {
+                document.getElementById("main-form").reset();
+                document.getElementById("result").style.display = "none";
+            }
+        </script>
 
 </body>
 <footer>
