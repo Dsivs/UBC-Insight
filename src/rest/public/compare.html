@@ -35,8 +35,8 @@
             </section>
             <hr>
             <h3 style="color: black;">I Want To Compare:</h3>
-            <input id="toggle1" name="deptToggle" value="1" type="checkbox">
-            <label for="toggle1" style="color: black">Different Sections</label>
+            <input id="toggle1" name="toggle" value="1" type="radio">
+            <label for="toggle1" style="color: black;">Different Sections</label>
             <div id="expand1">
                 <section>
                     <label for="sec1">Section 1:</label>
@@ -46,8 +46,10 @@
                 </section>
             </div>
 
-            <div><br></div>
-            <input id="toggle4" name="profToggle" value="1" type="checkbox">
+            <div><p>OR</p></div>
+
+
+            <input id="toggle4" name="toggle" value="1" type="radio">
             <label for="toggle4" style="color: black;">Different Instructors</label>
             <div id="expand4" >
                 <section>
@@ -77,10 +79,16 @@
                 function drawColColors() {
                     var data = new google.visualization.DataTable();
                     data.addColumn('timeofday', 'Time of Day');
+                    //this defines string in pop up window for bar1
                     data.addColumn('number', 'Motivation Level');
+                    //for bar2
                     data.addColumn('number', 'Energy Level');
 
+                    //bar graph value
                     data.addRows([
+
+                        //some little notes about this:
+                        //[{v: [x-axis position, x-position decimal, keep 0], f: 'x-axis label'}, bar1 point, bar2 point],
                         [{v: [8, 0, 0], f: '8 am'}, 1, .25],
                         [{v: [9, 0, 0], f: '9 am'}, 2, .5],
                         [{v: [10, 0, 0], f:'10 am'}, 3, 1],
@@ -90,7 +98,7 @@
                         [{v: [14, 0, 0], f: '2 pm'}, 7, 4],
                         [{v: [15, 0, 0], f: '3 pm'}, 8, 5.25],
                         [{v: [16, 0, 0], f: '4 pm'}, 9, 7.5],
-                        [{v: [17, 0, 0], f: '5 pm'}, 10, 10]
+                        [{v: [17, 0, 0], f: '5 pm'}, 9.8, 9.2]
                     ]);
 
                     var options = {
@@ -98,8 +106,10 @@
                         colors: ['#143B5E', '#BF2C2C'],
                         hAxis: {
                             title: 'Time of Day',
+                            //format needs to be changed
                             format: 'h:mm a',
                             viewWindow: {
+                                //min: [starting x-axis position, x-position decimal point , 0],
                                 min: [7, 30, 0],
                                 max: [17, 30, 0]
                             }
@@ -113,6 +123,7 @@
                     $("#placeholder").append("<div id='chart_div' style='height: 25em;'></div>");
                     var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
                     chart.draw(data, options);
+                    window.location = "#placeholder";
                 }
 
             </script>
