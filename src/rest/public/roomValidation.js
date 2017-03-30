@@ -198,8 +198,7 @@ function mergeArray(array_all, array_unique)
     var i = 0;
     $.each(array_unique, function(){
         if (array_unique[i] != null) {
-            var distance = getDis(array_unique[i].rooms_lat, array_unique[i].rooms_lon);
-            array_unique[i].distance = distance;
+            array_unique[i].distance = getDis(array_unique[i].rooms_lat, array_unique[i].rooms_lon);
         }
         i++;
     });
@@ -351,20 +350,6 @@ function getDis(lat1, lon1) {
 }
 
 
-function getDis_temp(lat,lon) {
-    var radius = 6371; // Radius of the earth in km
-    var dLat = (lat-target_lat) * (Math.PI/180);
-    var dLon = (lon-target_lon) * (Math.PI/180);
-
-    //Haversine formula, source1: https://en.wikipedia.org/wiki/Haversine_formula
-    //source2: https://en.wikipedia.org/wiki/Haversine_formula
-    var a =
-        Math.sin(dLat/2) * Math.sin(dLat/2) +
-        Math.cos((target_lat)* (Math.PI/180)) * Math.cos((lat)* (Math.PI/180)) *
-        Math.sin(dLon/2) * Math.sin(dLon/2);
-    var distance = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    return radius * distance * 1000;
-}
 
 function generateTable(data, columns) {
     var tbl_body = document.createElement("tbody");
