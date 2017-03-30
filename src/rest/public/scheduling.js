@@ -103,6 +103,7 @@ function scheduling()
         roomQuery.WHERE = {IS: {rooms_shortname: buildingVal}};
     }
 
+    var isDistanceCheck = false;
     var dis = formData.get("distanceToggle");
     if (dis == 1) {
 
@@ -132,6 +133,7 @@ function scheduling()
             return;
         }
         getTargetDis(building_shortname);
+        isDistanceCheck = true;
     }
 
     console.log(JSON.stringify(courseQuery, null, 4));
@@ -172,14 +174,14 @@ function scheduling()
 
         console.log("query room type = " + typeOfQuery);
         //room query = and
-        if (typeOfQuery == 3)
+        if (typeOfQuery == 3 && isDistanceCheck)
         {
             //FINAL room query for AND
             listOfRooms = checkDistance(data.result);
             console.log("FINAL room query for AND:");
             console.log(listOfRooms);
         }
-        else if (typeOfQuery == 4)
+        else if (typeOfQuery == 4 && isDistanceCheck)
         {
             //query type = OR
             var query = {
@@ -240,6 +242,7 @@ function roomDistanceFilter(array)
                 array_temp.splice(i, 1);
                 i--;
             }
+
             i++;
         }
     });
