@@ -458,17 +458,6 @@ function performSchedule(courses, rooms) {
     console.log(buildingSchedule);
     console.log(unscheduled);
 
-    coursesObj = {
-        "cpsc310": {
-            size: 20,
-            sections: 3
-        },
-        "cpsc110": {
-            size: 20,
-            sections: 3
-        }
-    }
-
 
     //PRINT THIS TO TABLE
     console.log(coursesObj);
@@ -576,10 +565,15 @@ function breakUpArray(buildingSchedule, rooms) {
                 TT: []
             }
         }
-        if (currentIndex%15 < 9)
+        if (currentIndex%15 < 9) {
             roomsSchedule[curRoom].MWF.push(buildingSchedule[i]);
-        else
+            roomsSchedule[curRoom].MWF.push(buildingSchedule[i]);
+        }
+        else {
             roomsSchedule[curRoom].TT.push(buildingSchedule[i]);
+            roomsSchedule[curRoom].TT.push(buildingSchedule[i]);
+            roomsSchedule[curRoom].TT.push(buildingSchedule[i]);
+        }
     }
 
     return roomsSchedule;
