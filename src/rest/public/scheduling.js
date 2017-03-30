@@ -88,6 +88,20 @@ function scheduling()
             courseQuery.WHERE.OR = courseFilters;
     }
 
+
+    var building = formData.get("buildingToggle");
+
+    if (building == 1) {
+        var buildingVal = formData.get("building");
+
+        if (isEmpty(buildingVal)) {
+            emptyFieldAlert();
+            return;
+        }
+
+        roomQuery.WHERE = {IS: {rooms_shortname: buildingVal}};
+    }
+
     var dis = formData.get("distanceToggle");
     if (dis == 1) {
 
@@ -142,9 +156,6 @@ function scheduling()
     });
 
     var listOfRooms;
-
-    alert("you want to schedule " + course_dept + "_" + course_num + " in building" + buildingVal + " within "
-        + meters +" meters of building " + withinBuilding);
 }
 
 
