@@ -5,6 +5,7 @@
 var building_distance;
 var target_lat;
 var target_lon;
+var room_list = [];
 
 function scheduling()
 {
@@ -471,12 +472,40 @@ function performSchedule(courses, rooms) {
     //FINAL ROOMS SCHEDULE
     var splitRooms = breakUpArray(buildingSchedule, rooms);
 
+
+    generateTimeTable(splitRooms);
+
+    console.log(splitRooms[0]);
+
+
     console.log(JSON.stringify(splitRooms, null, 4));
 
 }
 
 function getRoomFromIndex(index) {
     return Math.floor(index/15 );
+}
+
+
+function generateTimeTable(array)
+{
+
+    console.log("time table");
+    for (var room_name in array)
+    {
+        var mwf = [];
+        var tt = [];
+
+        if (array.hasOwnProperty(room_name)) {
+            console.log("room_name ==" + room_name);
+            var temp = array[room_name];
+            console.log(temp.MWF);
+            mwf = temp.MWF;
+            console.log(temp.TT);
+            tt = temp.TT;
+            singleTable(mwf,tt,room_name);
+        }
+    }
 }
 
 function processCourses(courses) {
@@ -553,12 +582,64 @@ function schedule(schedule, rooms, courseName, sections, size) {
     return sections+unScheduled;
 }
 
+function singleTable(mwf, tt, room_name)
+{
+    var time = ["08:00", "08:30", "09:00", "09:30","10:00", "10:30", "11:00",
+        "11:30", "12:00", "12:30","01:00", "01:30", "02:00", "02:30", "03:00",
+        "03:30", "04:00", "04:30"];
+    var header ="<tr><th></th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th></tr>";
+
+    console.log("single data:");
+    console.log(mwf);
+
+    $("#temp").append("<h2>"+"Schedule for room "+room_name+"</h2>");
+    var tbl=$("<table/>").attr("id",room_name);
+    var value = "#"+room_name;
+
+    $("#temp").append(tbl);
+    //5 = 5 days
+    for (var clock = 0; clock < time.length; clock++)
+    {
+        //console.log("HEREEEEE!");
+        if (clock == 0) {
+            $(value).append(header);
+        }
+        console.log(mwf[clock]);
+            var tr="<tr>";
+            var td1="<td>"+time[clock]+"</td>";
+            var td2=getContent(mwf[clock]);
+            var td3=getContent(tt[clock]);
+            var td4=getContent(mwf[clock]);
+            var td5=getContent(tt[clock]);
+            var td6=getContent(mwf[clock]);
+            var td7="</tr>";
+            $(value).append(tr+td1+td2+td3+td4+td5+td6+td7);
+    }
+}
+
+
+function getContent(content) {
+
+    if (content == null)
+        return "<td></td>";
+    else
+        return "<td>"+content+"</td>";
+}
+
 function breakUpArray(buildingSchedule, rooms) {
+
     var roomsSchedule = {};
 
     for (var i = 0; i < buildingSchedule.length; i++) {
+
         var currentIndex = i;
+
+
         var curRoom = rooms[getRoomFromIndex(currentIndex)]["rooms_name"];
+        //$("#temp").append("<h2>" + curRoom+ "</h2>");
+
+        room_list.push(curRoom);
+
         if (roomsSchedule[curRoom] == undefined) {
             roomsSchedule[curRoom] = {
                 MWF: [],
@@ -575,6 +656,8 @@ function breakUpArray(buildingSchedule, rooms) {
             roomsSchedule[curRoom].TT.push(buildingSchedule[i]);
         }
     }
+
+
 
     return roomsSchedule;
 
