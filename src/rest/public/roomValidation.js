@@ -423,7 +423,7 @@ function getTargetDis(shortname)
         contentType: 'application/json'
     }).done( function(data){
 
-        if (data != null && data.result[0] && data.result[0].rooms_lat!= null) {
+        if (data != null && data.result[0] != null && data.result[0].rooms_lat!= null) {
             target_lat = data.result[0].rooms_lat;
             target_lon = data.result[0].rooms_lon;
         }
