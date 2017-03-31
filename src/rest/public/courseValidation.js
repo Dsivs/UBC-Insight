@@ -185,13 +185,6 @@ function doStuff() {
             query.WHERE.OR = filter;
     }
 
-
-
-
-    console.log("DONE");
-
-    console.log(JSON.stringify(query, null, 4));
-
     $.ajax({
         url: 'http://localhost:63342/query',
         type: 'POST',
@@ -201,9 +194,6 @@ function doStuff() {
         cache: false,
         contentType: 'application/json'
     }).done( function(data){
-        //data will be the result json obj
-        console.log('response: ' + data);
-
         generateTable(data.result, query.OPTIONS.COLUMNS);
     }).fail( function(err){
         alert(err.responseText);
@@ -216,7 +206,6 @@ function doStuff() {
 function generateTable(data, columns) {
     var tbl_body = document.createElement("tbody");
     var odd_even = false;
-    console.log("DATA", data);
 
     if (data == null || data.length == 0)
     {

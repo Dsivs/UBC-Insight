@@ -142,8 +142,6 @@ function scheduling()
         isDistanceCheck = true;
     }
 
-    console.log(JSON.stringify(courseQuery, null, 4));
-    console.log(JSON.stringify(roomQuery, null, 4));
     var listOfCourses;
     var listOfRooms;
 
@@ -157,8 +155,6 @@ function scheduling()
         contentType: 'application/json'
     }).done( function(data){
         listOfCourses = data.result;
-        console.log(listOfCourses);
-        //generateTable(listOfCourses, courseQuery.OPTIONS.COLUMNS);
     }).fail( function(err){
         alert(err.responseText);
         console.log(err);
@@ -177,15 +173,9 @@ function scheduling()
         var array = data.result;
         var typeOfQuery = formData.get("roomQueryType");
 
-        console.log("query room type = " + typeOfQuery);
         //room query = and
         if (typeOfQuery == 3 && isDistanceCheck)
-        {
-            //FINAL room query for AND
             listOfRooms = checkDistance(data.result);
-            console.log("FINAL room query for AND:");
-            console.log(listOfRooms);
-        }
         else if (typeOfQuery == 4 && isDistanceCheck)
         {
             //query type = OR
@@ -212,21 +202,15 @@ function scheduling()
                 cache: false,
                 contentType: 'application/json'
             }).done( function(data){
-                //FINAL room query for OR
                 listOfRooms = mergeArray(roomDistanceFilter(data.result), array);
-                console.log("FINAL room query for OR");
-                console.log(listOfRooms);
             }).fail( function(err){
                 alert(err.responseText);
                 console.log(err);
             });
         }
         else
-        {
             listOfRooms = data.result;
-            console.log("FINAL ROOM DATA");
-            console.log(listOfRooms);
-        }
+
 
         performSchedule(listOfCourses, listOfRooms);
 
@@ -239,7 +223,6 @@ function scheduling()
 
 function roomDistanceFilter(array)
 {
-    console.log("roomDistanceFilter(array) called");
     var i = 0;
 
     var array_temp = array.slice();
@@ -248,7 +231,6 @@ function roomDistanceFilter(array)
 
         if (array[i] != null) {
             var distance = getDis(array[i].rooms_lat, array[i].rooms_lon);
-            console.log(distance + " > " + building_distance);
             array_temp[i].distance = distance;
         }
         i++;
@@ -278,7 +260,6 @@ function mergeArray(array_all, array_unique)
         i++;
     });
 
-    console.log("mergeArray called");
     var merged = array_all.concat(array_unique);
 
 
@@ -307,7 +288,6 @@ function checkDistance(array) {
     $.each(array, function(){
         if (array[i] != null) {
             var distance = getDis(array[i].rooms_lat, array[i].rooms_lon);
-            console.log(distance + " > " + building_distance);
             array_temp[i].distance = distance;
         }
         i++;
@@ -341,7 +321,6 @@ function getDis(lat1, lon1) {
 function generateTable(data, columns) {
     var tbl_body = document.createElement("tbody");
     var odd_even = false;
-    console.log("DATA", data);
 
     if (data == null || data.length == 0)
     {
@@ -422,9 +401,6 @@ function getTargetDis(shortname)
         contentType: 'application/json'
     }).done( function(data){
         //data will be the result json obj
-        console.log('target response: ' + data);
-        console.log(data);
-        console.log('target building lat = ' + data.result[0].rooms_lat + ", lon = " + data.result[0].rooms_lon);
         target_lat = data.result[0].rooms_lat;
         target_lon= data.result[0].rooms_lon;
     }).fail( function(err){
@@ -440,28 +416,16 @@ function performSchedule(courses, rooms) {
     var coursesObj = processCourses(courses);
     var totalSections = getTotalSections(coursesObj);
 
-    console.log(coursesObj);
-    console.log(totalSections);
-
     var unscheduled = 0;
 
     for (var course in coursesObj) {
         var sections = coursesObj[course].sections;
         var size = coursesObj[course].size;
 
-        //console.log(course + " " + sections + " " + size);
-
         unscheduled += schedule(buildingSchedule, rooms, course, sections, size);
     }
 
 
-
-    console.log(buildingSchedule);
-    console.log(unscheduled);
-
-
-    //PRINT THIS TO TABLE
-    console.log(coursesObj);
     var courseList = [];
 
     for (var key in coursesObj) {
@@ -474,12 +438,6 @@ function performSchedule(courses, rooms) {
 
     generateTable(courseList, ["Course Name", "Sections", "Size per Section"]);
 
-    console.log("Schedule Quality:");
-    console.log("Total Scheduled: " + (totalSections-unscheduled));
-    console.log("Total Unscheduled: " + unscheduled);
-    console.log("Percentage of unscheduled courses: " + unscheduled/totalSections);
-
-
     var quality = document.getElementById("quality");
     quality.innerHTML = "Total Scheduled: " + (totalSections-unscheduled) +
         "   |   Total Unscheduled: " + unscheduled +
@@ -490,15 +448,7 @@ function performSchedule(courses, rooms) {
 
     var roomsSize = toObj(rooms);
 
-    console.log(roomsSize);
-
     generateTimeTable(splitRooms, roomsSize);
-
-    console.log(splitRooms[0]);
-
-
-    console.log(JSON.stringify(splitRooms, null, 4));
-
 }
 
 function getRoomFromIndex(index) {
@@ -542,11 +492,8 @@ function processCourses(courses) {
 function getTotalSections(courses) {
     var sum = 0;
 
-    for (var key in courses) {
-        //console.log(key);
-        //console.log(courses[key]["sections"]);
+    for (var key in courses)
         sum += courses[key]["sections"];
-    }
 
     return sum;
 
@@ -561,10 +508,8 @@ function schedule(schedule, rooms, courseName, sections, size) {
     }
 
     while (sections > 0) {
-        //console.log(schedule);
         var currentIndex = schedule.length;
         var curRoom = rooms[getRoomFromIndex(currentIndex)];
-        //console.log(curRoom["rooms_name"]);
         if (curRoom == undefined) {
             return sections+unScheduled;
         }
@@ -583,7 +528,6 @@ function generateTimeTable(array, sizes)
 {
     $("#temp").empty();
 
-    console.log("time table");
     for (var room_name in array)
     {
         var size = sizes[room_name];
@@ -591,11 +535,8 @@ function generateTimeTable(array, sizes)
         var tt = [];
 
         if (array.hasOwnProperty(room_name)) {
-            console.log("room_name ==" + room_name);
             var temp = array[room_name];
-            console.log(temp.MWF);
             mwf = temp.MWF;
-            console.log(temp.TT);
             tt = temp.TT;
             singleTable(mwf,tt,room_name, size);
         }
@@ -609,12 +550,6 @@ function singleTable(mwf, tt, room_name, size)
         "03:30", "04:00", "04:30"];
     var header ="<tr><th></th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th></tr>";
 
-    console.log("single data:");
-    console.log(mwf);
-    console.log(tt);
-
-
-
     $("#temp").append("<h2>"+"Schedule for room "+room_name+ " | Seats: " + size + "</h2>");
     var tbl=$("<table/>").attr("id",room_name);
     var value = "#"+room_name;
@@ -627,11 +562,9 @@ function singleTable(mwf, tt, room_name, size)
 
     for (var clock = 0; clock < time.length; clock++)
     {
-        //console.log("HEREEEEE!");
         if (clock == 0) {
             $(value).append(header);
         }
-        //console.log(mwf[clock]);
 
             var tr="<tr>";
             var td1="<td>"+time[clock]+"</td>";

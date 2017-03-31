@@ -111,7 +111,6 @@ function sendQuery() {
     });
 
     var compType = formData.get("compType");
-    console.log(compType);
 
     if (compType == 2) {
         var prof1 = formData.get("profName1");
@@ -136,10 +135,59 @@ function sendQuery() {
             IS: {"courses_instructor": prof2}
         });
 
-        console.log(JSON.stringify(query2, null ,4));
-        console.log(JSON.stringify(query3, null ,4));
+        //console.log(JSON.stringify(query2, null ,4));
+        //console.log(JSON.stringify(query3, null ,4));
 
         //send query2 and query3
+        $.ajax({
+            url: 'http://localhost:63342/query',
+            type: 'POST',
+            data: JSON.stringify(query2),
+            dataType: 'json',
+            crossOrigin: true,
+            cache: false,
+            contentType: 'application/json'
+        }).done( function(data){
+            //console.log("FINAL: Multiple Requests Result:");
+            //console.log("query2:");
+            //console.log(data.result);
+
+            if (data.result.length == 0) {
+                alert("No results Found For First Instructor");
+                return;
+            }
+
+
+            data.result[0].instructor = prof1;
+
+            var data1 = data.result;
+
+            $.ajax({
+                url: 'http://localhost:63342/query',
+                type: 'POST',
+                data: JSON.stringify(query3),
+                dataType: 'json',
+                crossOrigin: true,
+                cache: false,
+                contentType: 'application/json'
+            }).done( function(data){
+                //console.log("query3:");
+                if (data.result.length == 0) {
+                    alert("No results Found For Second Instructor");
+                    return;
+                }
+                data.result[0].instructor = prof2;
+                //console.log(data.result);
+                compare(data1, data.result);
+            }).fail( function(err){
+                alert(err.responseText);
+                console.log(err);
+            });
+
+        }).fail( function(err){
+            alert(err.responseText);
+            console.log(err);
+        });
     }
     else if (compType == 3) {
         var dept2 = formData.get("dept2");
@@ -164,8 +212,8 @@ function sendQuery() {
         });
 
         //send query1 and query4
-        console.log(JSON.stringify(query1, null, 4));
-        console.log(JSON.stringify(query4, null, 4));
+        //console.log(JSON.stringify(query1, null, 4));
+        //console.log(JSON.stringify(query4, null, 4));
         $.ajax({
             url: 'http://localhost:63342/query',
             type: 'POST',
@@ -175,9 +223,15 @@ function sendQuery() {
             cache: false,
             contentType: 'application/json'
         }).done( function(data){
-            console.log("FINAL: Multiple Requests Result:");
-            console.log("query1:");
-            console.log(data.result);
+            //console.log("FINAL: Multiple Requests Result:");
+            //console.log("query1:");
+            //console.log(data.result);
+            if (data.result.length == 0) {
+                alert("No results Found For First Course");
+                return;
+            }
+
+            var data1 = data.result;
 
             $.ajax({
                 url: 'http://localhost:63342/query',
@@ -188,8 +242,12 @@ function sendQuery() {
                 cache: false,
                 contentType: 'application/json'
             }).done( function(data){
-                console.log("query4:");
-                console.log(data.result);
+                //console.log("query4:");
+                if (data.result.length == 0) {
+                    alert("No results Found For Second Course");
+                    return;
+                }
+                compare(data1, data.result);
             }).fail( function(err){
                 alert(err.responseText);
                 console.log(err);
@@ -203,8 +261,8 @@ function sendQuery() {
     }
     else {
         //send 1 request only with query1
-        console.log("HI");
-        console.log(JSON.stringify(query1, null, 4));
+        //console.log("HI");
+        //console.log(JSON.stringify(query1, null, 4));
 
 
         $.ajax({
@@ -216,8 +274,13 @@ function sendQuery() {
             cache: false,
             contentType: 'application/json'
         }).done( function(data){
-            console.log("FINAL: Single Request Result:");
-            console.log(data.result);
+            //console.log("FINAL: Single Request Result:");
+            //console.log(data.result);
+            if (data.result.length == 0) {
+                alert("No results Found For Course");
+                return;
+            }
+            compare(data.result);
         }).fail( function(err){
             alert(err.responseText);
             console.log(err);
@@ -228,70 +291,97 @@ function sendQuery() {
 }
 
 
-function compare()
+function compare(data1, data2)
 {
-    var query = {
-        "WHERE": {
-        },
-        "OPTIONS": {
-            "COLUMNS": details,
-            "FORM": "TABLE"
-        }
-    };
-
-    var filter = [];
-
-    var form = document.getElementById("main-form");
-    var formData = new FormData(form);
-
-    alert("sample data graph will be shown");
     google.charts.load('current', {packages: ['corechart', 'bar']});
-    google.charts.setOnLoadCallback(drawColColors);
+
+    if (data2 == undefined) {
+        google.charts.setOnLoadCallback(function() {
+            drawColColors(data1);
+        });
+    } else {
+        google.charts.setOnLoadCallback(function() {
+            drawColColors(data1, data2);
+        });
+    }
+
 }
 
 
-function drawColColors() {
+function drawColColors(data1, data2) {
+
     var data = new google.visualization.DataTable();
-    data.addColumn('timeofday', 'Time of Day');
-    //this defines string in pop up window for bar1
-    data.addColumn('number', 'Motivation Level');
+    data.addColumn('string', 'Grades');
+
+    //this defines string in pop up window for bar
+
+    if (data2 != undefined) {
+        if (data2[0].instructor != undefined) {
+            data.addColumn("number", data1[0].instructor);
+            data.addColumn("number", data2[0].instructor);
+        } else {
+            data.addColumn("number", data1[0].courses_dept + " " + data1[0].courses_id);
+            data.addColumn("number", data2[0].courses_dept + " " + data2[0].courses_id);
+        }
+    } else {
+        data.addColumn("number", data1[0].courses_dept + " " + data1[0].courses_id);
+    }
+
+
     //for bar2
-    data.addColumn('number', 'Energy Level');
+    //data.addColumn('number', 'Energy Level');
+
+    if (data2 == undefined) {
+        var size1 = data1[0].totalSize;
+
+        data.addRows([
+            //some little notes about this:
+            //[{v: [x-axis position, x-position decimal, keep 0], f: 'x-axis label'}, bar1 point, bar2 point],
+            ["F (0-49)",    data1[0].F/size1*100],
+            ["D (50-54)",   data1[0].D/size1*100],
+            ['C- (55-59)',  data1[0].CMinus/size1*100],
+            ['C (60-63)',   data1[0].C/size1*100],
+            ['C+ (64-67)',  data1[0].CPlus/size1*100],
+            ['B- (68-71)',  data1[0].BMinus/size1*100],
+            ['B (72-75)',   data1[0].B/size1*100],
+            ['B+ (76-79)',  data1[0].BPlus/size1*100],
+            ['A- (80-84)',  data1[0].AMinus/size1*100],
+            ['A (85-89)',   data1[0].A/size1*100],
+            ['A+ (90-100)', data1[0].APlus/size1*100]
+        ]);
+    } else {
+        var size1 = data1[0].totalSize;
+        var size2 = data2[0].totalSize;
+        data.addRows([
+            ["F (0-49)",    data1[0].F/size1*100,      data2[0].F/size2*100],
+            ["D (50-54)",   data1[0].D/size1*100,      data2[0].D/size2*100],
+            ['C- (55-59)',  data1[0].CMinus/size1*100, data2[0].CMinus/size2*100],
+            ['C (60-63)',   data1[0].C/size1*100,      data2[0].C/size2*100],
+            ['C+ (64-67)',  data1[0].CPlus/size1*100,  data2[0].CPlus/size2*100],
+            ['B- (68-71)',  data1[0].BMinus/size1*100, data2[0].BMinus/size2*100],
+            ['B (72-75)',   data1[0].B/size1*100,      data2[0].B/size2*100],
+            ['B+ (76-79)',  data1[0].BPlus/size1*100,  data2[0].BPlus/size2*100],
+            ['A- (80-84)',  data1[0].AMinus/size1*100, data2[0].AMinus/size2*100],
+            ['A (85-89)',   data1[0].A/size1*100,      data2[0].A/size2*100],
+            ['A+ (90-100)', data1[0].APlus/size1*100,  data2[0].APlus/size2*100]
+        ]);
+    }
 
     //bar graph value
-    data.addRows([
 
-        //some little notes about this:
-        //[{v: [x-axis position, x-position decimal, keep 0], f: 'x-axis label'}, bar1 point, bar2 point],
-        [{v: [8, 0, 0], f: '8 am'}, 1, .25],
-        [{v: [9, 0, 0], f: '9 am'}, 2, .5],
-        [{v: [10, 0, 0], f:'10 am'}, 3, 1],
-        [{v: [11, 0, 0], f: '11 am'}, 4, 2.25],
-        [{v: [12, 0, 0], f: '12 pm'}, 5, 2.25],
-        [{v: [13, 0, 0], f: '1 pm'}, 6, 3],
-        [{v: [14, 0, 0], f: '2 pm'}, 7, 4],
-        [{v: [15, 0, 0], f: '3 pm'}, 8, 5.25],
-        [{v: [16, 0, 0], f: '4 pm'}, 9, 7.5],
-        [{v: [17, 0, 0], f: '5 pm'}, 9.8, 9.2]
-    ]);
 
     var options = {
-        title: 'Motivation and Energy Level Throughout the Day',
+        title: 'Grade Distribution',
         colors: ['#143B5E', '#BF2C2C'],
         hAxis: {
-            title: 'Time of Day',
-            //format needs to be changed
-            format: 'h:mm a',
-            viewWindow: {
-                //min: [starting x-axis position, x-position decimal point , 0],
-                min: [7, 30, 0],
-                max: [17, 30, 0]
-            }
+            title: 'Grades'
         },
         vAxis: {
-            title: 'Rating (scale of 1-10)'
+            title: 'Percentage of People'
         }
     };
+
+
 
 
     $("#placeholder").append("<div id='chart_div' style='height: 25em;'></div>");

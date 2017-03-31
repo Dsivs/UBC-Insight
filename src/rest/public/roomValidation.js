@@ -45,12 +45,10 @@ function doStuff() {
             emptyFieldAlert();
             return;
         }
-        console.log(roomVal);
         array.push({"IS": {"rooms_number": roomVal}});
     }
 
     var building = formData.get("buildingToggle");
-    //console.log(building);
     if (building == 1) {
         var buildingVal = formData.get("building");
         if (isEmpty(buildingVal)) {
@@ -61,7 +59,6 @@ function doStuff() {
     }
 
     var size = formData.get("sizeToggle");
-    console.log(size);
     if (size == 1) {
         var compType = formData.get("compType");
         var sizeVal = formData.get("size");
@@ -101,7 +98,6 @@ function doStuff() {
 
         array.push({"IS": {"rooms_type": roomTypeVal}});
     }
-    //console.log(roomType);
 
     var furniture = formData.get("furnitureToggle");
     if (furniture == 1) {
@@ -159,7 +155,6 @@ function doStuff() {
         getTargetDis(building_shortname);
     }
 
-    console.log(JSON.stringify(query, null, 4));
 
     $.ajax({
         url: 'http://localhost:63342/query',
@@ -170,10 +165,7 @@ function doStuff() {
         cache: false,
         contentType: 'application/json'
     }).done( function(data){
-        //data will be the result json obj
-        console.log('response: ' + data);
 
-        //query == and
         if (isDistance && typeOfQuery == 1)
         {
             checkDistance(data.result, columns, building_shortname);
@@ -203,7 +195,6 @@ function mergeArray(array_all, array_unique)
         i++;
     });
 
-    console.log("mergeArray called");
     var merged = array_all.concat(array_unique);
 
 
@@ -227,7 +218,6 @@ function mergeArray(array_all, array_unique)
 
 function getAllRooms(array, columns, building_shortname)
 {
-    console.log("getALLRooms()");
     var query = {
         "WHERE": {
         },
@@ -259,7 +249,6 @@ function getAllRooms(array, columns, building_shortname)
 
 function roomDistanceFilter(array)
 {
-    console.log("roomDistanceFilter(array) called");
     var i = 0;
 
     var array_temp = array.slice();
@@ -268,7 +257,6 @@ function roomDistanceFilter(array)
 
         if (array[i] != null) {
             var distance = getDis(array[i].rooms_lat, array[i].rooms_lon);
-            console.log(distance + " > " + building_distance);
             array_temp[i].distance = distance;
         }
         i++;
@@ -308,7 +296,6 @@ function checkDistance(array, columns, building_shortname) {
 
 
             var distance = getDis(array[i].rooms_lat, array[i].rooms_lon);
-            console.log(distance + " > " + building_distance);
             array_temp[i].distance = distance;
 
         }
@@ -330,8 +317,6 @@ function checkDistance(array, columns, building_shortname) {
         }
     });
 
-    //console.log("HERE!!");
-    //console.log(array);
     columns.push("Distance to " + building_shortname);
     generateTable(array_temp, columns);
 }
@@ -354,7 +339,6 @@ function getDis(lat1, lon1) {
 function generateTable(data, columns) {
     var tbl_body = document.createElement("tbody");
     var odd_even = false;
-    console.log("DATA", data);
 
     if (data == null || data.length == 0)
     {
@@ -426,10 +410,7 @@ function getTargetDis(shortname)
         cache: false,
         contentType: 'application/json'
     }).done( function(data){
-        //data will be the result json obj
-        console.log('target response: ' + data);
-        console.log(data);
-        console.log('target building lat = ' + data.result[0].rooms_lat + ", lon = " + data.result[0].rooms_lon);
+
         target_lat = data.result[0].rooms_lat;
         target_lon= data.result[0].rooms_lon;
     }).fail( function(err){
