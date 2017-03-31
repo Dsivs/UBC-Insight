@@ -4,6 +4,7 @@
     <link rel="stylesheet" type="text/css" href="main.css" media="screen" />
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
     <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+    <script type="text/javascript" src="compare.js"></script>
     <meta charset="UTF-8">
         <title>Grades Explorer</title>
 </head>
@@ -22,6 +23,7 @@
 
         <div>
         <main>
+        <form id="main-form">
             <h2 style="color: black"><b>Graphing Engine</b></h2>
             <hr>
             <h3 style="color: black;">Enter The Course Info:</h3>
@@ -39,24 +41,24 @@
 
             <h3 style="color: black;">I Want To Compare:</h3>
 
-            <input id="noComp" name="compType" value="1" type="radio">
+            <input id="noComp" name="compType" value="1" type="radio" checked="checked">
             <label for="noComp" style="color: black">Don't Compare</label>
             <div><br></div>
 
-            <input id="toggle1" name="compType" value="1" type="radio">
+            <input id="toggle1" name="compType" value="2" type="radio">
             <label for="toggle1" style="color: black">Between Instructors</label>
             <div id="expand1">
 
                 <section>
                     <label for="prof1">Prof 1:</label>
-                    <input type="text" id="prof1" name="profName" placeholder="Reid Holmes">
+                    <input type="text" id="prof1" name="profName1" placeholder="Reid Holmes">
                     <label for="prof2">Prof 2:</label>
-                    <input type="text" id="prof2" name="profName" placeholder="Elisa Baniassad">
+                    <input type="text" id="prof2" name="profName2" placeholder="Elisa Baniassad">
                 </section>
             </div>
 
             <div><br></div>
-            <input id="toggleMedium3" name="compType" value="2" type="radio">
+            <input id="toggleMedium3" name="compType" value="3" type="radio">
             <label for="toggleMedium3" style="color: black;">With another Course</label>
             <div id="expandMedium3" >
                 <section >
@@ -72,74 +74,22 @@
             <div><br></div>
 
             <p></p>
-            <button class="abutton" onclick="compare()">Submit</button>
-            <br>
-            <button class="abutton" onclick=" window.location.href='index.html'">Home</button>
+            <input type="button" value = "Submit" onclick= sendQuery()>
+            <input type="button" value="Clear" onclick= resetFields()>
+            <input type="button" value = "Go Back To Homepage" onClick="location.href='index.html'"/>
 
-            <script>
-                function compare()
-                {
-                    alert("sample data graph will be shown");
-                    google.charts.load('current', {packages: ['corechart', 'bar']});
-                    google.charts.setOnLoadCallback(drawColColors);
-                }
-
-
-                function drawColColors() {
-                    var data = new google.visualization.DataTable();
-                    data.addColumn('timeofday', 'Time of Day');
-                    //this defines string in pop up window for bar1
-                    data.addColumn('number', 'Motivation Level');
-                    //for bar2
-                    data.addColumn('number', 'Energy Level');
-
-                    //bar graph value
-                    data.addRows([
-
-                        //some little notes about this:
-                        //[{v: [x-axis position, x-position decimal, keep 0], f: 'x-axis label'}, bar1 point, bar2 point],
-                        [{v: [8, 0, 0], f: '8 am'}, 1, .25],
-                        [{v: [9, 0, 0], f: '9 am'}, 2, .5],
-                        [{v: [10, 0, 0], f:'10 am'}, 3, 1],
-                        [{v: [11, 0, 0], f: '11 am'}, 4, 2.25],
-                        [{v: [12, 0, 0], f: '12 pm'}, 5, 2.25],
-                        [{v: [13, 0, 0], f: '1 pm'}, 6, 3],
-                        [{v: [14, 0, 0], f: '2 pm'}, 7, 4],
-                        [{v: [15, 0, 0], f: '3 pm'}, 8, 5.25],
-                        [{v: [16, 0, 0], f: '4 pm'}, 9, 7.5],
-                        [{v: [17, 0, 0], f: '5 pm'}, 9.8, 9.2]
-                    ]);
-
-                    var options = {
-                        title: 'Motivation and Energy Level Throughout the Day',
-                        colors: ['#143B5E', '#BF2C2C'],
-                        hAxis: {
-                            title: 'Time of Day',
-                            //format needs to be changed
-                            format: 'h:mm a',
-                            viewWindow: {
-                                //min: [starting x-axis position, x-position decimal point , 0],
-                                min: [7, 30, 0],
-                                max: [17, 30, 0]
-                            }
-                        },
-                        vAxis: {
-                            title: 'Rating (scale of 1-10)'
-                        }
-                    };
-
-
-                    $("#placeholder").append("<div id='chart_div' style='height: 25em;'></div>");
-                    var chart = new google.visualization.ColumnChart(document.getElementById('chart_div'));
-                    chart.draw(data, options);
-                    window.location = "#placeholder";
-                }
-
-            </script>
+        </form>
         </main>
             <div id="placeholder"></div>
             <br><br><br>
         </div>
+
+        <script>
+            function resetFields() {
+                document.getElementById("main-form").reset();
+                //document.getElementById("result").style.display = "none";
+            }
+        </script>
 
     </div>
 </body>
