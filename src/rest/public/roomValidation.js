@@ -112,9 +112,10 @@ function doStuff() {
         array.push({"IS": {"rooms_furniture": furnitureVal}});
     }
 
+
     //1 = AND, 2 = OR
+    var typeOfQuery = formData.get("type");
     if (array.length > 0) {
-        var typeOfQuery = formData.get("type");
         if (typeOfQuery == 1)
             query.WHERE.AND = array;
         else
@@ -166,16 +167,28 @@ function doStuff() {
         contentType: 'application/json'
     }).done( function(data){
 
-        if (isDistance && typeOfQuery == 1)
+
+        console.log("initial data");
+        console.log(data.result);
+        if(isDistance && target_lat == null)
         {
+            alert("Invalid Building Name");
+            document.getElementById("tblResults").innerHTML = '';
+            document.getElementById("result").style.display = "none";
+        }
+        else if (isDistance && typeOfQuery == 1)
+        {
+            console.log("AND distance");
             checkDistance(data.result, columns, building_shortname);
         }
         else if(isDistance && typeOfQuery == 2)
         {
+            console.log("OR distance");
             getAllRooms(data.result, columns, building_shortname);
         }
         else
         {
+            console.log("else type= " +typeOfQuery);
             generateTable(data.result, columns);
         }
     }).fail( function(err){
@@ -400,7 +413,6 @@ function getTargetDis(shortname)
     columns.push("rooms_lat");
     columns.push("rooms_lon");
 
-
     $.ajax({
         url: 'http://localhost:63342/query',
         type: 'POST',
@@ -411,8 +423,10 @@ function getTargetDis(shortname)
         contentType: 'application/json'
     }).done( function(data){
 
-        target_lat = data.result[0].rooms_lat;
-        target_lon= data.result[0].rooms_lon;
+        if (data != null && data.result[0] && data.result[0].rooms_lat!= null) {
+            target_lat = data.result[0].rooms_lat;
+            target_lon = data.result[0].rooms_lon;
+        }
     }).fail( function(err){
         alert(err.responseText);
         console.log(err);
