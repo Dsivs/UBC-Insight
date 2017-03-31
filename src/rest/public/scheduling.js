@@ -158,7 +158,7 @@ function scheduling()
     }).done( function(data){
         listOfCourses = data.result;
         console.log(listOfCourses);
-        generateTable(listOfCourses, courseQuery.OPTIONS.COLUMNS);
+        //generateTable(listOfCourses, courseQuery.OPTIONS.COLUMNS);
     }).fail( function(err){
         alert(err.responseText);
         console.log(err);
@@ -462,6 +462,17 @@ function performSchedule(courses, rooms) {
 
     //PRINT THIS TO TABLE
     console.log(coursesObj);
+    var courseList = [];
+
+    for (var key in coursesObj) {
+        courseList.push({
+            "Course Name": key,
+            "Sections": coursesObj[key].sections,
+            "Size per Section": coursesObj[key].size
+        })
+    }
+
+    generateTable(courseList, ["Course Name", "Sections", "Size per Section"]);
 
     console.log("Schedule Quality:");
     console.log("Total Scheduled: " + (totalSections-unscheduled));
@@ -469,11 +480,19 @@ function performSchedule(courses, rooms) {
     console.log("Percentage of unscheduled courses: " + unscheduled/totalSections);
 
 
+    var quality = document.getElementById("quality");
+    quality.innerHTML = "Total Scheduled: " + (totalSections-unscheduled) +
+        "   |   Total Unscheduled: " + unscheduled +
+        "   |   Percentage of unscheduled courses: " + unscheduled/totalSections*100+"%";
+
     //FINAL ROOMS SCHEDULE
     var splitRooms = breakUpArray(buildingSchedule, rooms);
 
+    var roomsSize = toObj(rooms);
 
-    generateTimeTable(splitRooms);
+    console.log(roomsSize);
+
+    generateTimeTable(splitRooms, roomsSize);
 
     console.log(splitRooms[0]);
 
@@ -484,28 +503,6 @@ function performSchedule(courses, rooms) {
 
 function getRoomFromIndex(index) {
     return Math.floor(index/15 );
-}
-
-
-function generateTimeTable(array)
-{
-
-    console.log("time table");
-    for (var room_name in array)
-    {
-        var mwf = [];
-        var tt = [];
-
-        if (array.hasOwnProperty(room_name)) {
-            console.log("room_name ==" + room_name);
-            var temp = array[room_name];
-            console.log(temp.MWF);
-            mwf = temp.MWF;
-            console.log(temp.TT);
-            tt = temp.TT;
-            singleTable(mwf,tt,room_name);
-        }
-    }
 }
 
 function processCourses(courses) {
@@ -582,7 +579,30 @@ function schedule(schedule, rooms, courseName, sections, size) {
     return sections+unScheduled;
 }
 
-function singleTable(mwf, tt, room_name)
+function generateTimeTable(array, sizes)
+{
+    $("#temp").empty();
+
+    console.log("time table");
+    for (var room_name in array)
+    {
+        var size = sizes[room_name];
+        var mwf = [];
+        var tt = [];
+
+        if (array.hasOwnProperty(room_name)) {
+            console.log("room_name ==" + room_name);
+            var temp = array[room_name];
+            console.log(temp.MWF);
+            mwf = temp.MWF;
+            console.log(temp.TT);
+            tt = temp.TT;
+            singleTable(mwf,tt,room_name, size);
+        }
+    }
+}
+
+function singleTable(mwf, tt, room_name, size)
 {
     var time = ["08:00", "08:30", "09:00", "09:30","10:00", "10:30", "11:00",
         "11:30", "12:00", "12:30","01:00", "01:30", "02:00", "02:30", "03:00",
@@ -591,39 +611,74 @@ function singleTable(mwf, tt, room_name)
 
     console.log("single data:");
     console.log(mwf);
+    console.log(tt);
 
-    $("#temp").append("<h2>"+"Schedule for room "+room_name+"</h2>");
+
+
+    $("#temp").append("<h2>"+"Schedule for room "+room_name+ " | Seats: " + size + "</h2>");
     var tbl=$("<table/>").attr("id",room_name);
     var value = "#"+room_name;
 
     $("#temp").append(tbl);
     //5 = 5 days
+
+    var mfwIndex = 0;
+    var ttIndex = 0;
+
     for (var clock = 0; clock < time.length; clock++)
     {
         //console.log("HEREEEEE!");
         if (clock == 0) {
             $(value).append(header);
         }
-        console.log(mwf[clock]);
+        //console.log(mwf[clock]);
+
             var tr="<tr>";
             var td1="<td>"+time[clock]+"</td>";
-            var td2=getContent(mwf[clock]);
-            var td3=getContent(tt[clock]);
-            var td4=getContent(mwf[clock]);
-            var td5=getContent(tt[clock]);
-            var td6=getContent(mwf[clock]);
+
             var td7="</tr>";
-            $(value).append(tr+td1+td2+td3+td4+td5+td6+td7);
+
+            if (clock%2 == 0 || clock%3 == 0) {
+
+                if (clock%6 == 0) {
+                    var td2=getContent(mwf[mfwIndex], 2);
+                    var td4=getContent(mwf[mfwIndex], 2);
+                    var td6=getContent(mwf[mfwIndex], 2);
+                    mfwIndex++;
+                    var td3 = getContent(tt[ttIndex], 3);
+                    var td5 = getContent(tt[ttIndex], 3);
+                    ttIndex++;
+                    $(value).append(tr + td1 + td2 + td3 + td4 + td5 + td6 + td7);
+                } else if (clock%2 == 0) {
+                    var td2=getContent(mwf[mfwIndex], 2);
+                    var td4=getContent(mwf[mfwIndex], 2);
+                    var td6=getContent(mwf[mfwIndex], 2);
+                    mfwIndex++;
+                    $(value).append(tr + td1 + td2 + td4 + td6 + td7);
+                } else {
+                    var td3 = getContent(tt[ttIndex], 3);
+                    var td5 = getContent(tt[ttIndex], 3);
+                    ttIndex++;
+                    $(value).append(tr + td1 + td3 + td5 + td7);
+                }
+            } else
+                $(value).append(tr + td1 + td7);
     }
 }
 
 
-function getContent(content) {
+function getContent(content, rowspan) {
 
-    if (content == null)
-        return "<td></td>";
+    if (content == null) {
+        if (rowspan == 2)
+            return "<td rowspan='2'></td>";
+        else
+            return "<td rowspan='3'></td>";
+    }
+    else if (rowspan == 2)
+        return "<td rowspan='2'>"+content+"</td>";
     else
-        return "<td>"+content+"</td>";
+        return "<td rowspan='3'>"+content+"</td>";
 }
 
 function breakUpArray(buildingSchedule, rooms) {
@@ -636,7 +691,6 @@ function breakUpArray(buildingSchedule, rooms) {
 
 
         var curRoom = rooms[getRoomFromIndex(currentIndex)]["rooms_name"];
-        //$("#temp").append("<h2>" + curRoom+ "</h2>");
 
         room_list.push(curRoom);
 
@@ -648,11 +702,8 @@ function breakUpArray(buildingSchedule, rooms) {
         }
         if (currentIndex%15 < 9) {
             roomsSchedule[curRoom].MWF.push(buildingSchedule[i]);
-            roomsSchedule[curRoom].MWF.push(buildingSchedule[i]);
         }
         else {
-            roomsSchedule[curRoom].TT.push(buildingSchedule[i]);
-            roomsSchedule[curRoom].TT.push(buildingSchedule[i]);
             roomsSchedule[curRoom].TT.push(buildingSchedule[i]);
         }
     }
@@ -661,4 +712,14 @@ function breakUpArray(buildingSchedule, rooms) {
 
     return roomsSchedule;
 
+}
+
+function toObj(rooms) {
+    var temp = {};
+
+    for (var i = 0; i < rooms.length; i++) {
+        temp[rooms[i].rooms_name] = rooms[i].rooms_seats;
+    }
+
+    return temp;
 }
