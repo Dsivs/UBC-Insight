@@ -166,11 +166,63 @@ function sendQuery() {
         //send query1 and query4
         console.log(JSON.stringify(query1, null, 4));
         console.log(JSON.stringify(query4, null, 4));
+        $.ajax({
+            url: 'http://localhost:63342/query',
+            type: 'POST',
+            data: JSON.stringify(query1),
+            dataType: 'json',
+            crossOrigin: true,
+            cache: false,
+            contentType: 'application/json'
+        }).done( function(data){
+            console.log("FINAL: Multiple Requests Result:");
+            console.log("query1:");
+            console.log(data.result);
+
+            $.ajax({
+                url: 'http://localhost:63342/query',
+                type: 'POST',
+                data: JSON.stringify(query4),
+                dataType: 'json',
+                crossOrigin: true,
+                cache: false,
+                contentType: 'application/json'
+            }).done( function(data){
+                console.log("query4:");
+                console.log(data.result);
+            }).fail( function(err){
+                alert(err.responseText);
+                console.log(err);
+            });
+
+        }).fail( function(err){
+            alert(err.responseText);
+            console.log(err);
+        });
+
     }
     else {
         //send 1 request only with query1
         console.log("HI");
         console.log(JSON.stringify(query1, null, 4));
+
+
+        $.ajax({
+            url: 'http://localhost:63342/query',
+            type: 'POST',
+            data: JSON.stringify(query1),
+            dataType: 'json',
+            crossOrigin: true,
+            cache: false,
+            contentType: 'application/json'
+        }).done( function(data){
+            console.log("FINAL: Single Request Result:");
+            console.log(data.result);
+        }).fail( function(err){
+            alert(err.responseText);
+            console.log(err);
+        });
+
     }
 
 }
