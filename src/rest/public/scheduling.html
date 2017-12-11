@@ -4,7 +4,7 @@
 <head>
     <link rel="stylesheet" type="text/css" href="main.css" media="screen" />
     <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
-    <script language="JavaScript" type="text/javascript" src="formValidation.js"></script>
+    <script language="JavaScript" type="text/javascript" src="roomValidation.js"></script>
     <meta charset="UTF-8">
         <title>Course Scheduling</title>
 </head>
@@ -14,6 +14,7 @@
 <div class="wrap" style="background: #767676; border-radius: 5px;">
     <img src="pics/scheduling.jpg" width = 100%>
     <h1 align="center">Course Scheduling</h1>
+    <script language="JavaScript" type="text/javascript" src="scheduling.js"></script>
     <hr>
 </div>
         <div class="wrap" align="center" style="background: #e6e6e6; border-radius: 15px;">
@@ -24,101 +25,105 @@
                 <form id="main-form">
 
                     <label>Please select or enter the building and course criteria:</label>
-
-
                     <main>
                         <h2 style="color: black"><b>Course Scheduling Engine V1.0</b></h2>
                         <hr>
                         <h3 style="color: black;">Enter Course Info:</h3>
                             <label style="color: black; align-content: left">Select A Course Query Type: </label>
-                            <input id = "and" name ="type" value="1" type="radio" align="left" checked="checked">
+                            <input id = "and" name ="courseQueryType" value="1" type="radio" align="left" checked="checked">
                             <label for = "and" style="color: black; align-content: left" >AND</label>
-                            <input id = "or" name ="type" value="2" type="radio" align="left">
+                            <input id = "or" name ="courseQueryType" value="2" type="radio" align="left">
                             <label for = "or" style="color: black; align-content: left">OR</label>
 
 
                             <!-----1--->
+                        <div><br></div>
 
-                                <section >
-                                    <label for="dept" style="color: black">Enter The Course Department:</label>
-                                    <input type="text" id="dept" name="dept" placeholder="CPSC">
+                            <input id="toggle1" name="deptToggle" value="1" type="checkbox">
+                            <label for="toggle1" style="color: black">Specify a department</label>
+                            <div id="expand1">
+                                <section>
+                                    <label for="department">Enter The Department Name:</label>
+                                    <input type="text" id="department" name="dept" placeholder="cpsc">
                                 </section>
-                                <section >
-                                    <label for="num" style="color: black">Enter The Course Number:</label>
-                                    <input type="text" id="num" name="num" placeholder="310">
+                            </div>
+
+                            <input id="toggle2" name="nameToggle" value="1" type="checkbox">
+                            <label for="toggle2" style="color: black">Specify a course number</label>
+                            <div id="expand2">
+                                <section>
+                                    <label for="num">Enter The Course Number:</label>
+                                    <input type="text" id="num" name="courseName" placeholder="310">
                                 </section>
+                            </div>
+                        <div><br></div>
                         <hr>
 
                         <h3 style="color: black"><b>Enter Building Info:</b></h3>
                         <label style="color: black; align-content: left">Select A Building Query Type: </label>
-                        <input id = "building_and" name ="type1" value="3" type="radio" align="left" checked="checked">
+                        <input id = "building_and" name ="roomQueryType" value="3" type="radio" align="left" checked="checked">
                         <label for = "building_and" style="color: black; align-content: left" >AND</label>
-                        <input id = "building_or" name ="type1" value="4" type="radio" align="left">
+                        <input id = "building_or" name ="roomQueryType" value="4" type="radio" align="left">
                         <label for = "building_or" style="color: black; align-content: left">OR</label>
 
 
                         <!-----1--->
+                        <div><br></div>
 
-                        <section >
-                            <label for="building" style="color: black">Enter The Building Name:</label>
-                            <input type="text" id="building" name="building" placeholder="ESB">
-                        </section>
-                        <section >
-                            <label for="meters" style="color: black">Within</label>
-                            <input type="text" id="meters" name="meters" placeholder="50">
-                            <label for="withinBuilding" style="color: black">meters of building: </label>
-                            <input type="text" id="withinBuilding" name="withinBuilding" placeholder="ICCIS">
-                        </section>
+                        <input id="toggle3" value="1" name="buildingToggle" type="checkbox">
+                        <label for="toggle3" style="color: black">Specify a building</label>
+                        <div id="expand3">
+                            <section>
+                                <label for="building">Enter The Building Name:</label>
+                                <input type="text" id="building" name="building" placeholder="ESB">
+                            </section>
+                        </div>
+                        <div><br></div>
+                        <input id="toggleMedium2" value="1" name="distanceToggle" type="checkbox">
+                        <label for="toggleMedium2" style="color: black">Specify the room distance</label>
+                        <div id="expandMedium2">
+                            <section>
+                                <label for="meter">The room(s) should be within:</label>
+                                <input type="text" id="meter" name="meter" placeholder="300">
+                                <label for="within">metres of the building:</label>
+                                <input type="text" id="within" name="within" placeholder="ESB">
+                            </section>
+                        </div>
 
                         </main>
-
-
-
-
-
                     <p></p>
                     <input type="button" value="Submit" onclick=scheduling()>
-                    <input type="button" value="Clear" onclick="window.location.reload()">
+                    <input type="button" value="Clear" onclick= resetFields()>
                     <input type="button" value = "Go Back To Homepage" onClick="location.href='index.html'"/>
-                    <script>
-                        function scheduling()
-                        {
-                            var query;
-
-                            var form = document.getElementById("main-form");
-                            var formData = new FormData(form);
-                            var buildingVal = formData.get("building");
-                            var meters = formData.get("meters");
-                            var withinBuilding = formData.get("building");
-                            var course_dept = formData.get("dept");
-                            var course_num = formData.get("num");
-
-                            alert("you want to schedule " + course_dept + "_" + course_num + " in building" + buildingVal + " within "
-                             + meters +" meters of building " + withinBuilding);
-                        }
-                    </script>
-
 
                 </form>
-
-
-
             </div>
 
             <br>
 
             <div class="content" id="result" style="display: none">
-                <h1>You Query Result: </h1>
+                <h1>Courses to be Scheduled: </h1>
                 <hr>
                 <table id="tblResults"></table>
+                <h3>Schedule Quality</h3>
+                <p id="quality"></p>
                 <hr>
+                <div class="temp" id = "temp"></div>
+                <br>
             </div>
         </div>
+
+        <script>
+            function resetFields() {
+                document.getElementById("main-form").reset();
+                document.getElementById("result").style.display = "none";
+            }
+        </script>
 
 </body>
 <footer>
     <p align="center">&copy; 2017 | John Peng, Michael Chen | All Rights Reserved</p>
-    <p align="center">A demo webpage for CPSC 310 project.</p>
+    <p align="center">A demo Webpage for CPSC 310 Project</p>
 </footer>
 
 </html>
