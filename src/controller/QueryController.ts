@@ -30,7 +30,7 @@ export default class QueryController {
                 /**
                  * Handle Empty WHERE
                  */
-                let filterFun: any = undefined;
+                let filterFun = undefined;
                 if (Object.keys(where).length != 0)
                     filterFun = instance.parseFilter(where);
 
