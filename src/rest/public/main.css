@@ -1,0 +1,271 @@
+
+.option {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: auto;
+}
+
+.image {
+    opacity: 1;
+    display: block;
+    width: auto;
+    height: auto;
+    transition: .5s ease;
+    backface-visibility: hidden;
+}
+
+.middle {
+    transition: .5s ease;
+    opacity: 0;
+    position: absolute;
+    align-items: center;
+    justify-content: center;
+    top: auto;
+    left: auto;
+}
+
+.option:hover .image {
+    opacity: 0.7;
+    background: #000000;
+}
+
+.option:hover .middle {
+    opacity: 1;
+}
+
+.text {
+    background-color: #ff443d;
+    color: white;
+    font-size: 16px;
+    padding: 15px 80px;
+}
+
+table {
+      border-collapse: collapse;
+      width: 100%;
+}
+
+th, td {
+    text-align: left;
+    padding: 8px;
+}
+
+tr:nth-child(even){background-color: #f2f2f2}
+
+
+
+input[type=text], select {
+    width: auto;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #000000;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+input[type=button] {
+    width: 50%;
+    background-color: #ff443d;
+    color: #ffffff;
+    padding: 8px 10px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 10px;
+}
+
+input[type=button]:hover {
+    background-color: #730612;
+}
+
+input[type=search] {
+    width: 50%;
+    background-color: #ff443d;
+    color: #ffffff;
+    padding: 8px 10px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 10px;
+}
+
+input[type=search]:hover {
+    background-color: #730612;
+}
+
+div.special {
+    width: 70%;
+    color: #ffffff;
+    border-radius: 15px;
+    background-color: #183b85;
+    padding: 20px;
+}
+
+
+/*
+
+
+
+*/
+body {
+    padding: 0;
+    font-family: "Roboto",-apple-system,BlinkMacSystemFont,"Segoe UI","Roboto","Oxygen","Ubuntu","Cantarell","Fira Sans","Droid Sans","Helvetica Neue","Helvetica","Arial",sans-serif;
+    background: #cac6c9;
+    margin: 0;
+}
+main {
+    background: #e7e7e7;
+    width: 90%;
+    margin: 20px auto;
+    padding: 10px 0;
+    box-shadow: 0 3px 5px rgba(0,0,0,0.3);
+}
+main.h2 {
+    text-align: center;
+    color: black;
+}
+main.p {
+    font-size: 13px;
+    color: black;
+    text-align: left;
+}
+main.input {
+    display: none;
+    visibility: hidden;
+}
+main.label {
+    margin-left: 0;
+    alignment: left;
+    display: block;
+    padding: 0.5em;
+    border-bottom: 1px solid #000000;
+    color: #000000;
+}
+main.label:hover {
+    color: #0082ff;
+}
+main.label::before {
+    font-family: Consolas, monaco, monospace;
+    font-weight: bold;
+    font-size: 15px;
+    vertical-align: text-top;
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    margin-right: 3px;
+    background: radial-gradient(ellipse at center, #CCC 50%, transparent 50%);
+}
+#expand1 {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.5s;
+    color: #000000;
+}
+#toggle1:checked ~ #expand1 {
+    height: 50px;
+}
+
+#expand2 {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.5s;
+    color: #000000;
+}
+#toggle2:checked ~ #expand2 {
+    height: 50px;
+}
+
+#expand3 {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.5s;
+    color: #000000;
+}
+#toggle3:checked ~ #expand3 {
+    height: 80px;
+}
+
+#expand4 {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.5s;
+    color: #000000;
+}
+#toggle4:checked ~ #expand4 {
+    height: 50px;
+}
+
+#expand5 {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.5s;
+    color: #000000;
+}
+#toggle5:checked ~ #expand5 {
+    height: 50px;
+}
+#expand6 {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.5s;
+    color: #000000;
+}
+#toggle6:checked ~ #expand6 {
+    height: 110px;
+}
+
+
+#expand7 {
+    height: 0;
+    overflow: hidden;
+    transition: height 0.5s;
+    color: #000000;
+}
+#toggle7:checked ~ #expand7 {
+    height: 110px;
+}
+main.section {
+    padding: 0 20px;
+}
+
+input[type="checkbox"]{
+    cursor: pointer;
+    -webkit-appearance: none;
+    background: #4e4e4e;
+    border-radius: 7px;
+    box-sizing: border-box;
+    position: relative;
+    width: 30px;
+    height: 30px;
+    border-width: 0;
+    transition: all .3s linear;
+}
+input[type="checkbox"]:hover {
+    background-color: #b1a8ab;
+}
+input[type="checkbox"]:checked{
+    background-color: #287ab1;
+}
+input[type="checkbox"]:focus{
+    outline: 0 none;
+    box-shadow: none;
+}
+
+table {
+    color: #333; /* Lighten up font color */
+    font-family: Helvetica, Arial, sans-serif; /* Nicer font */
+    width: 30%;
+    border-collapse: collapse; border-spacing: 0;
+}
+
+td, th { border: 3px solid #CCC; height: 30px; } /* Make cells a bit taller */
+
+th {
+    background: #F3F3F3; /* Light grey background */
+    font-weight: bold; /* Make sure they're bold */
+}
+
+td {
+    background: #FAFAFA; /* Lighter grey background */
+    text-align: center; /* Center our text */
+}

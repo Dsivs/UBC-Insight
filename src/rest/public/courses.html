@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="main.css" media="screen" />
+    <meta charset="UTF-8">
+        <title>Course Explore</title>
+</head>
+<body>
+
+<div class="wrap" style="background: #767676; border-radius: 5px;">
+    <img src="pics/ubc.jpg" width = 100%>
+    <h1 align="center">Courses</h1>
+    <p align="center">testing</p>
+</div>
+
+
+<!------REST Button Implementation -------->
+<!------http://stackoverflow.com/questions/36975619/-------->
+
+
+<div class="wrap" align="center" style="background: #e6e6e6; border-radius: 15px;">
+    <div><br></div>
+    <div class="special" style="alignment: left; height: 10%" >
+        <form style="alignment: left">
+
+            <!-----
+            Show all rooms in building X.
+            Show all rooms within X meters of building X.
+            Show all rooms over size X.
+            Previous task within X meters of building X.
+            Show all rooms with type X or furniture X.
+            Previous task within X meters of building X.----->
+
+            <label>Please select or enter the course criteria:</label>
+
+
+
+
+            <main>
+                <h2 style="color: black"><b>Course Query Engine V1.0</b></h2>
+
+
+                <form>
+                    <label style="color: black; align-content: left">Select A Query Type: </label>
+                    <input id = "and" name = "first" type="radio" align="left" checked="checked">
+                    <label for = "and" style="color: black; align-content: left" >AND</label>
+                    <input id = "or" name = "first" type="radio" align="left">
+                    <label for = "or" style="color: black; align-content: left">OR</label>
+                    <hr>
+                </form>
+                <!-----1--->
+                <input id="toggle1" type="checkbox" align="left">
+                <label for="toggle1" style="color: black; align-content: left; margin-left: 0; alignment: left">Specific a section number</label>
+                <div id="expand1" style="alignment: left; align-content: left; margin-left: 0">
+                    <section >
+                        <label for="section">Enter The Section Number:</label>
+                        <input type="text" id="section" name="section" placeholder="101">
+                    </section>
+                </div>
+                <div><br></div>
+
+                <input id="toggle2" type="checkbox">
+                <label for="toggle2" style="color: black">Specific a department</label>
+                <div id="expand2">
+                    <section>
+                        <label for="department">Enter The department Name:</label>
+                        <input type="text" id="department" name="department" placeholder="CPSC">
+                    </section>
+                </div>
+                <div><br></div>
+                <input id="toggle6" type="checkbox">
+                <label for="toggle6" style="color: black">Specific a course number</label>
+                <div id="expand6">
+                    <section>
+                        <label for="meter">Course number: </label>
+                        <input type="text" id="meter" name="meter" placeholder="310">
+                    </section>
+                </div>
+
+                <div><br></div>
+                <input id="toggle3" type="checkbox">
+                <label for="toggle3" style="color: black">Specific section size</label>
+                <div id="expand3">
+                    <section>
+                        <label for="type">Enter a section size:</label>
+                        <input type="text" id="type" name="type" placeholder="100">
+                        <br>
+                        <input id = "over" name = "second" type="radio" align="left" checked="checked">
+                        <label for = "over" style="color: black; align-content: left">OVER</label>
+                        <input id = "equal" name = "second" type="radio" align="left">
+                        <label for = "equal" style="color: black; align-content: left">EQUAL</label>
+                        <input id = "less" name = "second" type="radio" align="left">
+                        <label for = "less" style="color: black; align-content: left">LESS</label>
+                    </section>
+                </div>
+
+                <div><br></div>
+                <input id="toggle7" type="checkbox">
+                <label for="toggle7" style="color: black">Specific a professor:</label>
+                <div id="expand7">
+                    <section>
+                        <label for="prof_first">Prof's first name:</label>
+                        <input type="text" id="prof_first" name="prof_first" placeholder="John">
+                        <br>
+                        <label for="prof_last">Prof's last name:</label>
+                        <input type="text" id="prof_last" name="prof_last" placeholder="Smith">
+                    </section>
+                </div>
+
+                <div><br></div>
+                <input id="toggle5" type="checkbox">
+                <label for="toggle5" style="color: black">Specific a course title</label>
+                <div id="expand5">
+                    <section>
+                        <label for="title">Enter the course title:</label>
+                        <input type="text" id="title" name="title" placeholder="intr sftwr eng">
+                    </section>
+                </div>
+
+            </main>
+
+
+            <p></p>
+            <hr>
+            <label for = "sort">Sort Based On</label>
+            <select id = "sort">
+                <option value="null">no sort</option>
+                <option value="fail">The most failing students</option>
+                <option value="pass">The most passing students</option>
+                <option value="avg">Average grade</option>
+                <option value="size">Class Size</option>
+            </select>
+            <hr>
+            <label for = "filter">Filter Based On</label>
+            <select id = "filter">
+                <option value="null">no filter</option>
+                <option value="department">course department</option>
+                <option value="nmber">course number</option>
+                <option value="title">course title</option>
+                <option value="size">Class Size</option>
+            </select>
+            <hr>
+            <input type="button" value="Submit" onclick= sure()>
+            <input type="button" value="Clear" onclick="window.location.reload()">
+            <input type="button" value = "Go Back To Homepage" onClick="location.href='index.html'"/>
+            <script>
+                function sure() {
+                    var r = confirm('Are you ready to submit?');
+                    if (r == true) {
+                        var room = document.getElementById('room').value;
+                        var building = document.getElementById('building').value;
+                        var size = document.getElementById('size').value;
+                        var type = document.getElementById('type').value;
+                        var furniture = document.getElementById('furniture').value;
+                        var meter = document.getElementById('meter').value;
+                        var within = document.getElementById('within').value;
+                        alert(' your input room = ' + room + ', building = ' + building
+                            + ", size = " + size + ", type = " + type + ", furnature = " + furniture + ", meter = " + meter
+                            + ", within = " + within);
+                    } else {
+                        alert('cancel');
+                    }
+                }
+            </script>
+
+        </form>
+    </div>
+    <div class="content"></div>
+</div>
+</body>
+<footer>
+    <p align="center">&copy; 2017 | John Peng, Micheal Chen | All Rights Reserved</p>
+    <p align="center">This is a demo webpage for CPSC 310 project.</p>
+</footer>
+
+</html>

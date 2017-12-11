@@ -4,21 +4,206 @@
 
 import Server from "../src/rest/Server";
 import {expect} from 'chai';
+let chai = require('chai') , chaiHttp = require('chai-http');
+chai.use(chaiHttp);
 import Log from "../src/Util";
+import restify = require('restify');
 import {InsightResponse} from "../src/controller/IInsightFacade";
-
+import http = require('http');
+import {isUndefined} from "util";
+import Response = ChaiHttp.Response;
+let server = new Server(8080);
+let client: any;
+let fs = require("fs");
+let content:string;
 describe("EchoSpec", function () {
 
 
-    function sanityCheck(response: InsightResponse) {
-        expect(response).to.have.property('code');
-        expect(response).to.have.property('body');
-        expect(response.code).to.be.a('number');
-    }
 
-    before(function () {
+    const basicGTQuery = {
+        "WHERE":{
+            "GT":{
+                "courses_avg":0
+            }
+        },
+        "OPTIONS":{
+            "COLUMNS":[
+                "courses_dept",
+                "courses_avg"
+            ],
+            "ORDER":"courses_avg",
+            "FORM":"TABLE"
+        }
+    };
+
+    before(function (done) {
         Log.test('Before: ' + (<any>this).test.parent.title);
+
+        server.start()
+            .then(function (result) {
+                return result;
+            }).then( function(res){
+                client = restify.createJsonClient({
+                    url: 'http://localhost:8080/'
+                });
+
+            fs.readFile('./zips/demo.zip', function(err: any, data: any){
+                if (err) {
+                    //invalid zip file is given
+                    console.log(err);
+                }
+                else if (!isUndefined(data) || data !== null)
+                {
+                    //debug, if given content is invalid
+                    //since given data is a array buffer, we can convert right away
+                    content = data.toString('base64');
+                    done();
+                }
+            });
+
+
+            }).catch(function (err: any){
+                console.log(err);
+                expect.fail();
+                done();
+            });
     });
+
+    it('request GET', function(done) {
+        //test for GET, sample
+        chai.request('http://localhost:8080')
+            .get('/')
+            .end(function(err: any, res:restify.Response) {
+                expect(res.statusCode).to.equal(200);
+                done();
+            });
+    });
+
+    it('request invalid DELETE', function(done) {
+        chai.request('http://localhost:8080')
+            .del('/dataset/courses')
+            .end(function(err: any, res:restify.Response) {
+                expect(err.status).to.equal(404);
+                done();
+            });
+    });
+
+
+    it("PUT description", function () {
+        return chai.request('http://localhost:8080')
+            .put('/dataset/courses')
+            .attach("body", fs.readFileSync('./zips/demo.zip'), "demo.zip")
+            .then(function (res: any) {
+                Log.trace('then:');
+                // some assertions
+                expect(res.statusCode).to.equal(204);
+            })
+            .catch(function (err:any) {
+                Log.trace('catch:');
+                // some assertions
+                expect.fail();
+            });
+    });
+
+
+
+    /*it('request PUT courses', function(done) {
+        chai.request('http://localhost:8080')
+            .put('/dataset/courses')
+            .send({ 'content': content})
+            .end(function (err:any, res:any) {
+                if(err)
+                    expect.fail();
+                expect(err).to.be.null;
+                //204 = new id
+                expect(res.statusCode).to.equal(204);
+                //expect(res).to.have.status(204);
+                done();
+            });
+    });*/
+
+    /*it('request POST courses', function() {
+        return chai.request('http://localhost:8080')
+            .post('/query')
+            .send(basicGTQuery)
+            .then(function (res:any) {
+                //expect(err).to.be.null;
+                expect(res.statusCode).to.equal(200);
+                //expect(res).to.have.status(200);
+                console.log(res.body);
+            });
+    });*/
+
+    it("POST description", function () {
+        return chai.request('http://localhost:8080')
+            .post('/dataset/courses')
+            .send(basicGTQuery)
+            .then(function (res: any) {
+                Log.trace('then:');
+                expect(res.statusCode).to.equal(200);
+                // some assertions
+            })
+            .catch(function (err:any) {
+                Log.trace('catch:');
+                // some assertions
+                expect.fail();
+            });
+    });
+
+    it('request DELETE courses', function(done) {
+        chai.request('http://localhost:8080')
+            .del('/dataset/courses')
+            .end(function (err:any, res:any) {
+                if(err)
+                    expect.fail();
+                expect(err).to.be.null;
+                //204 = delete ok
+                expect(res.statusCode).to.equal(204);
+                //expect(res).to.have.status(204);
+                done();
+            });
+    });
+
+
+    /*
+
+    it("put invalid base64 content", function () {
+
+
+
+        client.put('/dataset/room', {'content': 'invalid64string'} ,
+            function (err:any,req:restify.Request,res: restify.Response,obj:any) {
+            if (err)
+            {
+                console.log("req err: " + err);
+                expect(err.code).to.equal(400);
+                expect(err.body).to.be.deep.equal({"error":"invalid64string is not a valid dataset id."});
+            }
+            console.log("req from client: " +req);
+            console.log("res from server: " +res);
+            console.log("random obj stuff: " +obj);
+            //invalid content should be returned an error
+            expect.fail();
+        })
+    });
+
+
+    it("put courses", function () {
+        client.put('/dataset/courses', {'content': content} ,
+            function (err:any,req:restify.Request,res: restify.Response,obj:any) {
+                if (err)
+                {
+                    console.log("req err: " + err);
+                    expect.fail();
+                }
+                console.log("req from client: " +req);
+                console.log("res from server: " +res);
+                console.log("random obj stuff: " +obj);
+                expect(res.statusCode).to.equal(204);
+            })
+    });
+
+
 
     beforeEach(function () {
         Log.test('BeforeTest: ' + (<any>this).currentTest.title);
@@ -32,16 +217,9 @@ describe("EchoSpec", function () {
         Log.test('AfterTest: ' + (<any>this).currentTest.title);
     });
 
-    it("Should be able to echo", function () {
-        let out = Server.performEcho('echo');
-        Log.test(JSON.stringify(out));
-        sanityCheck(out);
-        expect(out.code).to.equal(200);
-        expect(out.body).to.deep.equal({message: 'echo...echo'});
-    });
 
     it("Should be able to echo silence", function () {
-        let out = Server.performEcho('');
+        let out = Request.performEcho('');
         Log.test(JSON.stringify(out));
         sanityCheck(out);
         expect(out.code).to.equal(200);
@@ -49,7 +227,7 @@ describe("EchoSpec", function () {
     });
 
     it("Should be able to handle a missing echo message sensibly", function () {
-        let out = Server.performEcho(undefined);
+        let out = Request.performEcho(undefined);
         Log.test(JSON.stringify(out));
         sanityCheck(out);
         expect(out.code).to.equal(400);
@@ -57,12 +235,21 @@ describe("EchoSpec", function () {
     });
 
     it("Should be able to handle a null echo message sensibly", function () {
-        let out = Server.performEcho(null);
+        let out = Request.performEcho(null);
         Log.test(JSON.stringify(out));
         sanityCheck(out);
         expect(out.code).to.equal(400);
         expect(out.body).to.have.property('error');
         expect(out.body).to.deep.equal({error: 'Message not provided'});
     });
+    */
 
+    it("stop server", function () {
+        server.stop()
+            .then(function (result) {
+                expect(result).to.equal(true);
+            }).catch( function (err) {
+                expect.fail();
+        });
+    });
 });

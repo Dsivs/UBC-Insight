@@ -1,9 +1,8 @@
-/**
- * This is the main programmatic entry point for the project.
- */
 import {IInsightFacade, InsightResponse, QueryRequest} from "./IInsightFacade";
+import DataController from "./DataController";
 
 import Log from "../Util";
+import QueryController from "./QueryController";
 
 let JSZip = require("jszip");
 let fs = require("fs");
@@ -11,9 +10,15 @@ let fs = require("fs");
 
 export default class InsightFacade implements IInsightFacade {
 
+    private dataController: DataController;
+    private queryController: QueryController;
+
     constructor() {
         Log.trace('InsightFacadeImpl::init()');
+        this.dataController = new DataController();
+        this.queryController = new QueryController();
     }
+  
     /**
      * Add a dataset to UBCInsight.
      *
@@ -35,33 +40,43 @@ export default class InsightFacade implements IInsightFacade {
      *
      * Response codes:
      *
-     * 201: the operation was successful and the id already existed (was added in
+     * existing id: 201: the operation was successful and the id already existed (was added in
      * this session or was previously cached).
-     * 204: the operation was successful and the id was new (not added in this
+     * new id:   204: the operation was successful and the id was new (not added in this
      * session or was previously cached).
-     * 400: the operation failed. The body should contain {"error": "my text"}
+     * error:   400: the operation failed. The body should contain {"error": "my text"}
      * to explain what went wrong.
      *
      */
     addDataset(id: string, content: string): Promise<InsightResponse> {
+        const instance = this;
+
         return new Promise(function (fulfill, reject) {
-            // TODO: implement
-
-            var zip = new JSZip();
-
-            fs.readFile("Archive.zip", function(err: any, data: any) {
-                if (err)
-                    reject(0);
-                JSZip.loadAsync(data).then(function (zip: any) {
-                    console.log(zip);
-                    console.log(err);
-                    console.log(data);
-                });
-            });
-
-            fulfill(0);
-        });
+            switch(id) {
+                case "courses":
+                    instance.dataController.addCourses(content)
+                        .then(function (result: any) {
+                            fulfill(result);
+                        })
+                        .catch(function (err: any) {
+                            reject(err);
+                        });
+                    break;
+                case "rooms":
+                    instance.dataController.addRooms(content)
+                        .then(function (result: any) {
+                            fulfill(result);
+                        })
+                        .catch(function (err: any) {
+                            reject(err);
+                        });
+                    break;
+                default:
+                    reject({code: 400, body: {error: id + " is not a valid dataset id."}})
+            }
+        })
     }
+    
     /**
      * Remove a dataset from UBCInsight.
      *
@@ -82,9 +97,16 @@ export default class InsightFacade implements IInsightFacade {
      *
      */
     removeDataset(id: string): Promise<InsightResponse> {
+        const instance = this;
+
         return new Promise(function (fulfill, reject) {
-            // TODO: implement
-            fulfill(0);
+            instance.dataController.removeDataset((id))
+                .then(function (result) {
+                    fulfill(result)
+                })
+                .catch(function (err) {
+                    reject(err)
+                })
         });
     }
     /**
@@ -102,13 +124,29 @@ export default class InsightFacade implements IInsightFacade {
      *
      * 200: the query was successfully answered. The result should be sent in JSON according in the response body.
      * 400: the query failed; body should contain {"error": "my text"} providing extra detail.
-     * 424: the query failed because it depends on a resource that has not been PUT. The body should contain {"missing": ["id1", "id2"...]}.
+     * 424: the query failed because it depends on an id that has not been added. The body should contain {"missing": ["id1", "id2"...]}.
      *
      */
     performQuery(query: QueryRequest): Promise <InsightResponse> {
+        const instance = this;
         return new Promise(function (fulfill, reject) {
-            // TODO: implement
-            fulfill(0);
-        });
+            instance.queryController.performQuery(query, instance)
+                .then(function (result) {
+                    fulfill(result)
+                })
+                .catch(function (err) {
+                    reject(err)
+                })
+        })
+    }
+
+
+
+    /**
+     * check if the dataset requested is in memory already, if not try to read it from cache
+     */
+    checkMem(id: string): any[] {
+        const instance = this;
+        return instance.dataController.loadCache(id);
     }
 }

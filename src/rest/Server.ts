@@ -6,7 +6,7 @@
 import restify = require('restify');
 
 import Log from "../Util";
-import {InsightResponse} from "../controller/IInsightFacade";
+import Request from "./Request";
 
 /**
  * This configures the REST endpoints for the server.
@@ -31,9 +31,16 @@ export default class Server {
         Log.info('Server::close()');
         let that = this;
         return new Promise(function (fulfill) {
-            that.rest.close(function () {
+            try {
+                that.rest.close(function () {
+                    fulfill(true);
+                }).catch(function (err: any) {
+                    fulfill(true);
+                });
+            }catch (err)
+            {
                 fulfill(true);
-            });
+            }
         });
     }
 
@@ -53,15 +60,16 @@ export default class Server {
                 that.rest = restify.createServer({
                     name: 'insightUBC'
                 });
-
-                that.rest.get('/', function (req: restify.Request, res: restify.Response, next: restify.Next) {
-                    res.send(200);
-                    return next();
-                });
-
                 // provides the echo service
                 // curl -is  http://localhost:4321/echo/myMessage
-                that.rest.get('/echo/:msg', Server.echo);
+                //that.rest.get('/echo/:msg', Request.echo);
+                //that.rest.use(restify.acceptParser(that.rest.acceptable));
+                that.rest.use(restify.bodyParser({mapParams: true, mapFiles: true}));
+                that.rest.get('/', Request.echo);
+                that.rest.put('/dataset/:id', Request.echo);
+                that.rest.del('/dataset/:id', Request.echo);
+                that.rest.post('/dataset/:id', Request.echo);
+                that.rest.post('/query', Request.echo);
 
                 // Other endpoints will go here
 
@@ -82,29 +90,6 @@ export default class Server {
         });
     }
 
-    // The next two methods handle the echo service.
-    // These are almost certainly not the best place to put these, but are here for your reference.
-    // By updating the Server.echo function pointer above, these methods can be easily moved.
 
-    public static echo(req: restify.Request, res: restify.Response, next: restify.Next) {
-        Log.trace('Server::echo(..) - params: ' + JSON.stringify(req.params));
-        try {
-            let result = Server.performEcho(req.params.msg);
-            Log.info('Server::echo(..) - responding ' + result.code);
-            res.json(result.code, result.body);
-        } catch (err) {
-            Log.error('Server::echo(..) - responding 400');
-            res.json(400, {error: err.message});
-        }
-        return next();
-    }
-
-    public static performEcho(msg: string): InsightResponse {
-        if (typeof msg !== 'undefined' && msg !== null) {
-            return {code: 200, body: {message: msg + '...' + msg}};
-        } else {
-            return {code: 400, body: {error: 'Message not provided'}};
-        }
-    }
 
 }

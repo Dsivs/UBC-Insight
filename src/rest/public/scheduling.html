@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+    <link rel="stylesheet" type="text/css" href="main.css" media="screen" />
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script language="JavaScript" type="text/javascript" src="formValidation.js"></script>
+    <meta charset="UTF-8">
+        <title>Course Scheduling</title>
+</head>
+<body>
+
+
+<div class="wrap" style="background: #767676; border-radius: 5px;">
+    <img src="pics/scheduling.jpg" width = 100%>
+    <h1 align="center">Course Scheduling</h1>
+    <hr>
+</div>
+        <div class="wrap" align="center" style="background: #e6e6e6; border-radius: 15px;">
+            <div><br></div>
+            <div class="special" style="alignment: left; height: 10%" >
+
+
+                <form id="main-form">
+
+                    <label>Please select or enter the building and course criteria:</label>
+
+
+                    <main>
+                        <h2 style="color: black"><b>Course Scheduling Engine V1.0</b></h2>
+                        <hr>
+                        <h3 style="color: black;">Enter Course Info:</h3>
+                            <label style="color: black; align-content: left">Select A Course Query Type: </label>
+                            <input id = "and" name ="type" value="1" type="radio" align="left" checked="checked">
+                            <label for = "and" style="color: black; align-content: left" >AND</label>
+                            <input id = "or" name ="type" value="2" type="radio" align="left">
+                            <label for = "or" style="color: black; align-content: left">OR</label>
+
+
+                            <!-----1--->
+
+                                <section >
+                                    <label for="dept" style="color: black">Enter The Course Department:</label>
+                                    <input type="text" id="dept" name="dept" placeholder="CPSC">
+                                </section>
+                                <section >
+                                    <label for="num" style="color: black">Enter The Course Number:</label>
+                                    <input type="text" id="num" name="num" placeholder="310">
+                                </section>
+                        <hr>
+
+                        <h3 style="color: black"><b>Enter Building Info:</b></h3>
+                        <label style="color: black; align-content: left">Select A Building Query Type: </label>
+                        <input id = "building_and" name ="type1" value="3" type="radio" align="left" checked="checked">
+                        <label for = "building_and" style="color: black; align-content: left" >AND</label>
+                        <input id = "building_or" name ="type1" value="4" type="radio" align="left">
+                        <label for = "building_or" style="color: black; align-content: left">OR</label>
+
+
+                        <!-----1--->
+
+                        <section >
+                            <label for="building" style="color: black">Enter The Building Name:</label>
+                            <input type="text" id="building" name="building" placeholder="ESB">
+                        </section>
+                        <section >
+                            <label for="meters" style="color: black">Within</label>
+                            <input type="text" id="meters" name="meters" placeholder="50">
+                            <label for="withinBuilding" style="color: black">meters of building: </label>
+                            <input type="text" id="withinBuilding" name="withinBuilding" placeholder="ICCIS">
+                        </section>
+
+                        </main>
+
+
+
+
+
+                    <p></p>
+                    <input type="button" value="Submit" onclick=scheduling()>
+                    <input type="button" value="Clear" onclick="window.location.reload()">
+                    <input type="button" value = "Go Back To Homepage" onClick="location.href='index.html'"/>
+                    <script>
+                        function scheduling()
+                        {
+                            var query;
+
+                            var form = document.getElementById("main-form");
+                            var formData = new FormData(form);
+                            var buildingVal = formData.get("building");
+                            var meters = formData.get("meters");
+                            var withinBuilding = formData.get("building");
+                            var course_dept = formData.get("dept");
+                            var course_num = formData.get("num");
+
+                            alert("you want to schedule " + course_dept + "_" + course_num + " in building" + buildingVal + " within "
+                             + meters +" meters of building " + withinBuilding);
+                        }
+                    </script>
+
+
+                </form>
+
+
+
+            </div>
+
+            <br>
+
+            <div class="content" id="result" style="display: none">
+                <h1>You Query Result: </h1>
+                <hr>
+                <table id="tblResults"></table>
+                <hr>
+            </div>
+        </div>
+
+</body>
+<footer>
+    <p align="center">&copy; 2017 | John Peng, Michael Chen | All Rights Reserved</p>
+    <p align="center">A demo webpage for CPSC 310 project.</p>
+</footer>
+
+</html>
