@@ -4,6 +4,10 @@ import DataController from "./DataController";
 import Log from "../Util";
 import QueryController from "./QueryController";
 
+let JSZip = require("jszip");
+let fs = require("fs");
+
+
 export default class InsightFacade implements IInsightFacade {
 
     private dataController: DataController;
@@ -14,7 +18,7 @@ export default class InsightFacade implements IInsightFacade {
         this.dataController = new DataController();
         this.queryController = new QueryController();
     }
-
+  
     /**
      * Add a dataset to UBCInsight.
      *
@@ -72,7 +76,7 @@ export default class InsightFacade implements IInsightFacade {
             }
         })
     }
-
+    
     /**
      * Remove a dataset from UBCInsight.
      *
@@ -105,7 +109,6 @@ export default class InsightFacade implements IInsightFacade {
                 })
         });
     }
-
     /**
      * Perform a query on UBCInsight.
      *
