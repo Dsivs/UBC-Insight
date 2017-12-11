@@ -45,5 +45,4 @@ deadline. Some D4 checklists were implicit, hope we could have a much more speci
 TA is no longer helpful and starts ignoring posts on Piazza. Limited TA was involved in discussion on Piazza (only 2 ish?), which leads hugh confusion and frustration at the 
 beginning of this project before D4 tutorial was held. 
 
-Also, whether or not this deliverable should be heavily depended on materials that are neither
-prerequisite of this course nor class materials is arguable and questionable. 
+Also, whether or not this deliverable should be heavily depended on materials that are neither prerequisite of this course nor class materials is arguable and questionable. 
