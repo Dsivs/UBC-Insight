@@ -18,35 +18,15 @@ export default class Course {
     //The number of students that failed the course offering.
     courses_fail: number;
     //The number of students that audited the course offering.
-    courses_size: number;
     courses_audit: number;
     //the unique id of a course offering.
     courses_uuid: string;
     //the year the course was offered
     courses_year: number;
 
-    courses_section: number;
+    static courseKeys = ["courses_dept", "courses_id", "courses_avg", "courses_instructor", "courses_title", "courses_pass", "courses_fail", "courses_audit", "courses_uuid", "courses_year"];
 
-    courses_APlus: number; //90
-    courses_A: number; //85
-    courses_AMinus: number; //80
-    courses_BPlus: number; //76
-    courses_B: number; //72
-    courses_BMinus: number; //68
-    courses_CPlus: number; //64
-    courses_C: number; //60
-    courses_CMinus: number; //55
-    courses_D: number; //50
-    courses_F: number;
-
-    static courseKeys = ["courses_dept", "courses_id", "courses_avg", "courses_instructor", "courses_title", "courses_pass", "courses_fail",
-        "courses_audit", "courses_uuid", "courses_year",
-        "courses_section", "courses_size",
-        "courses_APlus", "courses_A", "courses_AMinus",
-        "courses_BPlus", "courses_B", "courses_BMinus",
-        "courses_CPlus", "courses_C", "courses_CMinus", "courses_D", "courses_F"];
-
-    constructor(dept: string, id: string, avg: number, instructor: string, title: string, pass: number, fail: number, audit: number, uuid: string, year: number, section: number) {
+    constructor(dept: string, id: string, avg: number, instructor: string, title: string, pass: number, fail: number, audit: number, uuid: string, year: number) {
         this.courses_dept = dept;
         this.courses_id = id;
         this.courses_avg = avg;
@@ -54,10 +34,8 @@ export default class Course {
         this.courses_title = title;
         this.courses_pass = pass;
         this.courses_fail = fail;
-        this.courses_size = pass+fail;
         this.courses_audit = audit;
         this.courses_uuid = uuid;
         this.courses_year = year;
-        this.courses_section = section;
     }
 }
