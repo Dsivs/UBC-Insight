@@ -65,11 +65,34 @@ export default class Server {
                 //that.rest.get('/echo/:msg', Request.echo);
                 //that.rest.use(restify.acceptParser(that.rest.acceptable));
                 that.rest.use(restify.bodyParser({mapParams: true, mapFiles: true}));
-                that.rest.get('/', Request.echo);
+
+                //debug
+                that.rest.use(
+                    function crossOrigin(req,res,next){
+                        res.header("Access-Control-Allow-Origin", "*");
+                        res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, TRACE, HEAD, OPTION");
+                        res.header("Access-Control-Allow-Headers", "Content-Type, X-Requested-With, Authorization, Accept, Content-Type, Accept");
+                        return next();
+                    }
+                );
+
+
+
+
+
+                that.rest.get('/:name', restify.serveStatic({
+                    'directory': __dirname + "/public",
+                    'default': "index.html"
+                }));
+                that.rest.get(/.*/, restify.serveStatic({
+                    'directory': __dirname+'/public/',
+                    'default': 'index.html'
+                }));
+
                 that.rest.put('/dataset/:id', Request.echo);
                 that.rest.del('/dataset/:id', Request.echo);
-                that.rest.post('/dataset/:id', Request.echo);
                 that.rest.post('/query', Request.echo);
+                that.rest.post('/query/', Request.echo);
 
                 // Other endpoints will go here
 
